@@ -29,9 +29,9 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
             const mobile = window.innerWidth < 1024;
             setIsMobile(mobile);
 
-            const headerH = mobile ? 0 : 60;
+            const headerH = 0; // Header is now 0 on all platforms
             const availW = window.innerWidth;
-            const availH = window.innerHeight - headerH;
+            const availH = window.innerHeight;
             const ratio = 16 / 9;
 
             if (availW / availH > ratio) {
@@ -45,7 +45,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
         return () => window.removeEventListener('resize', updateDim);
     }, []);
 
-    const headerHeight = isMobile ? '0px' : '60px';
+    const headerHeight = '0px';
 
     // Initial Load
     useEffect(() => {
@@ -170,27 +170,6 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
             onTouchMove={handleMove}
             onTouchEnd={handleEnd}
         >
-            {/* DESKTOP-ONLY HEADER */}
-            {!isMobile && (
-                <header style={{ height: headerHeight, padding: '0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(15,15,25,0.8)', backdropFilter: 'blur(10px)', zIndex: 200 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#a78bfa', padding: '4px 10px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 800 }}>LÁMINA {currentIndex + 1} / {totalSlides}</div>
-                        <h2 style={{ fontSize: '0.9rem', color: 'white', fontWeight: 600, opacity: 0.9 }}>{alias}</h2>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                        {tool === 'draw' && (
-                            <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '10px' }}>
-                                {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
-                                    <button key={c} onClick={() => setColor(c)} style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, border: color === c ? '2px solid white' : 'none', cursor: 'pointer' }} />
-                                ))}
-                            </div>
-                        )}
-                        <button onClick={undo} className="btn-outline" style={{ padding: '6px 12px', fontSize: '9px', display: 'flex', alignItems: 'center', gap: '5px' }}><Undo2 size={12} /> Deshacer</button>
-                    </div>
-                </header>
-            )}
-
             {/* RESPONSIVE MAIN STAGE */}
             <main style={{
                 flex: 1,
