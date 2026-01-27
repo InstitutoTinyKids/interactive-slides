@@ -232,13 +232,13 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         background: 'rgba(255,255,255,0.95)',
                                         backdropFilter: 'blur(5px)',
                                         border: '2px solid white',
-                                        padding: isMobile ? '8px' : '12px 15px',
+                                        padding: isMobile ? '8px' : '15px',
                                         borderRadius: '16px',
                                         width: '100%',
                                         height: '100%',
                                         textAlign: 'center',
                                         color: '#000',
-                                        fontSize: 'clamp(10px, 2.5cqw, 18px)',
+                                        fontSize: isMobile ? '16px' : 'clamp(12px, 2.5cqw, 18px)', // 16px min to prevent iOS zoom
                                         lineHeight: '1.2',
                                         fontWeight: 800,
                                         resize: 'none',
@@ -248,6 +248,10 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                     placeholder={el.text || "Escribe aquí..."}
                                     value={textValues[el.id] || ''}
                                     onChange={(e) => setTextValues({ ...textValues, [el.id]: e.target.value })}
+                                    onBlur={() => {
+                                        // Force browser to reset any scroll position caused by keyboard/zoom
+                                        window.scrollTo(0, 0);
+                                    }}
                                 />
                                 {textValues[el.id] && (
                                     <div style={{ position: 'absolute', right: '10px', top: '10px', color: '#059669' }}><CheckCircle2 size={isMobile ? 14 : 18} /></div>
