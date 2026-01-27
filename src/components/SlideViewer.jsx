@@ -238,7 +238,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         height: '100%',
                                         textAlign: 'center',
                                         color: '#000',
-                                        fontSize: isMobile ? '16px' : 'clamp(12px, 2.5cqw, 18px)', // 16px min to prevent iOS zoom
+                                        fontSize: isMobile ? '12px' : 'clamp(9px, 1.8cqw, 14px)',
                                         lineHeight: '1.2',
                                         fontWeight: 800,
                                         resize: 'none',
@@ -270,7 +270,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 onTouchStart={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
                             >
                                 {item.url ? (
-                                    <img src={item.url} style={{ width: '12cqw', height: '12cqw', objectFit: 'contain', filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))', pointerEvents: 'none' }} />
+                                    <img src={item.url} style={{ width: '12cqw', height: '12cqw', objectFit: 'contain', pointerEvents: 'none' }} />
                                 ) : (
                                     <div style={{ width: '8cqw', height: '8cqw', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <Move color="white" size="50%" />
@@ -313,8 +313,8 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 </button>
                             )}
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontSize: '1.6cqh', fontWeight: 800, color: 'white', opacity: 0.9 }}>{alias}</span>
-                                <span style={{ fontSize: '1.2cqh', color: '#a78bfa', fontWeight: 700 }}>PAG {currentIndex + 1} / {totalSlides}</span>
+                                <span style={{ fontSize: '2.2cqh', fontWeight: 800, color: 'white', opacity: 0.9, lineHeight: 1 }}>{alias}</span>
+                                <span style={{ fontSize: '1.6cqh', color: '#a78bfa', fontWeight: 700 }}>PAG {currentIndex + 1} / {totalSlides}</span>
                             </div>
                         </div>
 
