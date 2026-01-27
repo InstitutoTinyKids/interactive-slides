@@ -16,6 +16,13 @@ export default function App() {
     const [slides, setSlides] = useState([]);
     const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 1024);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Load project data on mount
     useEffect(() => {
@@ -270,15 +277,21 @@ export default function App() {
 
                 <div className="glass anim-up" style={{
                     width: '90%',
-                    maxWidth: '500px',
-                    maxHeight: '85vh',
-                    padding: isMobile ? '30px 20px' : '50px 30px',
+                    maxWidth: '450px',
+                    maxHeight: '90vh',
+                    padding: isMobile ? '25px 20px' : '50px 30px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: isMobile ? '15px' : '25px',
+                    gap: isMobile ? '12px' : '25px',
                     textAlign: 'center',
-                    overflowY: 'auto'
+                    overflowY: 'auto',
+                    position: 'relative',
+                    zIndex: 110,
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '24px'
                 }}>
                     <div style={{ fontSize: isMobile ? '3.5rem' : '5rem' }}>🎉</div>
                     <div>

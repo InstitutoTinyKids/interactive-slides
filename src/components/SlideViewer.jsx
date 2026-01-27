@@ -229,7 +229,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 <textarea
                                     className="premium-input"
                                     style={{
-                                        background: 'rgba(255,255,255,0.95)',
+                                        background: 'rgba(255,255,255,0.5)', // 50% opacity
                                         backdropFilter: 'blur(5px)',
                                         border: '2px solid white',
                                         padding: isMobile ? '8px' : '15px',
@@ -289,12 +289,12 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             bottom: 0,
                             left: 0,
                             right: 0,
-                            height: isMobile ? '18cqh' : '12cqh',
+                            height: isMobile ? '20cqh' : '12cqh',
                             background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 100%)',
                             backdropFilter: 'blur(15px)',
                             display: 'flex',
                             alignItems: 'center',
-                            padding: isMobile ? '0 3cqw 3cqh 3cqw' : '0 3cqw',
+                            padding: isMobile ? '0 3cqw 6cqh 3cqw' : '0 3cqw', // More bottom padding for iPhone safety
                             gap: '2cqw',
                             zIndex: 100,
                             borderTop: '1px solid rgba(255,255,255,0.1)',
