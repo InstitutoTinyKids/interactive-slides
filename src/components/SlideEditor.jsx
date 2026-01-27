@@ -108,8 +108,11 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const handleCanvasMouseMove = (e) => {
         if (!canvasContainerRef.current) return;
         const rect = canvasContainerRef.current.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const x = ((clientX - rect.left) / rect.width) * 100;
+        const y = ((clientY - rect.top) / rect.height) * 100;
 
         if (draggingElementId) {
             const newSlides = [...localSlides];
@@ -123,7 +126,6 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             const newSlides = [...localSlides];
             const element = newSlides[selectedIdx].elements.find(el => el.id === resizingElementId);
             if (element) {
-                // Approximate width/height based on mouse delta from element center
                 const elementX = (element.x / 100) * rect.width;
                 const elementY = (element.y / 100) * rect.height;
                 const mouseX = (x / 100) * rect.width;
@@ -142,7 +144,13 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     };
 
     return (
-        <div className="flex h-screen w-full bg-[#050510] overflow-hidden" onMouseMove={handleCanvasMouseMove} onMouseUp={handleMouseUp}>
+        <div
+            className="flex h-screen w-full bg-[#050510] overflow-hidden"
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleMouseUp}
+            onTouchMove={handleCanvasMouseMove}
+            onTouchEnd={handleMouseUp}
+        >
             {/* Sidebar Slide Navigation - COMPACT */}
             <aside style={{ width: '180px', borderRight: '1px solid rgba(255,255,255,0.1)', background: '#0a0a1a', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -229,6 +237,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 <div
                                     key={el.id}
                                     onMouseDown={(e) => { e.stopPropagation(); setDraggingElementId(el.id); }}
+                                    onTouchStart={(e) => { e.stopPropagation(); setDraggingElementId(el.id); }}
                                     style={{
                                         position: 'absolute',
                                         left: `${el.x}%`,
@@ -276,6 +285,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             {/* Dedicated Resize Handle */}
                                             <div
                                                 onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }}
+                                                onTouchStart={(e) => { e.stopPropagation(); setResizingElementId(el.id); }}
                                                 style={{
                                                     position: 'absolute',
                                                     bottom: '5px',
