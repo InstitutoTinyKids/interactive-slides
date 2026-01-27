@@ -271,24 +271,26 @@ export default function App() {
                 <div className="glass anim-up" style={{
                     width: '90%',
                     maxWidth: '500px',
-                    padding: '50px 30px',
+                    maxHeight: '85vh',
+                    padding: isMobile ? '30px 20px' : '50px 30px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '25px',
-                    textAlign: 'center'
+                    gap: isMobile ? '15px' : '25px',
+                    textAlign: 'center',
+                    overflowY: 'auto'
                 }}>
-                    <div style={{ fontSize: '5rem' }}>🎉</div>
+                    <div style={{ fontSize: isMobile ? '3.5rem' : '5rem' }}>🎉</div>
                     <div>
-                        <h1 style={{ fontSize: '2.2rem', marginBottom: '12px', lineHeight: 1.1 }}>¡Misión Cumplida!</h1>
-                        <p style={{ fontSize: '1rem', color: '#a78bfa', fontWeight: 800, marginBottom: '6px' }}>Excelente trabajo, {alias}</p>
-                        <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Tus respuestas han sido registradas exitosamente en el sistema.</p>
+                        <h1 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', marginBottom: '12px', lineHeight: 1.1 }}>¡Misión Cumplida!</h1>
+                        <p style={{ fontSize: isMobile ? '0.9rem' : '1rem', color: '#a78bfa', fontWeight: 800, marginBottom: '6px' }}>Excelente trabajo, {alias}</p>
+                        <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>Tus respuestas han sido registradas exitosamente en el sistema.</p>
                     </div>
 
                     <button
                         onClick={() => window.location.reload()}
                         className="btn-premium"
-                        style={{ padding: '14px 40px', fontSize: '1rem', marginTop: '10px' }}
+                        style={{ padding: isMobile ? '12px 30px' : '14px 40px', fontSize: isMobile ? '0.9rem' : '1rem', marginTop: '10px' }}
                     >
                         Finalizar Sesión
                     </button>

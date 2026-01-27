@@ -345,10 +345,26 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             </div>
 
                             {tool === 'draw' && (
-                                <div style={{ display: 'flex', gap: '1.5cqw', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', gap: '2cqw', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh 1.5cqh', borderRadius: '1.5cqh' }}>
                                     <button onClick={undo} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '6cqh', height: '6cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <Undo2 size="60%" />
                                     </button>
+
+                                    {/* Stroke Width Selector */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1cqw', padding: '0 1cqw', borderLeft: '1px solid rgba(255,255,255,0.1)', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <div style={{ width: '4cqh', height: '4cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <div style={{ width: `${Math.max(2, lineWidth / 2)}px`, height: `${Math.max(2, lineWidth / 2)}px`, background: 'white', borderRadius: '50%' }} />
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="2"
+                                            max="30"
+                                            value={lineWidth}
+                                            onChange={(e) => setLineWidth(parseInt(e.target.value))}
+                                            style={{ width: isMobile ? '60px' : '100px', accentColor: '#7c3aed', height: '4px' }}
+                                        />
+                                    </div>
+
                                     <div style={{ display: 'flex', gap: '0.8cqw' }}>
                                         {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
                                             <button key={c} onClick={() => setColor(c)} style={{ width: '4cqh', height: '4cqh', borderRadius: '50%', background: c, border: color === c ? '2px solid white' : 'none' }} />
