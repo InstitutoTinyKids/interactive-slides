@@ -21,16 +21,31 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
     // Interaction State
     const [draggingIdx, setDraggingIdx] = useState(null);
     const [isDrawing, setIsDrawing] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    const [stageDim, setStageDim] = useState({ w: 0, h: 0 });
 
     useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        const updateDim = () => {
+            const mobile = window.innerWidth < 1024;
+            setIsMobile(mobile);
+
+            const headerH = mobile ? 0 : 60;
+            const availW = window.innerWidth;
+            const availH = window.innerHeight - headerH;
+            const ratio = 16 / 9;
+
+            if (availW / availH > ratio) {
+                setStageDim({ w: availH * ratio, h: availH });
+            } else {
+                setStageDim({ w: availW, h: availW / ratio });
+            }
+        };
+        updateDim();
+        window.addEventListener('resize', updateDim);
+        return () => window.removeEventListener('resize', updateDim);
     }, []);
 
-    const headerHeight = isMobile ? '50px' : '60px';
-    const footerHeight = isMobile ? '70px' : '80px';
+    const headerHeight = isMobile ? '0px' : '60px';
 
     // Initial Load
     useEffect(() => {
@@ -138,16 +153,16 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
     return (
         <div
             style={{
-                height: '100vh',
+                height: '100dvh',
                 width: '100vw',
-                background: '#050510',
+                background: '#000',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
                 position: 'fixed',
                 top: 0,
                 left: 0,
-                touchAction: 'pan-x pan-y pinch-zoom' // Allow zoom and scroll, block only on interaction areas
+                touchAction: 'none'
             }}
             className="anim-up"
             onMouseMove={handleMove}
@@ -155,27 +170,26 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
             onTouchMove={handleMove}
             onTouchEnd={handleEnd}
         >
-            {/* COMPACT PREMIUM HEADER */}
-            <header style={{ height: headerHeight, padding: isMobile ? '0 15px' : '0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(15,15,25,0.8)', backdropFilter: 'blur(10px)', zIndex: 200 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '15px' }}>
-                    <div style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#a78bfa', padding: '2px 8px', borderRadius: '6px', fontSize: '0.6rem', fontWeight: 800 }}>LÁMINA {currentIndex + 1}</div>
-                    <h2 style={{ fontSize: isMobile ? '0.75rem' : '0.9rem', color: 'white', fontWeight: 600, opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: isMobile ? '120px' : 'none' }}>{alias}</h2>
-                </div>
+            {/* DESKTOP-ONLY HEADER */}
+            {!isMobile && (
+                <header style={{ height: headerHeight, padding: '0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(15,15,25,0.8)', backdropFilter: 'blur(10px)', zIndex: 200 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#a78bfa', padding: '4px 10px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 800 }}>LÁMINA {currentIndex + 1} / {totalSlides}</div>
+                        <h2 style={{ fontSize: '0.9rem', color: 'white', fontWeight: 600, opacity: 0.9 }}>{alias}</h2>
+                    </div>
 
-                <div style={{ display: 'flex', gap: isMobile ? '8px' : '15px' }}>
-                    {tool === 'draw' && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '15px' }}>
-                            <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '3px', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                        {tool === 'draw' && (
+                            <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '10px' }}>
                                 {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
-                                    <button key={c} onClick={() => setColor(c)} style={{ width: isMobile ? '16px' : '20px', height: isMobile ? '16px' : '20px', borderRadius: '50%', background: c, border: color === c ? '2px solid white' : 'none', cursor: 'pointer' }} />
+                                    <button key={c} onClick={() => setColor(c)} style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, border: color === c ? '2px solid white' : 'none', cursor: 'pointer' }} />
                                 ))}
                             </div>
-                            {!isMobile && <input type="range" min="2" max="40" value={lineWidth} onChange={(e) => setLineWidth(parseInt(e.target.value))} style={{ width: '70px', accentColor: '#7c3aed' }} />}
-                            <button onClick={undo} className="btn-outline" style={{ padding: isMobile ? '4px 8px' : '6px 12px', fontSize: isMobile ? '8px' : '9px', display: 'flex', alignItems: 'center', gap: '3px' }}><Undo2 size={isMobile ? 10 : 12} /> {isMobile ? '' : 'Deshacer'}</button>
-                        </div>
-                    )}
-                </div>
-            </header>
+                        )}
+                        <button onClick={undo} className="btn-outline" style={{ padding: '6px 12px', fontSize: '9px', display: 'flex', alignItems: 'center', gap: '5px' }}><Undo2 size={12} /> Deshacer</button>
+                    </div>
+                </header>
+            )}
 
             {/* RESPONSIVE MAIN STAGE */}
             <main style={{
@@ -184,47 +198,33 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '0', // Full screen priority
-                overflow: 'hidden',
-                background: 'radial-gradient(circle at center, #0a0a1f, #050510)'
+                padding: '0',
+                background: '#050510',
+                overflow: 'hidden'
             }}>
                 <div
                     ref={stageRef}
                     style={{
-                        width: '100%',
-                        height: '100%',
-                        maxWidth: `calc((100vh - ${headerHeight}) * 16 / 9)`,
-                        maxHeight: `calc(100vh - ${headerHeight})`,
+                        width: `${stageDim.w}px`,
+                        height: `${stageDim.h}px`,
                         aspectRatio: '16/9',
-                        background: '#000',
-                        borderRadius: '0px', // Full screen look
+                        background: '#111',
+                        borderRadius: isMobile ? '0' : '12px',
                         overflow: 'hidden',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
                         position: 'relative',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         containerType: 'size',
-                        touchAction: 'pan-x pan-y pinch-zoom'
+                        boxShadow: isMobile ? 'none' : '0 40px 100px rgba(0,0,0,0.5)',
+                        border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)'
                     }}
                 >
                     {slide?.image_url && <img src={slide.image_url} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />}
 
                     {/* Text Layer - Scaled by container size */}
                     {slide?.elements?.filter(e => e.type === 'text').map(el => (
-                        <div
-                            key={el.id}
-                            style={{
-                                position: 'absolute',
-                                left: `${el.x}%`,
-                                top: `${el.y}%`,
-                                width: el.width ? `${(el.width / 900) * 100}%` : '40%',
-                                height: el.height ? `${(el.height / 506) * 100}%` : '15%',
-                                transform: 'translate(-50%, -50%)',
-                                zIndex: 40
-                            }}
-                        >
+                        <div key={el.id} style={{ position: 'absolute', left: `${el.x}%`, top: `${el.y}%`, width: el.width ? `${(el.width / 900) * 100}%` : '40%', height: el.height ? `${(el.height / 506) * 100}%` : '15%', transform: 'translate(-50%, -50%)', zIndex: 40 }}>
                             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                                 <textarea
                                     className="premium-input"
@@ -266,10 +266,10 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 onTouchStart={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
                             >
                                 {item.url ? (
-                                    <img src={item.url} style={{ width: 'min(150px, 12vw)', height: 'min(150px, 12vw)', objectFit: 'contain', filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))', pointerEvents: 'none' }} />
+                                    <img src={item.url} style={{ width: '12cqw', height: '12cqw', objectFit: 'contain', filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))', pointerEvents: 'none' }} />
                                 ) : (
-                                    <div style={{ width: 'min(80px, 8vw)', height: 'min(80px, 8vw)', background: '#7c3aed', borderRadius: '16px', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Move color="white" size={24} />
+                                    <div style={{ width: '8cqw', height: '8cqw', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Move color="white" size="50%" />
                                     </div>
                                 )}
                             </div>
@@ -278,93 +278,94 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
 
                     <canvas ref={canvasRef} width={1920} height={1080} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 30, cursor: tool === 'draw' ? 'crosshair' : 'default', touchAction: 'none' }} onMouseDown={handleStart} onTouchStart={handleStart} />
 
-                    <canvas ref={canvasRef} width={1920} height={1080} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 30, cursor: tool === 'draw' ? 'crosshair' : 'default', touchAction: 'none' }} onMouseDown={handleStart} onTouchStart={handleStart} />
-
-                    {/* Integrated Internal Control Bar - Transparent & Proportional */}
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '10cqh', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', padding: '0 2cqw', gap: '1.5cqw', zIndex: 100, borderTop: '1px solid rgba(255,255,255,0.1)', touchAction: 'auto' }}>
-
-                        {/* Audio Control */}
-                        {slide?.audio_url && (
-                            <button
-                                onClick={() => { if (isPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsPlaying(!isPlaying); }}
-                                style={{ background: isPlaying ? '#7c3aed' : 'rgba(255,255,255,0.1)', border: 'none', width: '6cqh', height: '6cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}
-                            >
-                                {isPlaying ? <Pause size="50%" /> : <Volume2 size="50%" />}
-                                <audio ref={audioRef} src={slide.audio_url} onEnded={() => setIsPlaying(false)} />
-                            </button>
-                        )}
-
-                        {/* Navigation */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5cqw' }}>
-                            <button onClick={onPrev} disabled={isFirst} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', opacity: isFirst ? 0.2 : 0.8, width: '5cqh', height: '5cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <ChevronLeft size="80%" />
-                            </button>
-                            <div style={{ color: 'white', fontWeight: 800, fontSize: '1.8cqh', minWidth: '6cqw', textAlign: 'center' }}>{currentIndex + 1} / {totalSlides}</div>
-                            <button onClick={onNext} disabled={isLast} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', opacity: isLast ? 0.2 : 0.8, width: '5cqh', height: '5cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <ChevronRight size="80%" />
-                            </button>
+                    {/* IMMERSIVE CONTROL BAR */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: isMobile ? '12cqh' : '10cqh',
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 100%)',
+                            backdropFilter: 'blur(10px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '0 3cqw',
+                            gap: '2cqw',
+                            zIndex: 100,
+                            borderTop: '1px solid rgba(255,255,255,0.05)',
+                            touchAction: 'auto'
+                        }}
+                    >
+                        {/* Audio & Info */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '2cqw', flexShrink: 0 }}>
+                            {slide?.audio_url && (
+                                <button
+                                    onClick={() => { if (isPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsPlaying(!isPlaying); }}
+                                    style={{ background: isPlaying ? '#7c3aed' : 'rgba(255,255,255,0.1)', border: 'none', width: '7cqh', height: '7cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
+                                >
+                                    {isPlaying ? <Pause size="50%" /> : <Volume2 size="50%" />}
+                                    <audio ref={audioRef} src={slide.audio_url} onEnded={() => setIsPlaying(false)} />
+                                </button>
+                            )}
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '1.6cqh', fontWeight: 800, color: 'white', opacity: 0.9 }}>{alias}</span>
+                                <span style={{ fontSize: '1.2cqh', color: '#a78bfa', fontWeight: 700 }}>PAG {currentIndex + 1} / {totalSlides}</span>
+                            </div>
                         </div>
 
-                        {/* Tool Selector - Compact */}
-                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                            <div style={{ display: 'flex', gap: '0.8cqw', background: 'rgba(255,255,255,0.05)', padding: '0.5cqh', borderRadius: '1.2cqh' }}>
+                        {/* Middle Controls */}
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3cqw' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <button onClick={onPrev} disabled={isFirst} style={{ background: 'none', border: 'none', color: 'white', opacity: isFirst ? 0.2 : 0.8, cursor: 'pointer', width: '8cqh', height: '8cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <ChevronLeft size="70%" />
+                                </button>
+                                <button onClick={onNext} disabled={isLast} style={{ background: 'none', border: 'none', color: 'white', opacity: isLast ? 0.2 : 0.8, cursor: 'pointer', width: '8cqh', height: '8cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <ChevronRight size="70%" />
+                                </button>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1.5cqw', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh', borderRadius: '1.5cqh' }}>
                                 {Array.from(new Set(slide.elements?.map(e => e.type))).map(type => {
                                     const Icon = type === 'draw' ? Paintbrush : type === 'drag' ? Move : type === 'stamp' ? Target : Type;
                                     return (
                                         <button
                                             key={type}
                                             onClick={() => setTool(type)}
-                                            style={{
-                                                padding: '0.8cqh 1.2cqh',
-                                                borderRadius: '0.8cqh',
-                                                border: 'none',
-                                                background: tool === type ? 'white' : 'transparent',
-                                                color: tool === type ? '#7c3aed' : 'white',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5cqw',
-                                                transition: '0.2s',
-                                                boxShadow: tool === type ? '0 2px 10px rgba(0,0,0,0.2)' : 'none'
-                                            }}
+                                            style={{ padding: '1cqh 2cqh', borderRadius: '1cqh', border: 'none', background: tool === type ? 'white' : 'transparent', color: tool === type ? '#7c3aed' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                                         >
-                                            <Icon size="1.8cqh" />
-                                            {!isMobile && <span style={{ fontSize: '1.4cqh', fontWeight: 800, textTransform: 'uppercase' }}>{type}</span>}
+                                            <Icon size="3.5cqh" />
                                         </button>
                                     );
                                 })}
                             </div>
+
+                            {tool === 'draw' && (
+                                <div style={{ display: 'flex', gap: '1.5cqw', alignItems: 'center' }}>
+                                    <button onClick={undo} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '6cqh', height: '6cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Undo2 size="60%" />
+                                    </button>
+                                    <div style={{ display: 'flex', gap: '0.8cqw' }}>
+                                        {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
+                                            <button key={c} onClick={() => setColor(c)} style={{ width: '4cqh', height: '4cqh', borderRadius: '50%', background: c, border: color === c ? '2px solid white' : 'none' }} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Actions */}
-                        <div style={{ display: 'flex', gap: '1cqw', alignItems: 'center' }}>
-                            <button onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '1cqh 2cqh', borderRadius: '1cqh', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5cqw' }}>
-                                <RotateCcw size="1.5cqh" />
-                                {!isMobile && <span style={{ fontSize: '1.4cqh', fontWeight: 800 }}>Reiniciar</span>}
+                        {/* Right: Actions */}
+                        <div style={{ display: 'flex', gap: '2cqw', flexShrink: 0 }}>
+                            <button onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '1cqh 1.5cqh', borderRadius: '1cqh', cursor: 'pointer' }}>
+                                <RotateCcw size="3.5cqh" />
                             </button>
-                            <button
-                                onClick={() => onComplete({ paths, stamps, textValues, dragItems })}
-                                style={{
-                                    background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
-                                    border: 'none',
-                                    color: 'white',
-                                    padding: '1cqh 2.5cqh',
-                                    borderRadius: '1cqh',
-                                    cursor: 'pointer',
-                                    fontWeight: 800,
-                                    fontSize: '1.6cqh',
-                                    boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)'
-                                }}
-                            >
-                                {isLast ? 'Finalizar' : 'Siguiente'}
+                            <button onClick={() => onComplete({ paths, stamps, textValues, dragItems })} style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', border: 'none', color: 'white', padding: isMobile ? '1.5cqh 3cqh' : '1cqh 2.5cqh', borderRadius: '1.2cqh', fontWeight: 800, fontSize: '2cqh' }}>
+                                {isLast ? 'FIN' : 'SIG'}
                             </button>
                         </div>
-
                     </div>
                 </div>
             </main>
-
-
         </div>
     );
 }
