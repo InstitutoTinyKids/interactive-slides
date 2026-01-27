@@ -289,15 +289,15 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             bottom: 0,
                             left: 0,
                             right: 0,
-                            height: isMobile ? '12cqh' : '10cqh',
-                            background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 100%)',
-                            backdropFilter: 'blur(10px)',
+                            height: isMobile ? '18cqh' : '12cqh',
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 100%)',
+                            backdropFilter: 'blur(15px)',
                             display: 'flex',
                             alignItems: 'center',
-                            padding: '0 3cqw',
+                            padding: isMobile ? '0 3cqw 3cqh 3cqw' : '0 3cqw',
                             gap: '2cqw',
                             zIndex: 100,
-                            borderTop: '1px solid rgba(255,255,255,0.05)',
+                            borderTop: '1px solid rgba(255,255,255,0.1)',
                             touchAction: 'auto'
                         }}
                     >
