@@ -210,7 +210,18 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     <div style={{ flex: 1, padding: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflow: 'auto' }}>
                         <div
                             ref={canvasContainerRef}
-                            style={{ width: '100%', maxWidth: '1000px', marginTop: '20px', aspectRatio: '16/9', background: '#000', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', position: 'relative', overflow: 'hidden' }}
+                            style={{
+                                width: '100%',
+                                maxWidth: currentSlide?.format === '1/1' ? '800px' : '1000px',
+                                marginTop: '20px',
+                                aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9',
+                                background: '#000',
+                                borderRadius: '16px',
+                                border: '1px solid rgba(255,255,255,0.05)',
+                                boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}
                         >
                             {currentSlide?.image_url ? (
                                 <img
@@ -226,7 +237,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
                                     <div style={{ width: '60px', height: '60px', background: 'rgba(255,255,255,0.05)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={30} color="#444" /></div>
                                     <label className="btn-premium" style={{ padding: '12px 20px', fontSize: '0.8rem' }}>
-                                        Cargar Fondo (1920x1080)
+                                        Cargar Fondo (Lámina)
                                         <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'bg', selectedIdx)} />
                                     </label>
                                 </div>
@@ -340,7 +351,33 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: '#475569' }}>Configuración</span>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: '#475569' }}>Configuración de Lámina</span>
+
+                                <div className="glass" style={{ padding: '15px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'white' }}>Formato (Aspect Ratio)</p>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                        <button
+                                            onClick={() => {
+                                                const copy = [...localSlides];
+                                                copy[selectedIdx].format = '16/9';
+                                                setLocalSlides(copy);
+                                            }}
+                                            style={{ padding: '8px', borderRadius: '8px', background: currentSlide?.format !== '1/1' ? '#7c3aed' : 'rgba(255,255,255,0.05)', border: 'none', color: 'white', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer', transition: '0.2s' }}
+                                        >
+                                            16:9 (Horizontal)
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const copy = [...localSlides];
+                                                copy[selectedIdx].format = '1/1';
+                                                setLocalSlides(copy);
+                                            }}
+                                            style={{ padding: '8px', borderRadius: '8px', background: currentSlide?.format === '1/1' ? '#7c3aed' : 'rgba(255,255,255,0.05)', border: 'none', color: 'white', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer', transition: '0.2s' }}
+                                        >
+                                            1:1 (Cuadrado)
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <div className="glass" style={{ padding: '15px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

@@ -32,18 +32,20 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
             const headerH = 0; // Header is now 0 on all platforms
             const availW = window.innerWidth;
             const availH = window.innerHeight;
-            const ratio = 16 / 9;
 
-            if (availW / availH > ratio) {
-                setStageDim({ w: availH * ratio, h: availH });
+            // USE SLIDE FORMAT (16/9 default)
+            const slideRatio = slide?.format === '1/1' ? 1 : (16 / 9);
+
+            if (availW / availH > slideRatio) {
+                setStageDim({ w: availH * slideRatio, h: availH });
             } else {
-                setStageDim({ w: availW, h: availW / ratio });
+                setStageDim({ w: availW, h: availW / slideRatio });
             }
         };
         updateDim();
         window.addEventListener('resize', updateDim);
         return () => window.removeEventListener('resize', updateDim);
-    }, []);
+    }, [slide?.format]);
 
     const headerHeight = '0px';
 

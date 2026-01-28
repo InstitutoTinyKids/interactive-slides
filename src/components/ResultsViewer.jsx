@@ -9,6 +9,7 @@ import {
     RefreshCw,
     Eye,
     Type,
+    Trash2,
     Image as ImageIcon
 } from 'lucide-react';
 
@@ -38,6 +39,30 @@ export default function ResultsViewer({ slides = [], onExit }) {
     useEffect(() => {
         fetchInteractions();
     }, []);
+
+    const handleDeleteAll = async () => {
+        if (!confirm('¿ESTÁS SEGURO? Se eliminarán todos los resultados de todos los estudiantes permanentemente.')) return;
+
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('interactions')
+                .delete()
+                .neq('project_id', '_nothing_'); // Efficient way to delete all rows
+
+            if (error) throw error;
+
+            setInteractions([]);
+            setSelectedUser(null);
+            setSelectedSlideId(null);
+            alert('Todos los resultados han sido eliminados correctamente.');
+        } catch (err) {
+            console.error('Error deleting interactions:', err);
+            alert('Error al eliminar datos: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const drawUserResult = (interaction) => {
         const canvas = canvasRef.current;
@@ -105,10 +130,16 @@ export default function ResultsViewer({ slides = [], onExit }) {
                     <button onClick={onExit} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronLeft /></button>
                     <h2 style={{ fontSize: '1.25rem', color: 'white' }}>Seguimiento de Aprendizaje</h2>
                 </div>
-                <button onClick={fetchInteractions} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                    {loading ? 'Actualizando...' : 'Actualizar Datos'}
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={handleDeleteAll} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+                        <Trash2 size={18} />
+                        Borrar Resultados
+                    </button>
+                    <button onClick={fetchInteractions} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                        {loading ? 'Actualizando...' : 'Actualizar Datos'}
+                    </button>
+                </div>
             </header>
 
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
@@ -189,7 +220,17 @@ export default function ResultsViewer({ slides = [], onExit }) {
                             {/* Detail View */}
                             {selectedSlideId && (
                                 <div className="glass anim-up" style={{ padding: '25px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                    <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{
+                                        position: 'relative',
+                                        width: '100%',
+                                        maxWidth: slides.find(s => s.id === selectedSlideId)?.format === '1/1' ? '600px' : '100%',
+                                        margin: '0 auto',
+                                        aspectRatio: slides.find(s => s.id === selectedSlideId)?.format === '1/1' ? '1/1' : '16/9',
+                                        background: '#000',
+                                        borderRadius: '16px',
+                                        overflow: 'hidden',
+                                        border: '1px solid rgba(255,255,255,0.05)'
+                                    }}>
                                         {slides.find(s => s.id === selectedSlideId)?.image_url && (
                                             <img src={slides.find(s => s.id === selectedSlideId).image_url} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 1 }} />
                                         )}
