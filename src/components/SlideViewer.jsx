@@ -11,7 +11,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
     const [tool, setTool] = useState('draw');
     const [color, setColor] = useState('#ef4444');
     const [lineWidth, setLineWidth] = useState(8);
-    const [showBrushOptions, setShowBrushOptions] = useState(false);
+    const [activeMenu, setActiveMenu] = useState('none'); // 'none', 'color', 'width'
 
     // Interaction Data
     const [paths, setPaths] = useState([]);
@@ -328,7 +328,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                     return (
                                         <button
                                             key={type}
-                                            onClick={() => { setTool(type); setShowBrushOptions(false); }}
+                                            onClick={() => { setTool(type); setActiveMenu('none'); }}
                                             style={{ padding: '1cqh 2cqh', borderRadius: '1cqh', border: 'none', background: tool === type ? 'white' : 'transparent', color: tool === type ? '#7c3aed' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                                         >
                                             <Icon size="3.5cqh" />
@@ -343,17 +343,17 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         <Undo2 size="60%" />
                                     </button>
 
-                                    {/* Toggle Brush Settings Button */}
+                                    {/* Width Settings Button */}
                                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                         <button
-                                            onClick={() => setShowBrushOptions(!showBrushOptions)}
+                                            onClick={() => setActiveMenu(activeMenu === 'width' ? 'none' : 'width')}
                                             style={{
-                                                background: showBrushOptions ? 'white' : 'rgba(255,255,255,0.1)',
+                                                background: activeMenu === 'width' ? 'white' : 'rgba(255,255,255,0.1)',
                                                 border: 'none',
                                                 width: '5.5cqh',
                                                 height: '5.5cqh',
                                                 borderRadius: '1.2cqh',
-                                                color: showBrushOptions ? '#7c3aed' : 'white',
+                                                color: activeMenu === 'width' ? '#7c3aed' : 'white',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
@@ -365,83 +365,61 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                             <Settings2 size="3.5cqh" />
                                         </button>
 
-                                        {showBrushOptions && (
-                                            <div
-                                                className="glass anim-up"
-                                                style={{
-                                                    position: 'absolute',
-                                                    bottom: '8cqh',
-                                                    left: '50%',
-                                                    transform: 'translateX(-50%)',
-                                                    background: 'rgba(10, 10, 26, 0.95)',
-                                                    backdropFilter: 'blur(20px)',
-                                                    border: '1px solid rgba(255,255,255,0.1)',
-                                                    borderRadius: '2cqh',
-                                                    padding: '2cqh',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    gap: '2.5cqh',
-                                                    zIndex: 200,
-                                                    boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
-                                                }}
-                                            >
-                                                {/* Colors vertical grid */}
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.2cqh' }}>
-                                                    {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
-                                                        <button
-                                                            key={c}
-                                                            onClick={() => { setColor(c); setShowBrushOptions(false); }}
-                                                            style={{
-                                                                width: '5cqh',
-                                                                height: '5cqh',
-                                                                borderRadius: '50%',
-                                                                background: c,
-                                                                border: color === c ? '2.5px solid white' : '1px solid rgba(255,255,255,0.1)',
-                                                                cursor: 'pointer',
-                                                                boxShadow: color === c ? `0 0 15px ${c}` : 'none'
-                                                            }}
-                                                        />
-                                                    ))}
-                                                </div>
-
-                                                {/* Vertical Stroke Width Selector */}
-                                                <div style={{
-                                                    height: '14cqh',
-                                                    width: '4cqh',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    gap: '1.5cqh',
-                                                    paddingTop: '1cqh',
-                                                    borderTop: '1px solid rgba(255,255,255,0.1)'
-                                                }}>
+                                        {activeMenu === 'width' && (
+                                            <div className="glass anim-up" style={{
+                                                position: 'absolute', bottom: '8cqh', left: '50%', transform: 'translateX(-50%)',
+                                                background: 'rgba(10, 10, 26, 0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '2cqh', padding: '2cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2.5cqh',
+                                                zIndex: 200, boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+                                            }}>
+                                                <div style={{ height: '14cqh', width: '4cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5cqh', paddingTop: '1cqh' }}>
                                                     <div style={{ width: '4cqh', height: '4cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <div style={{ width: `${Math.max(2, lineWidth / 2.2)}px`, height: `${Math.max(2, lineWidth / 2.2)}px`, background: color, borderRadius: '50%' }} />
+                                                        <div style={{ width: `${Math.max(2, lineWidth / 2.2)}px`, height: `${Math.max(2, lineWidth / 2.2)}px`, background: 'white', borderRadius: '50%' }} />
                                                     </div>
                                                     <input
-                                                        type="range"
-                                                        min="2"
-                                                        max="30"
-                                                        value={lineWidth}
+                                                        type="range" min="2" max="30" value={lineWidth}
                                                         onChange={(e) => setLineWidth(parseInt(e.target.value))}
-                                                        style={{
-                                                            outline: 'none',
-                                                            width: '80px',
-                                                            height: '4px',
-                                                            transform: 'rotate(-90deg)',
-                                                            margin: '35px 0',
-                                                            accentColor: color,
-                                                            cursor: 'pointer'
-                                                        }}
+                                                        style={{ outline: 'none', width: '80px', height: '4px', transform: 'rotate(-90deg)', margin: '35px 0', accentColor: '#7c3aed', cursor: 'pointer' }}
                                                     />
                                                 </div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Color Indicator (Shows current color, separate from settings btn) */}
-                                    <div style={{ width: '4.5cqh', height: '4.5cqh', borderRadius: '50%', background: color, border: '2px solid rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                                    {/* Color Settings Button */}
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <button
+                                            onClick={() => setActiveMenu(activeMenu === 'color' ? 'none' : 'color')}
+                                            style={{
+                                                width: '5.5cqh', height: '5.5cqh', borderRadius: '50%', background: color,
+                                                border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)',
+                                                cursor: 'pointer', flexShrink: 0, transition: '0.2s'
+                                            }}
+                                        />
+
+                                        {activeMenu === 'color' && (
+                                            <div className="glass anim-up" style={{
+                                                position: 'absolute', bottom: '8cqh', left: '50%', transform: 'translateX(-50%)',
+                                                background: 'rgba(10, 10, 26, 0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '2cqh', padding: '2cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2.5cqh',
+                                                zIndex: 200, boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+                                            }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.2cqh' }}>
+                                                    {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
+                                                        <button
+                                                            key={c}
+                                                            onClick={() => { setColor(c); setActiveMenu('none'); }}
+                                                            style={{
+                                                                width: '5cqh', height: '5cqh', borderRadius: '50%', background: c,
+                                                                border: color === c ? '2.5px solid white' : '1px solid rgba(255,255,255,0.1)',
+                                                                cursor: 'pointer', boxShadow: color === c ? `0 0 15px ${c}` : 'none'
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
