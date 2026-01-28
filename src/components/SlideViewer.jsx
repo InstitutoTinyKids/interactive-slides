@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Play, Pause, RotateCcw, Paintbrush, Move, Type, Target, ChevronLeft, ChevronRight, Undo2, Eraser, CheckCircle2, Volume2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Paintbrush, Move, Type, Target, ChevronLeft, ChevronRight, Undo2, Eraser, CheckCircle2, Volume2, Settings2 } from 'lucide-react';
 
 export default function SlideViewer({ slide, alias, currentIndex, totalSlides, onComplete, onNext, onPrev, isFirst, isLast }) {
     const canvasRef = useRef(null);
@@ -11,6 +11,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
     const [tool, setTool] = useState('draw');
     const [color, setColor] = useState('#ef4444');
     const [lineWidth, setLineWidth] = useState(8);
+    const [showBrushOptions, setShowBrushOptions] = useState(false);
 
     // Interaction Data
     const [paths, setPaths] = useState([]);
@@ -327,7 +328,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                     return (
                                         <button
                                             key={type}
-                                            onClick={() => setTool(type)}
+                                            onClick={() => { setTool(type); setShowBrushOptions(false); }}
                                             style={{ padding: '1cqh 2cqh', borderRadius: '1cqh', border: 'none', background: tool === type ? 'white' : 'transparent', color: tool === type ? '#7c3aed' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                                         >
                                             <Icon size="3.5cqh" />
@@ -337,31 +338,56 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             </div>
 
                             {tool === 'draw' && (
-                                <div style={{ display: 'flex', gap: '2cqw', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh 1.5cqh', borderRadius: '1.5cqh' }}>
-                                    <button onClick={undo} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '6cqh', height: '6cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ display: 'flex', gap: '1.5cqw', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh 1cqh', borderRadius: '1.5cqh' }}>
+                                    <button onClick={undo} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '5.5cqh', height: '5.5cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <Undo2 size="60%" />
                                     </button>
 
-                                    {/* Stroke Width Selector */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1cqw', padding: '0 1cqw', borderLeft: '1px solid rgba(255,255,255,0.1)', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
-                                        <div style={{ width: '4cqh', height: '4cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <div style={{ width: `${Math.max(2, lineWidth / 2)}px`, height: `${Math.max(2, lineWidth / 2)}px`, background: 'white', borderRadius: '50%' }} />
-                                        </div>
-                                        <input
-                                            type="range"
-                                            min="2"
-                                            max="30"
-                                            value={lineWidth}
-                                            onChange={(e) => setLineWidth(parseInt(e.target.value))}
-                                            style={{ width: isMobile ? '60px' : '100px', accentColor: '#7c3aed', height: '4px' }}
-                                        />
-                                    </div>
+                                    {/* Toggle Brush Settings Button */}
+                                    <button
+                                        onClick={() => setShowBrushOptions(!showBrushOptions)}
+                                        style={{
+                                            background: showBrushOptions ? 'white' : 'rgba(255,255,255,0.1)',
+                                            border: 'none',
+                                            height: '5.5cqh',
+                                            padding: '0 2cqh',
+                                            borderRadius: '1.2cqh',
+                                            color: showBrushOptions ? '#7c3aed' : 'white',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '1.5cqw',
+                                            cursor: 'pointer',
+                                            transition: '0.2s'
+                                        }}
+                                    >
+                                        <Settings2 size="3.5cqh" />
+                                        <div style={{ width: '2.5cqh', height: '2.5cqh', borderRadius: '50%', background: color, border: '1.5px solid rgba(255,255,255,0.3)' }} />
+                                    </button>
 
-                                    <div style={{ display: 'flex', gap: '0.8cqw' }}>
-                                        {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
-                                            <button key={c} onClick={() => setColor(c)} style={{ width: '4cqh', height: '4cqh', borderRadius: '50%', background: c, border: color === c ? '2px solid white' : 'none' }} />
-                                        ))}
-                                    </div>
+                                    {showBrushOptions && (
+                                        <div className="anim-in-right" style={{ display: 'flex', alignItems: 'center', gap: '2cqw' }}>
+                                            {/* Stroke Width Selector */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5cqw', padding: '0 1.5cqw', borderLeft: '1px solid rgba(255,255,255,0.1)', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+                                                <div style={{ width: '3.5cqh', height: '3.5cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <div style={{ width: `${Math.max(2, lineWidth / 2.5)}px`, height: `${Math.max(2, lineWidth / 2.5)}px`, background: 'white', borderRadius: '50%' }} />
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min="2"
+                                                    max="30"
+                                                    value={lineWidth}
+                                                    onChange={(e) => setLineWidth(parseInt(e.target.value))}
+                                                    style={{ width: isMobile ? '50px' : '80px', accentColor: '#7c3aed', height: '4px' }}
+                                                />
+                                            </div>
+
+                                            <div style={{ display: 'flex', gap: '0.8cqw' }}>
+                                                {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
+                                                    <button key={c} onClick={() => setColor(c)} style={{ width: '4.5cqh', height: '4.5cqh', borderRadius: '50%', background: c, border: color === c ? '2px solid white' : 'none', cursor: 'pointer' }} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
