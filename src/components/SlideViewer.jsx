@@ -322,21 +322,6 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 </button>
                             </div>
 
-                            <div style={{ display: 'flex', gap: slide?.format === '1/1' ? '1cqw' : '1.5cqw', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh', borderRadius: '1.5cqh' }}>
-                                {Array.from(new Set(slide.elements?.map(e => e.type))).map(type => {
-                                    const Icon = type === 'draw' ? Paintbrush : type === 'drag' ? Move : type === 'stamp' ? Target : Type;
-                                    return (
-                                        <button
-                                            key={type}
-                                            onClick={() => { setTool(type); setActiveMenu('none'); }}
-                                            style={{ padding: '1cqh 2cqh', borderRadius: '1cqh', border: 'none', background: tool === type ? 'white' : 'transparent', color: tool === type ? '#7c3aed' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                                        >
-                                            <Icon size="3.5cqh" />
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
                             {tool === 'draw' && (
                                 <div style={{ display: 'flex', gap: '1.5cqw', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh 1cqh', borderRadius: '1.5cqh' }}>
                                     <button onClick={undo} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '5.5cqh', height: '5.5cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -372,15 +357,28 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                                 borderRadius: '2cqh', padding: '2cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2.5cqh',
                                                 zIndex: 200, boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
                                             }}>
-                                                <div style={{ height: '14cqh', width: '4cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5cqh', paddingTop: '1cqh' }}>
+                                                <div style={{ height: '16cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1cqh' }}>
                                                     <div style={{ width: '4cqh', height: '4cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                         <div style={{ width: `${Math.max(2, lineWidth / 2.2)}px`, height: `${Math.max(2, lineWidth / 2.2)}px`, background: 'white', borderRadius: '50%' }} />
                                                     </div>
-                                                    <input
-                                                        type="range" min="2" max="30" value={lineWidth}
-                                                        onChange={(e) => setLineWidth(parseInt(e.target.value))}
-                                                        style={{ outline: 'none', width: '80px', height: '4px', transform: 'rotate(-90deg)', margin: '35px 0', accentColor: '#7c3aed', cursor: 'pointer' }}
-                                                    />
+                                                    <div style={{ height: '10cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <input
+                                                            type="range" min="2" max="30" value={lineWidth}
+                                                            onChange={(e) => setLineWidth(parseInt(e.target.value))}
+                                                            style={{
+                                                                outline: 'none',
+                                                                width: '10cqh',
+                                                                height: '6px',
+                                                                transform: 'rotate(-90deg)',
+                                                                accentColor: '#7c3aed',
+                                                                cursor: 'pointer',
+                                                                background: 'rgba(255,255,255,0.1)',
+                                                                borderRadius: '10px',
+                                                                appearance: 'none',
+                                                                margin: 0
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
