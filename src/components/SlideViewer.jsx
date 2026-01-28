@@ -344,50 +344,104 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                     </button>
 
                                     {/* Toggle Brush Settings Button */}
-                                    <button
-                                        onClick={() => setShowBrushOptions(!showBrushOptions)}
-                                        style={{
-                                            background: showBrushOptions ? 'white' : 'rgba(255,255,255,0.1)',
-                                            border: 'none',
-                                            height: '5.5cqh',
-                                            padding: '0 2cqh',
-                                            borderRadius: '1.2cqh',
-                                            color: showBrushOptions ? '#7c3aed' : 'white',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '1.5cqw',
-                                            cursor: 'pointer',
-                                            transition: '0.2s'
-                                        }}
-                                    >
-                                        <Settings2 size="3.5cqh" />
-                                        <div style={{ width: '2.5cqh', height: '2.5cqh', borderRadius: '50%', background: color, border: '1.5px solid rgba(255,255,255,0.3)' }} />
-                                    </button>
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <button
+                                            onClick={() => setShowBrushOptions(!showBrushOptions)}
+                                            style={{
+                                                background: showBrushOptions ? 'white' : 'rgba(255,255,255,0.1)',
+                                                border: 'none',
+                                                width: '5.5cqh',
+                                                height: '5.5cqh',
+                                                borderRadius: '1.2cqh',
+                                                color: showBrushOptions ? '#7c3aed' : 'white',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                transition: '0.2s',
+                                                zIndex: 300
+                                            }}
+                                        >
+                                            <Settings2 size="3.5cqh" />
+                                        </button>
 
-                                    {showBrushOptions && (
-                                        <div className="anim-in-right" style={{ display: 'flex', alignItems: 'center', gap: '2cqw' }}>
-                                            {/* Stroke Width Selector */}
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5cqw', padding: '0 1.5cqw', borderLeft: '1px solid rgba(255,255,255,0.1)', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
-                                                <div style={{ width: '3.5cqh', height: '3.5cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <div style={{ width: `${Math.max(2, lineWidth / 2.5)}px`, height: `${Math.max(2, lineWidth / 2.5)}px`, background: 'white', borderRadius: '50%' }} />
+                                        {showBrushOptions && (
+                                            <div
+                                                className="glass anim-up"
+                                                style={{
+                                                    position: 'absolute',
+                                                    bottom: '8cqh',
+                                                    left: '50%',
+                                                    transform: 'translateX(-50%)',
+                                                    background: 'rgba(10, 10, 26, 0.95)',
+                                                    backdropFilter: 'blur(20px)',
+                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                    borderRadius: '2cqh',
+                                                    padding: '2cqh',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '2.5cqh',
+                                                    zIndex: 200,
+                                                    boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+                                                }}
+                                            >
+                                                {/* Colors vertical grid */}
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.2cqh' }}>
+                                                    {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
+                                                        <button
+                                                            key={c}
+                                                            onClick={() => { setColor(c); setShowBrushOptions(false); }}
+                                                            style={{
+                                                                width: '5cqh',
+                                                                height: '5cqh',
+                                                                borderRadius: '50%',
+                                                                background: c,
+                                                                border: color === c ? '2.5px solid white' : '1px solid rgba(255,255,255,0.1)',
+                                                                cursor: 'pointer',
+                                                                boxShadow: color === c ? `0 0 15px ${c}` : 'none'
+                                                            }}
+                                                        />
+                                                    ))}
                                                 </div>
-                                                <input
-                                                    type="range"
-                                                    min="2"
-                                                    max="30"
-                                                    value={lineWidth}
-                                                    onChange={(e) => setLineWidth(parseInt(e.target.value))}
-                                                    style={{ width: isMobile ? '50px' : '80px', accentColor: '#7c3aed', height: '4px' }}
-                                                />
-                                            </div>
 
-                                            <div style={{ display: 'flex', gap: '0.8cqw' }}>
-                                                {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
-                                                    <button key={c} onClick={() => setColor(c)} style={{ width: '4.5cqh', height: '4.5cqh', borderRadius: '50%', background: c, border: color === c ? '2px solid white' : 'none', cursor: 'pointer' }} />
-                                                ))}
+                                                {/* Vertical Stroke Width Selector */}
+                                                <div style={{
+                                                    height: '14cqh',
+                                                    width: '4cqh',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '1.5cqh',
+                                                    paddingTop: '1cqh',
+                                                    borderTop: '1px solid rgba(255,255,255,0.1)'
+                                                }}>
+                                                    <div style={{ width: '4cqh', height: '4cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <div style={{ width: `${Math.max(2, lineWidth / 2.2)}px`, height: `${Math.max(2, lineWidth / 2.2)}px`, background: color, borderRadius: '50%' }} />
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        min="2"
+                                                        max="30"
+                                                        value={lineWidth}
+                                                        onChange={(e) => setLineWidth(parseInt(e.target.value))}
+                                                        style={{
+                                                            outline: 'none',
+                                                            width: '80px',
+                                                            height: '4px',
+                                                            transform: 'rotate(-90deg)',
+                                                            margin: '35px 0',
+                                                            accentColor: color,
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
+
+                                    {/* Color Indicator (Shows current color, separate from settings btn) */}
+                                    <div style={{ width: '4.5cqh', height: '4.5cqh', borderRadius: '50%', background: color, border: '2px solid rgba(255,255,255,0.3)', flexShrink: 0 }} />
                                 </div>
                             )}
                         </div>
