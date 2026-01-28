@@ -267,19 +267,30 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                     <div
                         style={{
                             position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            height: isMobile ? '20cqh' : '12cqh',
-                            background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 100%)',
+                            bottom: slide?.format === '1/1' ? '2cqh' : 0,
+                            left: slide?.format === '1/1' ? '2.5%' : 0,
+                            right: slide?.format === '1/1' ? '2.5%' : 0,
+                            width: slide?.format === '1/1' ? '95%' : '100%',
+                            height: isMobile
+                                ? (slide?.format === '1/1' ? '15cqh' : '20cqh')
+                                : (slide?.format === '1/1' ? '10cqh' : '12cqh'),
+                            background: slide?.format === '1/1'
+                                ? 'rgba(10, 10, 26, 0.85)'
+                                : 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 100%)',
                             backdropFilter: 'blur(15px)',
                             display: 'flex',
                             alignItems: 'center',
-                            padding: isMobile ? '0 3cqw 6cqh 3cqw' : '0 3cqw', // More bottom padding for iPhone safety
-                            gap: '2cqw',
+                            justifyContent: 'space-between',
+                            padding: isMobile
+                                ? (slide?.format === '1/1' ? '0 3cqw' : '0 3cqw 6cqh 3cqw')
+                                : '0 3cqw',
+                            gap: '1.5cqw',
                             zIndex: 100,
+                            borderRadius: slide?.format === '1/1' ? '2.5cqh' : 0,
+                            border: slide?.format === '1/1' ? '1px solid rgba(255,255,255,0.1)' : 'none',
                             borderTop: '1px solid rgba(255,255,255,0.1)',
-                            touchAction: 'auto'
+                            touchAction: 'auto',
+                            boxShadow: slide?.format === '1/1' ? '0 10px 40px rgba(0,0,0,0.5)' : 'none'
                         }}
                     >
                         {/* Audio & Info */}
@@ -300,7 +311,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                         </div>
 
                         {/* Middle Controls */}
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3cqw' }}>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: slide?.format === '1/1' ? '1cqw' : '3cqw' }}>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <button onClick={onPrev} disabled={isFirst} style={{ background: 'none', border: 'none', color: 'white', opacity: isFirst ? 0.2 : 0.8, cursor: 'pointer', width: '8cqh', height: '8cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <ChevronLeft size="70%" />
@@ -310,7 +321,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 </button>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '1.5cqw', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh', borderRadius: '1.5cqh' }}>
+                            <div style={{ display: 'flex', gap: slide?.format === '1/1' ? '1cqw' : '1.5cqw', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh', borderRadius: '1.5cqh' }}>
                                 {Array.from(new Set(slide.elements?.map(e => e.type))).map(type => {
                                     const Icon = type === 'draw' ? Paintbrush : type === 'drag' ? Move : type === 'stamp' ? Target : Type;
                                     return (
