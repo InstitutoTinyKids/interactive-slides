@@ -312,7 +312,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                         </div>
 
                         {/* Middle Controls */}
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: slide?.format === '1/1' ? '3cqw' : '5cqw' }}>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: slide?.format === '1/1' ? '6cqw' : '10cqw' }}>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <button onClick={onPrev} disabled={isFirst} style={{ background: 'none', border: 'none', color: 'white', opacity: isFirst ? 0.2 : 0.8, cursor: 'pointer', width: '8cqh', height: '8cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <ChevronLeft size="70%" />
@@ -323,7 +323,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             </div>
 
                             {tool === 'draw' && (
-                                <div style={{ display: 'flex', gap: '2.5cqw', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh 1.5cqh', borderRadius: '1.5cqh' }}>
+                                <div style={{ display: 'flex', gap: '4cqw', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh 2cqh', borderRadius: '1.5cqh' }}>
                                     <button onClick={undo} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '5.5cqh', height: '5.5cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <Undo2 size="60%" />
                                     </button>
@@ -423,7 +423,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                         </div>
 
                         {/* Right: Actions */}
-                        <div style={{ display: 'flex', gap: '3cqw', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', gap: '5cqw', flexShrink: 0 }}>
                             <button onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '1cqh 1.5cqh', borderRadius: '1cqh', cursor: 'pointer' }}>
                                 <RotateCcw size="3.5cqh" />
                             </button>
