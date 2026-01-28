@@ -48,7 +48,7 @@ export default function ResultsViewer({ slides = [], onExit }) {
             const { error } = await supabase
                 .from('interactions')
                 .delete()
-                .neq('project_id', '_nothing_'); // Efficient way to delete all rows
+                .neq('alias', '_nothing_'); // Using alias as it exists in the table
 
             if (error) throw error;
 
@@ -205,7 +205,15 @@ export default function ResultsViewer({ slides = [], onExit }) {
                                                 position: 'relative'
                                             }}
                                         >
-                                            <div style={{ aspectRatio: '16/9', background: '#000', borderRadius: '8px', overflow: 'hidden', marginBottom: '8px', opacity: interaction ? 1 : 0.4 }}>
+                                            <div style={{
+                                                aspectRatio: s.format === '1/1' ? '1/1' : '16/9',
+                                                background: '#000',
+                                                borderRadius: '8px',
+                                                overflow: 'hidden',
+                                                marginBottom: '8px',
+                                                opacity: interaction ? 1 : 0.4,
+                                                width: '100%'
+                                            }}>
                                                 {s.image_url ? <img src={s.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} opacity={0.1} /></div>}
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

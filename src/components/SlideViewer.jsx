@@ -188,7 +188,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                     style={{
                         width: `${stageDim.w}px`,
                         height: `${stageDim.h}px`,
-                        aspectRatio: '16/9',
+                        aspectRatio: slide?.format === '1/1' ? '1/1' : '16/9',
                         background: '#111',
                         borderRadius: isMobile ? '0' : '12px',
                         overflow: 'hidden',

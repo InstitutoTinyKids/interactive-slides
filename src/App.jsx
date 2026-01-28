@@ -91,6 +91,7 @@ export default function App() {
                 project_id: PROJECT_ID,
                 image_url: slide.image_url || null,
                 audio_url: slide.audio_url || null,
+                format: slide.format || '16/9', // SAVE FORMAT
                 elements: slide.elements || [],
                 order_index: idx
             }));
