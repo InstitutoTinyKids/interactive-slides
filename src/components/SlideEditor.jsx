@@ -71,6 +71,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             id: crypto.randomUUID(),
             image_url: '',
             audio_url: '',
+            format: '16/9',
             elements: [],
             order_index: localSlides.length
         };

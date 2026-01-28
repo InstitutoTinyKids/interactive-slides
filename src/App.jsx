@@ -56,7 +56,17 @@ export default function App() {
                 .order('order_index', { ascending: true });
 
             if (slidesData) {
-                setSlides(slidesData);
+                // EXTRACT FORMAT FROM ELEMENTS
+                const processed = slidesData.map(s => {
+                    const elements = s.elements || [];
+                    const formatEl = elements.find(e => e.type === 'format_metadata');
+                    return {
+                        ...s,
+                        format: formatEl ? formatEl.value : '16/9',
+                        elements: elements.filter(e => e.type !== 'format_metadata')
+                    };
+                });
+                setSlides(processed);
             }
         } catch (error) {
             console.error('Error loading project:', error);
@@ -86,15 +96,22 @@ export default function App() {
             if (deleteError) throw new Error(`Error al limpiar: ${deleteError.message}`);
 
             // Insert new slides
-            const slidesToInsert = newSlides.map((slide, idx) => ({
-                id: slide.id,
-                project_id: PROJECT_ID,
-                image_url: slide.image_url || null,
-                audio_url: slide.audio_url || null,
-                format: slide.format || '16/9', // SAVE FORMAT
-                elements: slide.elements || [],
-                order_index: idx
-            }));
+            const slidesToInsert = newSlides.map((slide, idx) => {
+                // EMBED FORMAT IN ELEMENTS TO AVOID COLUMN ERROR
+                const elementsWithFormat = [
+                    ...(slide.elements || []).filter(e => e.type !== 'format_metadata'),
+                    { id: 'fmt-meta', type: 'format_metadata', value: slide.format || '16/9' }
+                ];
+
+                return {
+                    id: slide.id,
+                    project_id: PROJECT_ID,
+                    image_url: slide.image_url || null,
+                    audio_url: slide.audio_url || null,
+                    elements: elementsWithFormat,
+                    order_index: idx
+                };
+            });
 
             if (slidesToInsert.length > 0) {
                 const { error: insertError } = await supabase
