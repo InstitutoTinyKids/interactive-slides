@@ -249,8 +249,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             type,
             x: 50,
             y: 50,
-            width: type === 'text' ? 300 : (type === 'drag' ? 50 : null),
-            height: type === 'text' ? 150 : (type === 'drag' ? 50 : null),
+            width: type === 'text' ? 300 : (type === 'drag' ? 80 : null),
+            height: type === 'text' ? 150 : (type === 'drag' ? 80 : null),
             text: type === 'text' ? 'Escribe aquí...' : '',
             url: ''
         };
@@ -520,10 +520,10 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         padding: '10px',
                                         border: (draggingElementId === el.id || selectedElementId === el.id) ? '2px solid var(--primary)' : '1px dashed rgba(255,255,255,0.3)',
                                         borderRadius: '12px',
-                                        background: el.url ? 'transparent' : 'rgba(0,0,0,0.5)',
-                                        backdropFilter: el.url ? 'none' : 'blur(10px)',
-                                        width: el.type === 'drag' ? '50px' : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
-                                        height: el.type === 'drag' ? '50px' : (el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto'),
+                                        background: (el.url || el.type === 'stamp') ? 'transparent' : 'rgba(0,0,0,0.5)',
+                                        backdropFilter: (el.url || el.type === 'stamp') ? 'none' : 'blur(10px)',
+                                        width: el.type === 'drag' ? '80px' : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
+                                        height: el.type === 'drag' ? '80px' : (el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto'),
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
@@ -559,8 +559,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         </div>
                                     )}
                                     {el.type === 'stamp' && (
-                                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '4px solid white', background: 'rgba(239, 68, 68, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Target size={24} color="white" />
+                                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '2px dashed rgba(255,255,255,0.8)', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Target size={24} color="rgba(255,255,255,0.5)" />
                                         </div>
                                     )}
                                     {/* Handle for resizing - Only for Text and Stamp */}
