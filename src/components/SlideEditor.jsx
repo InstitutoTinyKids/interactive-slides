@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Plus, Image as ImageIcon, Music, Type, Move, Target, Paintbrush,
     Save, Trash2, X, Play, Pause, Upload, Eye, ChevronLeft, LayoutGrid,
-    Settings as SettingsIcon, ShieldCheck, Key
+    Settings as SettingsIcon, ShieldCheck, Key, PanelLeftClose, PanelRightClose, Layers
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
@@ -26,6 +26,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [showAddModal, setShowAddModal] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+    const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
+    const [showSlidesPanel, setShowSlidesPanel] = useState(window.innerWidth >= 1200);
+    const [showSettingsPanel, setShowSettingsPanel] = useState(window.innerWidth >= 1200);
 
     const PROGRAM_ORDER = [
         'Baby Program', 'Mini Program', 'Tiny Program', 'Big Program',
@@ -34,8 +37,15 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     useEffect(() => {
         const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-            setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+            const width = window.innerWidth;
+            setIsMobile(width < 768);
+            setIsTablet(width >= 768 && width < 1024);
+            setIsCompact(width < 1200);
+            // Auto-show panels on larger screens
+            if (width >= 1200) {
+                setShowSlidesPanel(true);
+                setShowSettingsPanel(true);
+            }
         };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
@@ -445,7 +455,17 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     return (
         <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden' }} onMouseMove={handleCanvasMouseMove} onMouseUp={() => { setDraggingElementId(null); setResizingElementId(null); }} onTouchEnd={() => { setDraggingElementId(null); setResizingElementId(null); }} onClick={(e) => { if (e.target === e.currentTarget) setSelectedElementId(null); }}>
-            <aside style={{ width: '200px', borderRight: '1px solid rgba(255,255,255,0.05)', background: '#0a0a1a', display: 'flex', flexDirection: 'column' }}>
+            {/* Left Panel: Slides - Collapsible in compact mode */}
+            <aside style={{
+                width: showSlidesPanel ? '200px' : '0px',
+                minWidth: showSlidesPanel ? '200px' : '0px',
+                borderRight: showSlidesPanel ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                background: '#0a0a1a',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'all 0.3s ease',
+                overflow: 'hidden'
+            }}>
                 <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#475569' }}>Diapositivas</span>
                     <button onClick={addSlide} style={{ background: 'rgba(124, 58, 237, 0.1)', border: 'none', color: '#a78bfa', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}><Plus size={16} /></button>
@@ -462,20 +482,40 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             </aside>
 
             <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #111, #050510)' }}>
-                <header style={{ height: '70px', padding: '0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(10,10,20,0.8)', backdropFilter: 'blur(15px)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <header style={{ height: '70px', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(10,10,20,0.8)', backdropFilter: 'blur(15px)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        {/* Toggle Slides Panel - Only in compact mode */}
+                        {isCompact && (
+                            <button
+                                onClick={() => setShowSlidesPanel(!showSlidesPanel)}
+                                style={{ background: showSlidesPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: showSlidesPanel ? '#a78bfa' : '#94a3b8', cursor: 'pointer' }}
+                                title="Mostrar/Ocultar Diapositivas"
+                            >
+                                <Layers size={20} />
+                            </button>
+                        )}
                         <button onClick={() => setShowGallery(true)} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: '#94a3b8', cursor: 'pointer' }}><LayoutGrid size={22} /></button>
                         <div>
                             <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{currentProject?.name}</h2>
                             <span style={{ fontSize: '0.65rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Editor de Programa</span>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '0.85rem' }}><Eye size={18} /> Resultados</button>
-                        <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '0.85rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
-                            {isActive ? <Pause size={18} /> : <Play size={18} />} {isActive ? 'Suspender' : 'Activar Clase'}
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem' }}><Eye size={16} /> {!isCompact && 'Resultados'}</button>
+                        <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
+                            {isActive ? <Pause size={16} /> : <Play size={16} />} {!isCompact && (isActive ? 'Suspender' : 'Activar')}
                         </button>
-                        <button onClick={handleSaveAll} className="btn-premium" style={{ padding: '10px 25px', fontSize: '0.85rem' }}><Save size={18} /> Guardar Cambios</button>
+                        <button onClick={handleSaveAll} className="btn-premium" style={{ padding: '10px 15px', fontSize: '0.8rem' }}><Save size={16} /> {!isCompact && 'Guardar'}</button>
+                        {/* Toggle Settings Panel - Only in compact mode */}
+                        {isCompact && (
+                            <button
+                                onClick={() => setShowSettingsPanel(!showSettingsPanel)}
+                                style={{ background: showSettingsPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: showSettingsPanel ? '#a78bfa' : '#94a3b8', cursor: 'pointer' }}
+                                title="Mostrar/Ocultar Ajustes"
+                            >
+                                <SettingsIcon size={20} />
+                            </button>
+                        )}
                     </div>
                 </header>
 
@@ -618,7 +658,17 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         </div>
                     </div>
 
-                    <div style={{ width: '320px', background: 'rgba(10, 10, 20, 0.95)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    {/* Right Panel: Settings - Collapsible in compact mode */}
+                    <div style={{
+                        width: showSettingsPanel ? '320px' : '0px',
+                        minWidth: showSettingsPanel ? '320px' : '0px',
+                        background: 'rgba(10, 10, 20, 0.95)',
+                        borderLeft: showSettingsPanel ? '1px solid var(--border)' : 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease'
+                    }}>
                         <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
                             <div>
                                 <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}><SettingsIcon size={18} /> Ajustes</h3>

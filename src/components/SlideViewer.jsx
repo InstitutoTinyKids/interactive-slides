@@ -281,7 +281,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             transform: 'translateX(-50%)',
                             width: slide?.format === '1/1' ? '90%' : '100%',
                             height: 'auto',
-                            minHeight: isMobile ? '13cqh' : '11cqh',
+                            minHeight: isMobile ? 'max(50px, 12cqh)' : '10cqh',
                             background: 'rgba(15, 15, 35, 0.98)',
                             backdropFilter: 'blur(30px)',
                             display: 'flex',
@@ -295,18 +295,18 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             overflow: 'visible'
                         }}
                     >
-                        {/* Main Content Area - Strictly Centered */}
+                        {/* Main Content Area */}
                         <div style={{
                             flex: 1,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: isMobile ? '0 3cqw' : '0 4cqw',
-                            height: isMobile ? '12cqh' : '10cqh',
+                            padding: isMobile ? '0 2.5cqw' : '0 3cqw',
+                            height: isMobile ? 'max(48px, 11cqh)' : '9cqh',
                             width: '100%'
                         }}>
                             {/* Left Group: Back + Audio + Info */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '2cqw' : '3cqw', flexShrink: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '1.5cqw' : '2.5cqw', flexShrink: 0 }}>
                                 {/* 1. Botón Atrás */}
                                 <button
                                     onClick={onPrev}
@@ -316,8 +316,8 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         border: 'none',
                                         color: 'white',
                                         opacity: isFirst ? 0.2 : 0.9,
-                                        width: '6cqh',
-                                        height: '6cqh',
+                                        width: isMobile ? 'max(28px, 5.5cqh)' : '5.5cqh',
+                                        height: isMobile ? 'max(28px, 5.5cqh)' : '5.5cqh',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -332,44 +332,44 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 {slide?.audio_url && (
                                     <button
                                         onClick={() => { if (isPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsPlaying(!isPlaying); }}
-                                        style={{ background: isPlaying ? 'rgba(124, 58, 237, 0.2)' : 'none', border: 'none', width: '6cqh', height: '6cqh', borderRadius: '50%', color: isPlaying ? '#a78bfa' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
+                                        style={{ background: isPlaying ? 'rgba(124, 58, 237, 0.2)' : 'none', border: 'none', width: isMobile ? 'max(26px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(26px, 5cqh)' : '5.5cqh', borderRadius: '50%', color: isPlaying ? '#a78bfa' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
                                     >
-                                        {isPlaying ? <Pause size="60%" /> : <Volume2 size="60%" />}
+                                        {isPlaying ? <Pause size="55%" /> : <Volume2 size="55%" />}
                                         <audio ref={audioRef} src={slide.audio_url} onEnded={() => setIsPlaying(false)} />
                                     </button>
                                 )}
 
                                 {/* 3. Info del Usuario */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginLeft: '1cqw' }}>
-                                    <span style={{ fontSize: isMobile ? '2.2cqh' : '2.4cqh', fontWeight: 900, color: 'white', lineHeight: 1 }}>{alias}</span>
-                                    <span style={{ fontSize: isMobile ? '1.4cqh' : '1.6cqh', color: '#a78bfa', fontWeight: 700, opacity: 0.8 }}>PAG {currentIndex + 1}/{totalSlides}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginLeft: '0.5cqw' }}>
+                                    <span style={{ fontSize: isMobile ? 'max(12px, 2cqh)' : '2.2cqh', fontWeight: 900, color: 'white', lineHeight: 1 }}>{alias}</span>
+                                    <span style={{ fontSize: isMobile ? 'max(9px, 1.3cqh)' : '1.5cqh', color: '#a78bfa', fontWeight: 700, opacity: 0.8 }}>PAG {currentIndex + 1}/{totalSlides}</span>
                                 </div>
                             </div>
 
                             {/* Middle Group: Drawing Tools */}
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '3cqw' : '5cqw' }}>
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '2cqw' : '4cqw' }}>
                                 {tool === 'draw' && (
                                     <>
                                         {/* Undo */}
-                                        <button onClick={undo} style={{ background: 'none', border: 'none', width: '6cqh', height: '6cqh', color: 'white', opacity: 0.9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                            <Undo2 size="65%" />
+                                        <button onClick={undo} style={{ background: 'none', border: 'none', width: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', color: 'white', opacity: 0.9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                            <Undo2 size="60%" />
                                         </button>
 
                                         {/* Grosor (Settings) */}
                                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                             <button
                                                 onClick={() => setActiveMenu(activeMenu === 'width' ? 'none' : 'width')}
-                                                style={{ background: 'none', border: 'none', width: '6cqh', height: '6cqh', color: activeMenu === 'width' ? '#a78bfa' : 'white', opacity: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 300 }}
+                                                style={{ background: 'none', border: 'none', width: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', color: activeMenu === 'width' ? '#a78bfa' : 'white', opacity: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 300 }}
                                             >
-                                                <Settings2 size="3.8cqh" />
+                                                <Settings2 size="60%" />
                                             </button>
                                             {activeMenu === 'width' && (
-                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: '9cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2cqh', padding: '2cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
-                                                    <div style={{ height: '18cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1cqh' }}>
-                                                        <div style={{ width: '4cqh', height: '4cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: isMobile ? 'max(40px, 8cqh)' : '8cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+                                                    <div style={{ height: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                                        <div style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                             <div style={{ width: `${Math.max(3, lineWidth / 2.2)}px`, height: `${Math.max(3, lineWidth / 2.2)}px`, background: 'white', borderRadius: '50%' }} />
                                                         </div>
-                                                        <input type="range" min="2" max="30" value={lineWidth} onChange={(e) => setLineWidth(parseInt(e.target.value))} style={{ width: '12cqh', height: '6px', transform: 'rotate(-90deg)', accentColor: '#7c3aed', cursor: 'pointer', marginTop: '4cqh' }} />
+                                                        <input type="range" min="2" max="30" value={lineWidth} onChange={(e) => setLineWidth(parseInt(e.target.value))} style={{ width: '80px', height: '6px', transform: 'rotate(-90deg)', accentColor: '#7c3aed', cursor: 'pointer', marginTop: '24px' }} />
                                                     </div>
                                                 </div>
                                             )}
@@ -379,13 +379,13 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                             <button
                                                 onClick={() => setActiveMenu(activeMenu === 'color' ? 'none' : 'color')}
-                                                style={{ width: '6cqh', height: '6cqh', borderRadius: '50%', background: color, border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s' }}
+                                                style={{ width: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', borderRadius: '50%', background: color, border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s' }}
                                             />
                                             {activeMenu === 'color' && (
-                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: '9cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2cqh', padding: '2cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
-                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1cqh' }}>
+                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: isMobile ? 'max(40px, 8cqh)' : '8cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                                                         {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
-                                                            <button key={c} onClick={() => { setColor(c); setActiveMenu('none'); }} style={{ width: '5cqh', height: '5cqh', borderRadius: '50%', background: c, border: color === c ? '3px solid white' : '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: color === c ? `0 0 20px ${c}` : 'none' }} />
+                                                            <button key={c} onClick={() => { setColor(c); setActiveMenu('none'); }} style={{ width: '32px', height: '32px', borderRadius: '50%', background: c, border: color === c ? '3px solid white' : '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: color === c ? `0 0 20px ${c}` : 'none' }} />
                                                         ))}
                                                     </div>
                                                 </div>
@@ -395,9 +395,9 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         {/* Reiniciar (Reset) */}
                                         <button
                                             onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }}
-                                            style={{ background: 'none', border: 'none', color: 'white', width: '6cqh', height: '6cqh', opacity: 0.9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            style={{ background: 'none', border: 'none', color: 'white', width: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', opacity: 0.9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                         >
-                                            <RotateCcw size="60%" />
+                                            <RotateCcw size="55%" />
                                         </button>
                                     </>
                                 )}
@@ -411,15 +411,15 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
                                         border: 'none',
                                         color: 'white',
-                                        height: '6.5cqh',
-                                        padding: '0 4cqw',
-                                        borderRadius: '1.2cqh',
+                                        height: isMobile ? 'max(34px, 6cqh)' : '6cqh',
+                                        padding: isMobile ? '0 3cqw' : '0 3.5cqw',
+                                        borderRadius: isMobile ? 'max(8px, 1.2cqh)' : '1cqh',
                                         fontWeight: 900,
-                                        fontSize: isMobile ? '2cqh' : '2.2cqh',
+                                        fontSize: isMobile ? 'max(11px, 1.8cqh)' : '2cqh',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        minWidth: '10cqw',
+                                        minWidth: isMobile ? 'max(50px, 9cqw)' : '9cqw',
                                         cursor: 'pointer',
                                         boxShadow: '0 10px 20px rgba(124, 58, 237, 0.3)',
                                         transition: '0.2s'
