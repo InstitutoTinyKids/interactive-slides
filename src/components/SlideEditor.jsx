@@ -100,12 +100,36 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         setLoading(false);
     };
 
+    const deleteFileFromStorage = async (url) => {
+        if (!url) return;
+        try {
+            // Extract filename from Supabase URL
+            const parts = url.split('/storage/v1/object/public/media/');
+            if (parts.length > 1) {
+                const fileName = parts[1];
+                await supabase.storage.from('media').remove([fileName]);
+                console.log('File deleted from storage:', fileName);
+            }
+        } catch (err) {
+            console.warn('Error deleting file from storage:', err);
+        }
+    };
+
     const handleFileUpload = async (event, type, slideIdx, elementIdx = null) => {
         let file = event.target.files[0];
         if (!file) return;
         setLoading(true);
         try {
             if (type === 'bg' || type === 'drag_img') file = await optimizeImage(file);
+
+            // Cleanup OLD file if replacing
+            const oldSlide = localSlides[slideIdx];
+            if (type === 'bg' && oldSlide.image_url) await deleteFileFromStorage(oldSlide.image_url);
+            if (type === 'audio' && oldSlide.audio_url) await deleteFileFromStorage(oldSlide.audio_url);
+            if (type === 'drag_img' && elementIdx !== null && oldSlide.elements[elementIdx].url) {
+                await deleteFileFromStorage(oldSlide.elements[elementIdx].url);
+            }
+
             const fileName = `${Date.now()}-${file.name}`;
             const { data, error } = await supabase.storage.from('media').upload(fileName, file);
             if (error) throw error;
@@ -118,6 +142,36 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             setLocalSlides([...newSlides]);
         } catch (error) {
             alert('Error al subir: ' + error.message);
+        }
+        setLoading(false);
+    };
+
+    const handleDeleteSlide = async (idx) => {
+        if (!confirm('¿Eliminar esta lámina y todos sus archivos asociados permanentemente de la nube?')) return;
+
+        const slideToDelete = localSlides[idx];
+        setLoading(true);
+
+        try {
+            // 1. Delete background image
+            if (slideToDelete.image_url) await deleteFileFromStorage(slideToDelete.image_url);
+
+            // 2. Delete audio file
+            if (slideToDelete.audio_url) await deleteFileFromStorage(slideToDelete.audio_url);
+
+            // 3. Delete element icons
+            for (const el of slideToDelete.elements) {
+                if (el.url) await deleteFileFromStorage(el.url);
+            }
+
+            // Update local state
+            const updated = localSlides.filter((_, i) => i !== idx);
+            setLocalSlides(updated);
+            if (selectedIdx >= updated.length) setSelectedIdx(Math.max(0, updated.length - 1));
+
+            alert('Lámina y archivos eliminados de Supabase.');
+        } catch (err) {
+            console.error('Error in deletion:', err);
         }
         setLoading(false);
     };
@@ -218,7 +272,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         <div key={slide.id} onClick={() => setSelectedIdx(idx)} style={{ position: 'relative', borderRadius: '8px', border: `2px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'}`, background: '#111', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s' }}>
                             <span style={{ position: 'absolute', top: '3px', left: '3px', zIndex: 10, fontSize: '9px', background: 'rgba(0,0,0,0.6)', padding: '1px 4px', borderRadius: '3px', color: 'white' }}>{idx + 1}</span>
                             {slide.image_url ? <img src={slide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div className="h-full flex items-center justify-center opacity-10"><ImageIcon size={20} color="#fff" /></div>}
-                            <button onClick={(e) => { e.stopPropagation(); if (confirm('Eliminar?')) setLocalSlides(localSlides.filter((_, i) => i !== idx)); }} style={{ position: 'absolute', top: '3px', right: '3px', zIndex: 10, background: 'rgba(239, 68, 68, 0.8)', border: 'none', color: 'white', padding: '3px', borderRadius: '3px' }}><Trash2 size={10} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx); }} style={{ position: 'absolute', top: '3px', right: '3px', zIndex: 10, background: 'rgba(239, 68, 68, 0.8)', border: 'none', color: 'white', padding: '3px', borderRadius: '3px' }}><Trash2 size={10} /></button>
                         </div>
                     ))}
                 </div>
