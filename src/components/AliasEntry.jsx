@@ -157,12 +157,17 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                                     cursor: 'pointer',
                                     display: 'flex',
                                     justifyContent: 'space-between',
-                                    alignItems: 'center'
+                                    alignItems: 'center',
+                                    transition: '0.2s'
                                 }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                             >
-                                <span style={{ fontWeight: 700 }}>{project.name}</span>
-                                {project.access_code && alias && <Lock size={14} color="#64748b" />}
-                                <ArrowRight size={18} color="#7c3aed" />
+                                <span style={{ fontWeight: 700, color: 'white' }}>{project.name}</span>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                    {project.access_code && alias && <Lock size={14} color="#64748b" />}
+                                    <ArrowRight size={18} color="#7c3aed" />
+                                </div>
                             </button>
                         ))
                     )}

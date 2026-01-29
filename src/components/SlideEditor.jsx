@@ -525,25 +525,25 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             </div>
                         </div>
 
-                        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            {/* Element Specific Tools */}
-                            {draggingElementId && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {/* Element Specific Tools - Always visible */}
+                            {draggingElementId && localSlides[selectedIdx]?.elements.find(e => e.id === draggingElementId) && (
                                 <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
                                     <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', marginBottom: '15px', textTransform: 'uppercase' }}>Opciones del Elemento</h4>
                                     {localSlides[selectedIdx].elements.find(e => e.id === draggingElementId)?.type === 'drag' && (
-                                        <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer' }}>
+                                        <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
                                             <Upload size={16} /> Subir Imagen
                                             <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === draggingElementId))} />
                                         </label>
                                     )}
-                                    <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== draggingElementId); setLocalSlides(copy); setDraggingElementId(null); }} className="btn-outline" style={{ width: '100%', marginTop: '10px', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
+                                    <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== draggingElementId); setLocalSlides(copy); setDraggingElementId(null); }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
                                         <Trash2 size={16} /> Eliminar Elemento
                                     </button>
                                 </div>
                             )}
 
                             <div>
-                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio de Lámina</h3>
+                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio de L\u00e1mina</h3>
                                 <label className="btn-outline" style={{ width: '100%', padding: '15px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '10px' }}>
                                     <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
                                     <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
@@ -551,8 +551,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             </div>
 
                             <div style={{ background: 'rgba(124, 58, 237, 0.05)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
-                                <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '8px' }}>Tip de Edición</h4>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>Selecciona un elemento para ver sus opciones. Usa el botón "Guardar" para sincronizar con la nube.</p>
+                                <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '8px' }}>Tip de Edici\u00f3n</h4>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>Selecciona un elemento en el canvas para ver sus opciones espec\u00edficas.</p>
                             </div>
                         </div>
                     </div>
