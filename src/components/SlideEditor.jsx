@@ -472,7 +472,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                             {currentSlide?.audio_url && (
                                 <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 110, background: 'rgba(16, 185, 129, 0.2)', padding: '10px 15px', borderRadius: '12px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '10px', backdropFilter: 'blur(10px)' }}>
-                                    <Music size={18} />
+                                    <button onClick={() => { const a = new Audio(currentSlide.audio_url); a.play(); }} style={{ background: '#10b981', border: 'none', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Play size={12} fill="white" /></button>
                                     <span style={{ fontSize: '10px', fontWeight: 900 }}>AUDIO CARGADO</span>
                                     <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].audio_url = ''; setLocalSlides(copy); }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                 </div>
@@ -500,8 +500,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         padding: '10px',
                                         border: (draggingElementId === el.id || selectedElementId === el.id) ? '2px solid var(--primary)' : '1px dashed rgba(255,255,255,0.3)',
                                         borderRadius: '12px',
-                                        background: 'rgba(0,0,0,0.5)',
-                                        backdropFilter: 'blur(10px)',
+                                        background: el.url ? 'transparent' : 'rgba(0,0,0,0.5)',
+                                        backdropFilter: el.url ? 'none' : 'blur(10px)',
                                         width: el.width ? `${(el.width / 900) * 100}%` : 'auto'
                                     }}
                                 >
