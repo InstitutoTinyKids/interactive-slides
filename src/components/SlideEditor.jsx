@@ -478,9 +478,49 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             )}
 
                             {currentSlide?.elements.map(el => (
-                                <div key={el.id} onMouseDown={() => setDraggingElementId(el.id)} style={{ position: 'absolute', left: `${el.x}%`, top: `${el.y}%`, transform: 'translate(-50%, -50%)', zIndex: 100, cursor: 'move', padding: '10px', border: draggingElementId === el.id ? '2px solid var(--primary)' : '1px dashed rgba(255,255,255,0.3)', borderRadius: '12px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', width: el.width ? `${(el.width / 900) * 100}%` : 'auto' }}>
+                                <div
+                                    key={el.id}
+                                    onClick={() => setDraggingElementId(el.id)}
+                                    onMouseDown={(e) => {
+                                        setDraggingElementId(el.id);
+                                    }}
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${el.x}%`,
+                                        top: `${el.y}%`,
+                                        transform: 'translate(-50%, -50%)',
+                                        zIndex: 100,
+                                        cursor: 'move',
+                                        padding: '10px',
+                                        border: draggingElementId === el.id ? '2px solid var(--primary)' : '1px dashed rgba(255,255,255,0.3)',
+                                        borderRadius: '12px',
+                                        background: 'rgba(0,0,0,0.5)',
+                                        backdropFilter: 'blur(10px)',
+                                        width: el.width ? `${(el.width / 900) * 100}%` : 'auto'
+                                    }}
+                                >
                                     {el.type === 'text' && (
-                                        <textarea value={el.text} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value; setLocalSlides(copy); }} style={{ background: 'transparent', border: 'none', color: 'white', textAlign: 'center', width: '100%', outline: 'none', fontWeight: 800, resize: 'none', fontFamily: 'Outfit', fontSize: '1.2rem' }} />
+                                        <textarea
+                                            value={el.text}
+                                            onChange={(e) => {
+                                                const copy = [...localSlides];
+                                                copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value;
+                                                setLocalSlides(copy);
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                color: 'white',
+                                                textAlign: 'center',
+                                                width: '100%',
+                                                outline: 'none',
+                                                fontWeight: 800,
+                                                resize: 'none',
+                                                fontFamily: 'Outfit',
+                                                fontSize: '1.2rem'
+                                            }}
+                                        />
                                     )}
                                     {el.type === 'drag' && (
                                         <div style={{ width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
