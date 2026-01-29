@@ -301,48 +301,73 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: isMobile ? '0 5cqw' : '0 4cqw',
-                            height: isMobile ? '13cqh' : '11cqh',
+                            padding: isMobile ? '0 3cqw' : '0 4cqw',
+                            height: isMobile ? '12cqh' : '10cqh',
                             width: '100%'
                         }}>
-                            {/* Left: Audio & Info */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '2.5cqw', flexShrink: 0 }}>
+                            {/* Left Group: Back + Audio + Info */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '2cqw' : '3cqw', flexShrink: 0 }}>
+                                {/* 1. Botón Atrás */}
+                                <button
+                                    onClick={onPrev}
+                                    disabled={isFirst}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'white',
+                                        opacity: isFirst ? 0.2 : 0.9,
+                                        width: '6cqh',
+                                        height: '6cqh',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: isFirst ? 'default' : 'pointer',
+                                        transition: '0.2s'
+                                    }}
+                                >
+                                    <ChevronLeft size="90%" />
+                                </button>
+
+                                {/* 2. Botón Audio */}
                                 {slide?.audio_url && (
                                     <button
                                         onClick={() => { if (isPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsPlaying(!isPlaying); }}
-                                        style={{ background: isPlaying ? 'rgba(124, 58, 237, 0.2)' : 'none', border: 'none', width: '7cqh', height: '7cqh', borderRadius: '50%', color: isPlaying ? '#a78bfa' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
+                                        style={{ background: isPlaying ? 'rgba(124, 58, 237, 0.2)' : 'none', border: 'none', width: '6cqh', height: '6cqh', borderRadius: '50%', color: isPlaying ? '#a78bfa' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
                                     >
-                                        {isPlaying ? <Pause size="55%" /> : <Volume2 size="55%" />}
+                                        {isPlaying ? <Pause size="60%" /> : <Volume2 size="60%" />}
                                         <audio ref={audioRef} src={slide.audio_url} onEnded={() => setIsPlaying(false)} />
                                     </button>
                                 )}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                                    <span style={{ fontSize: isMobile ? '2.4cqh' : '2.8cqh', fontWeight: 900, color: 'white', lineHeight: 1 }}>{alias}</span>
-                                    <span style={{ fontSize: isMobile ? '1.5cqh' : '1.8cqh', color: '#a78bfa', fontWeight: 700, opacity: 0.8 }}>PAG {currentIndex + 1}/{totalSlides}</span>
+
+                                {/* 3. Info del Usuario */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginLeft: '1cqw' }}>
+                                    <span style={{ fontSize: isMobile ? '2.2cqh' : '2.4cqh', fontWeight: 900, color: 'white', lineHeight: 1 }}>{alias}</span>
+                                    <span style={{ fontSize: isMobile ? '1.4cqh' : '1.6cqh', color: '#a78bfa', fontWeight: 700, opacity: 0.8 }}>PAG {currentIndex + 1}/{totalSlides}</span>
                                 </div>
                             </div>
 
-                            {/* Middle: Drawing Tools (Unified Clean Style) */}
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '4cqw' : '6cqw' }}>
+                            {/* Middle Group: Drawing Tools */}
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '3cqw' : '5cqw' }}>
                                 {tool === 'draw' && (
                                     <>
-                                        <button onClick={undo} style={{ background: 'none', border: 'none', width: '7cqh', height: '7cqh', color: 'white', opacity: 0.9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                        {/* Undo */}
+                                        <button onClick={undo} style={{ background: 'none', border: 'none', width: '6cqh', height: '6cqh', color: 'white', opacity: 0.9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                                             <Undo2 size="65%" />
                                         </button>
 
-                                        {/* Width Selection */}
+                                        {/* Grosor (Settings) */}
                                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                             <button
                                                 onClick={() => setActiveMenu(activeMenu === 'width' ? 'none' : 'width')}
-                                                style={{ background: 'none', border: 'none', width: '7cqh', height: '7cqh', color: activeMenu === 'width' ? '#a78bfa' : 'white', opacity: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 300 }}
+                                                style={{ background: 'none', border: 'none', width: '6cqh', height: '6cqh', color: activeMenu === 'width' ? '#a78bfa' : 'white', opacity: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 300 }}
                                             >
-                                                <Settings2 size="4cqh" />
+                                                <Settings2 size="3.8cqh" />
                                             </button>
                                             {activeMenu === 'width' && (
-                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: '10cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2.5cqh', padding: '2.5cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: '9cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2cqh', padding: '2cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
                                                     <div style={{ height: '18cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1cqh' }}>
-                                                        <div style={{ width: '4.5cqh', height: '4.5cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <div style={{ width: `${Math.max(3, lineWidth / 2)}px`, height: `${Math.max(3, lineWidth / 2)}px`, background: 'white', borderRadius: '50%' }} />
+                                                        <div style={{ width: '4cqh', height: '4cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <div style={{ width: `${Math.max(3, lineWidth / 2.2)}px`, height: `${Math.max(3, lineWidth / 2.2)}px`, background: 'white', borderRadius: '50%' }} />
                                                         </div>
                                                         <input type="range" min="2" max="30" value={lineWidth} onChange={(e) => setLineWidth(parseInt(e.target.value))} style={{ width: '12cqh', height: '6px', transform: 'rotate(-90deg)', accentColor: '#7c3aed', cursor: 'pointer', marginTop: '4cqh' }} />
                                                     </div>
@@ -350,51 +375,54 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                             )}
                                         </div>
 
-                                        {/* Color Selection */}
+                                        {/* Color */}
                                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                             <button
                                                 onClick={() => setActiveMenu(activeMenu === 'color' ? 'none' : 'color')}
-                                                style={{ width: '6.5cqh', height: '6.5cqh', borderRadius: '50%', background: color, border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s' }}
+                                                style={{ width: '6cqh', height: '6cqh', borderRadius: '50%', background: color, border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s' }}
                                             />
                                             {activeMenu === 'color' && (
-                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: '10cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2.5cqh', padding: '2.5cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
-                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5cqh' }}>
+                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: '9cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2cqh', padding: '2cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1cqh' }}>
                                                         {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
-                                                            <button key={c} onClick={() => { setColor(c); setActiveMenu('none'); }} style={{ width: '5.5cqh', height: '5.5cqh', borderRadius: '50%', background: c, border: color === c ? '3px solid white' : '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: color === c ? `0 0 20px ${c}` : 'none' }} />
+                                                            <button key={c} onClick={() => { setColor(c); setActiveMenu('none'); }} style={{ width: '5cqh', height: '5cqh', borderRadius: '50%', background: c, border: color === c ? '3px solid white' : '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: color === c ? `0 0 20px ${c}` : 'none' }} />
                                                         ))}
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Reiniciar (Reset) */}
+                                        <button
+                                            onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }}
+                                            style={{ background: 'none', border: 'none', color: 'white', width: '6cqh', height: '6cqh', opacity: 0.9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        >
+                                            <RotateCcw size="60%" />
+                                        </button>
                                     </>
                                 )}
                             </div>
 
-                            {/* Right: Actions */}
-                            <div style={{ display: 'flex', gap: '3cqw', alignItems: 'center', flexShrink: 0 }}>
-                                <button
-                                    onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }}
-                                    style={{ background: 'none', border: 'none', color: 'white', width: '7cqh', height: '7cqh', opacity: 0.9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >
-                                    <RotateCcw size="60%" />
-                                </button>
+                            {/* Right Group: Next / Finish */}
+                            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                                 <button
                                     onClick={() => onComplete({ paths, stamps, textValues, dragItems })}
                                     style={{
                                         background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
                                         border: 'none',
                                         color: 'white',
-                                        height: '7.5cqh',
+                                        height: '6.5cqh',
                                         padding: '0 4cqw',
-                                        borderRadius: '1.5cqh',
+                                        borderRadius: '1.2cqh',
                                         fontWeight: 900,
-                                        fontSize: isMobile ? '2.2cqh' : '2.6cqh',
+                                        fontSize: isMobile ? '2cqh' : '2.2cqh',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        minWidth: '12cqw',
+                                        minWidth: '10cqw',
                                         cursor: 'pointer',
-                                        boxShadow: '0 10px 20px rgba(124, 58, 237, 0.3)'
+                                        boxShadow: '0 10px 20px rgba(124, 58, 237, 0.3)',
+                                        transition: '0.2s'
                                     }}
                                 >
                                     {isLast ? 'FIN' : 'SIG'}
