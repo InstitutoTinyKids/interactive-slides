@@ -21,40 +21,61 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [draggingElementId, setDraggingElementId] = useState(null);
     const [resizingElementId, setResizingElementId] = useState(null);
 
+    const [selectedProjects, setSelectedProjects] = useState([]);
+
     useEffect(() => {
         loadProjects();
     }, []);
 
-    useEffect(() => {
-        if (initialProject) {
-            setLocalSlides(slides);
-            setCurrentProject(initialProject);
-            setShowGallery(false);
-        }
-    }, [initialProject, slides]);
-
     const loadProjects = async () => {
         const { data } = await supabase.from('projects').select('*').order('name');
         setProjects(data || []);
+        setSelectedProjects([]); // Reset selection on reload
     };
 
     const handleCreateProject = async () => {
-        const name = prompt('Nombre del nuevo programa (ej. Baby Program):');
+        const name = prompt('Nombre del programa educativo (ej. Baby Program):');
         if (!name) return;
+        const accessCode = prompt('Define la Clave de Acceso para este programa:', '123');
+        if (!accessCode) return;
 
         const newProject = {
             id: name.toLowerCase().replace(/\s+/g, '-'),
             name: name,
             is_active: false,
-            access_code: '123'
+            access_code: accessCode
         };
 
         const { error } = await supabase.from('projects').insert(newProject);
         if (error) {
-            alert('Error al crear proyecto: ' + error.message);
+            alert('Error al agregar programa: ' + error.message);
         } else {
             loadProjects();
         }
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedProjects.length === 0) return;
+        if (!confirm(`¿Estás seguro de eliminar ${selectedProjects.length} programas? Esto borrará todas las láminas y archivos asociados de forma permanente.`)) return;
+
+        setLoading(true);
+        try {
+            const { error } = await supabase.from('projects').delete().in('id', selectedProjects);
+            if (error) throw error;
+            loadProjects();
+            alert('Programas eliminados correctamente.');
+        } catch (err) {
+            alert('Error al eliminar: ' + err.message);
+        }
+        setLoading(false);
+    };
+
+    const toggleProjectSelection = (projectId) => {
+        setSelectedProjects(prev =>
+            prev.includes(projectId)
+                ? prev.filter(id => id !== projectId)
+                : [...prev, projectId]
+        );
     };
 
     const handleSelectProject = (project) => {
@@ -224,13 +245,18 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 {/* Header Gallery */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                     <div>
-                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Galería de Programas</h1>
-                        <p style={{ color: '#94a3b8', fontSize: '1rem' }}>Selecciona o crea un programa educativo para gestionar sus láminas</p>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Gestión de Programas</h1>
+                        <p style={{ color: '#94a3b8', fontSize: '1rem' }}>Administra los niveles educativos y sus claves de acceso</p>
                     </div>
                     <div style={{ display: 'flex', gap: '15px' }}>
+                        {selectedProjects.length > 0 && (
+                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '12px 25px' }}>
+                                <Trash2 size={20} /> Eliminar Seleccionados ({selectedProjects.length})
+                            </button>
+                        )}
                         <button onClick={onExit} className="btn-outline" style={{ padding: '12px 25px' }}>Volver al Inicio</button>
                         <button onClick={handleCreateProject} className="btn-premium" style={{ padding: '12px 25px' }}>
-                            <Plus size={20} /> Nuevo Programa
+                            <Plus size={20} /> Agregar Programa
                         </button>
                     </div>
                 </div>
@@ -241,16 +267,35 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             <div style={{ width: '100px', height: '100px', background: 'rgba(255,255,255,0.03)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', marginBottom: '20px' }}>
                                 <LayoutGrid size={50} />
                             </div>
-                            <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '10px' }}>No hay programas creados</h2>
-                            <p style={{ color: '#64748b', maxWidth: '400px', marginBottom: '25px' }}>Crea tu primer programa (ej. Baby Program) para empezar a subir tus láminas e interactividades.</p>
+                            <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '10px' }}>No hay programas configurados</h2>
+                            <p style={{ color: '#64748b', maxWidth: '400px', marginBottom: '25px' }}>Comienza agregando los programas educativos de tu institución.</p>
                             <button onClick={handleCreateProject} className="btn-premium" style={{ width: 'fit-content' }}>
-                                <Plus size={20} /> Crear Primer Programa
+                                <Plus size={20} /> Agregar Programa
                             </button>
                         </div>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '25px' }}>
                             {projects.map(p => (
-                                <div key={p.id} className="glass" style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', transition: '0.3s', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div
+                                    key={p.id}
+                                    className="glass"
+                                    style={{
+                                        padding: '25px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '20px',
+                                        transition: '0.3s',
+                                        border: `1px solid ${selectedProjects.includes(p.id) ? '#ef4444' : 'rgba(255,255,255,0.05)'}`,
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedProjects.includes(p.id)}
+                                        onChange={() => toggleProjectSelection(p.id)}
+                                        style={{ position: 'absolute', top: '15px', right: '15px', width: '20px', height: '20px', accentColor: '#ef4444', cursor: 'pointer' }}
+                                    />
+
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                                         <div style={{ padding: '12px', background: p.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)', borderRadius: '12px', color: p.is_active ? '#10b981' : '#64748b' }}>
                                             <ShieldCheck size={28} />
@@ -263,7 +308,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             background: p.is_active ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)',
                                             color: p.is_active ? '#10b981' : '#64748b',
                                             textTransform: 'uppercase',
-                                            letterSpacing: '1px'
+                                            letterSpacing: '1px',
+                                            marginRight: '30px'
                                         }}>
                                             {p.is_active ? '● ACTIVO' : '○ PAUSADO'}
                                         </div>
@@ -280,7 +326,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     </div>
 
                                     <button onClick={() => handleSelectProject(p)} className="btn-premium" style={{ width: '100%', marginTop: 'auto' }}>
-                                        Editar Láminas
+                                        Entrar a Editar
                                     </button>
                                 </div>
                             ))}
@@ -357,41 +403,41 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         </div>
                     </div>
 
-                    <div className="w-[320px] bg-slate-950/50 border-l border-white/5 p-6 flex flex-col gap-8">
+                    <div style={{ width: '320px', background: 'rgba(10,10,20,0.8)', borderLeft: '1px solid rgba(255,255,255,0.05)', padding: '30px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
                         <div>
-                            <h3 className="text-white font-bold flex items-center gap-2 mb-4"><SettingsIcon size={18} /> Ajustes del Programa</h3>
-                            <div className="flex flex-col gap-4">
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Nombre</label>
-                                    <input type="text" value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} className="bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-purple-500" />
+                            <h3 style={{ color: 'white', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}><SettingsIcon size={16} /> Ajustes del Programa</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: '#475569', textTransform: 'uppercase' }}>Nombre</label>
+                                    <input type="text" value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '0.9rem', outline: 'none' }} />
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Clave de Acceso</label>
-                                    <input type="text" value={currentProject?.access_code || ''} onChange={(e) => setCurrentProject({ ...currentProject, access_code: e.target.value })} className="bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-purple-500" />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: '#475569', textTransform: 'uppercase' }}>Clave de Acceso</label>
+                                    <input type="text" value={currentProject?.access_code || ''} onChange={(e) => setCurrentProject({ ...currentProject, access_code: e.target.value })} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '0.9rem', outline: 'none' }} />
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <h3 className="text-white font-bold mb-4">Herramientas</h3>
-                            <div className="grid grid-cols-2 gap-2">
+                            <h3 style={{ color: 'white', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '20px' }}>Herramientas</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 {[
-                                    { type: 'draw', icon: Paintbrush, color: 'text-purple-500' },
-                                    { type: 'drag', icon: Move, color: 'text-blue-500' },
-                                    { type: 'stamp', icon: Target, color: 'text-red-500' },
-                                    { type: 'text', icon: Type, color: 'text-emerald-500' }
+                                    { type: 'draw', icon: Paintbrush, color: '#a78bfa' },
+                                    { type: 'drag', icon: Move, color: '#3b82f6' },
+                                    { type: 'stamp', icon: Target, color: '#ef4444' },
+                                    { type: 'text', icon: Type, color: '#10b981' }
                                 ].map(t => (
-                                    <button key={t.type} onClick={() => addElement(t.type)} className="glass p-4 rounded-xl border border-white/5 hover:border-white/20 flex flex-col items-center gap-2 transition-all">
-                                        <div className={t.color}><t.icon size={20} /></div>
-                                        <span className="text-[10px] font-bold uppercase text-white">{t.type}</span>
+                                    <button key={t.type} onClick={() => addElement(t.type)} className="glass" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: '0.2s', border: '1px solid rgba(255,255,255,0.05)' }} onMouseEnter={e => e.currentTarget.style.borderColor = t.color} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}>
+                                        <div style={{ color: t.color }}><t.icon size={20} /></div>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', color: 'white' }}>{t.type}</span>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="mt-auto glass p-4 rounded-xl border border-emerald-500/20">
-                            <h4 className="text-xs font-black text-emerald-500 mb-2">SOPORTE MULTI-PROGRAMA</h4>
-                            <p className="text-[10px] text-slate-400">Ahora puedes crear programas individuales. Recuerda guardar antes de cambiar de programa.</p>
+                        <div style={{ marginTop: 'auto', background: 'rgba(16, 185, 129, 0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+                            <h4 style={{ fontSize: '0.75rem', fontWeight: 900, color: '#10b981', marginBottom: '8px', textTransform: 'uppercase' }}>Tip Profesional</h4>
+                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.4 }}>Recuerda presionar <strong>"Guardar"</strong> antes de cambiar de programa para no perder tus cambios.</p>
                         </div>
                     </div>
                 </div>
