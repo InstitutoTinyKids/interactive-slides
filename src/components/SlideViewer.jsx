@@ -281,7 +281,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             transform: 'translateX(-50%)',
                             width: slide?.format === '1/1' ? '90%' : '100%',
                             height: 'auto',
-                            minHeight: isMobile ? '13cqh' : '11cqh',
+                            minHeight: isMobile ? 'clamp(58px, 14cqh, 85px)' : '11cqh',
                             background: 'rgba(15, 15, 35, 0.98)',
                             backdropFilter: 'blur(30px)',
                             display: 'flex',
@@ -302,7 +302,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             padding: isMobile ? '0 3cqw' : '0 4cqw',
-                            height: isMobile ? '12cqh' : '10cqh',
+                            height: isMobile ? 'clamp(55px, 12cqh, 80px)' : '10cqh',
                             width: '100%'
                         }}>
                             {/* Left Group: Back + Audio + Info */}
@@ -341,8 +341,8 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
 
                                 {/* 3. Info del Usuario */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginLeft: '1cqw' }}>
-                                    <span style={{ fontSize: isMobile ? '2.2cqh' : '2.4cqh', fontWeight: 900, color: 'white', lineHeight: 1 }}>{alias}</span>
-                                    <span style={{ fontSize: isMobile ? '1.4cqh' : '1.6cqh', color: '#a78bfa', fontWeight: 700, opacity: 0.8 }}>PAG {currentIndex + 1}/{totalSlides}</span>
+                                    <span style={{ fontSize: isMobile ? 'clamp(14px, 2.4cqh, 20px)' : '2.6cqh', fontWeight: 900, color: 'white', lineHeight: 1, fontFamily: 'Outfit, sans-serif' }}>{alias}</span>
+                                    <span style={{ fontSize: isMobile ? 'clamp(10px, 1.6cqh, 14px)' : '1.8cqh', color: '#a78bfa', fontWeight: 700, opacity: 0.8 }}>PAG {currentIndex + 1}/{totalSlides}</span>
                                 </div>
                             </div>
 
@@ -411,11 +411,11 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
                                         border: 'none',
                                         color: 'white',
-                                        height: '6.5cqh',
+                                        height: isMobile ? 'clamp(40px, 7.5cqh, 55px)' : '7.5cqh',
                                         padding: '0 4cqw',
                                         borderRadius: '1.2cqh',
                                         fontWeight: 900,
-                                        fontSize: isMobile ? '2cqh' : '2.2cqh',
+                                        fontSize: isMobile ? 'clamp(13px, 2.2cqh, 18px)' : '2.4cqh',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
