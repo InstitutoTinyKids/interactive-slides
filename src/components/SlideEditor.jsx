@@ -270,9 +270,18 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             const element = newSlides[selectedIdx].elements.find(el => el.id === resizingElementId);
             if (element) {
                 const elementX = (element.x / 100) * rect.width;
+                const elementY = (element.y / 100) * rect.height;
                 const mouseX = (x / 100) * rect.width;
+                const mouseY = (y / 100) * rect.height;
+
+                // Allow free resizing for Text and Stamp
                 element.width = Math.max(50, (mouseX - elementX) * 2);
-                element.height = element.width * 0.5; // Maintain some ratio
+                if (element.type === 'text' || element.type === 'stamp') {
+                    element.height = Math.max(30, (mouseY - elementY) * 2);
+                } else {
+                    // Maintain ratio for others if needed, though Drag won't have the handle
+                    element.height = element.width * 0.5;
+                }
                 setLocalSlides(newSlides);
             }
         }
@@ -535,28 +544,31 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             {el.url ? <img src={el.url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} /> : <Move size={24} color="#3b82f6" />}
                                         </div>
                                     )}
-                                    <div
-                                        onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }}
-                                        style={{
-                                            position: 'absolute',
-                                            bottom: '-10px',
-                                            right: '-10px',
-                                            width: '24px',
-                                            height: '24px',
-                                            cursor: 'nwse-resize',
-                                            background: 'var(--primary)',
-                                            borderRadius: '50%',
-                                            border: '3px solid white',
-                                            boxShadow: '0 4px 10px rgba(124, 58, 237, 0.5)',
-                                            zIndex: 110,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: 'transform 0.2s'
-                                        }}
-                                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
-                                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                                    />
+                                    {/* Handle for resizing - Only for Text and Stamp */}
+                                    {(el.type === 'text' || el.type === 'stamp') && (
+                                        <div
+                                            onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }}
+                                            style={{
+                                                position: 'absolute',
+                                                bottom: '-10px',
+                                                right: '-10px',
+                                                width: '24px',
+                                                height: '24px',
+                                                cursor: 'nwse-resize',
+                                                background: 'var(--primary)',
+                                                borderRadius: '50%',
+                                                border: '3px solid white',
+                                                boxShadow: '0 4px 10px rgba(124, 58, 237, 0.5)',
+                                                zIndex: 110,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                transition: 'transform 0.2s'
+                                            }}
+                                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+                                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                                        />
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -628,10 +640,10 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             <div style={{ background: 'rgba(124, 58, 237, 0.2)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 {(() => {
                                                     const el = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
-                                                    if (el?.type === 'text') return <><Type size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>TEXTO</span></>;
-                                                    if (el?.type === 'drag') return <><Move size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>ARRASTRE</span></>;
-                                                    if (el?.type === 'draw') return <><Paintbrush size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DIBUJO</span></>;
-                                                    if (el?.type === 'stamp') return <><Target size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>ESTAMPA</span></>;
+                                                    if (el?.type === 'text') return <><Type size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>TEXT</span></>;
+                                                    if (el?.type === 'drag') return <><Move size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAG</span></>;
+                                                    if (el?.type === 'draw') return <><Paintbrush size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAW</span></>;
+                                                    if (el?.type === 'stamp') return <><Target size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>STAMP</span></>;
                                                     return null;
                                                 })()}
                                             </div>
@@ -649,17 +661,13 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 )}
 
                                 <div>
-                                    <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio de L\u00e1mina</h3>
+                                    <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio</h3>
                                     <label className="btn-outline" style={{ width: '100%', padding: '15px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '10px' }}>
                                         <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
                                         <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
                                     </label>
                                 </div>
 
-                                <div style={{ background: 'rgba(124, 58, 237, 0.05)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
-                                    <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '8px' }}>Tip de Edici\u00f3n</h4>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{selectedElementId ? 'Edita las opciones del elemento seleccionado arriba.' : 'Haz clic en un elemento para ver sus opciones espec\u00edficas.'}</p>
-                                </div>
                             </div>
                         </div>
                     </div>
