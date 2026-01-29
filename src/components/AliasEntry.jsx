@@ -211,6 +211,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                             onChange={(e) => setPass(e.target.value)}
                             autoFocus
                             required
+                            style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
                         />
                         <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
                             Acceder al Panel
@@ -233,6 +234,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                             onChange={(e) => setPass(e.target.value)}
                             autoFocus
                             required
+                            style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
                         />
                         <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
                             Acceder como Teacher
@@ -257,6 +259,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                                 onChange={(e) => setAlias(e.target.value)}
                                 autoFocus
                                 required
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
                             />
                         </div>
                         <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
@@ -283,6 +286,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                             onChange={(e) => setProjectPass(e.target.value)}
                             autoFocus
                             required
+                            style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
                         />
                         <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
                             Entrar a la Clase
