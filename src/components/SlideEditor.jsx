@@ -20,6 +20,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const canvasContainerRef = useRef(null);
     const [draggingElementId, setDraggingElementId] = useState(null);
     const [resizingElementId, setResizingElementId] = useState(null);
+    const [selectedElementId, setSelectedElementId] = useState(null);
 
     const [selectedProjects, setSelectedProjects] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -403,7 +404,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const currentSlide = localSlides[selectedIdx] || null;
 
     return (
-        <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden' }} onMouseMove={handleCanvasMouseMove} onMouseUp={() => { setDraggingElementId(null); setResizingElementId(null); }} onTouchEnd={() => { setDraggingElementId(null); setResizingElementId(null); }}>
+        <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden' }} onMouseMove={handleCanvasMouseMove} onMouseUp={() => { setDraggingElementId(null); setResizingElementId(null); }} onTouchEnd={() => { setDraggingElementId(null); setResizingElementId(null); }} onClick={(e) => { if (e.target === e.currentTarget) setSelectedElementId(null); }}>
             <aside style={{ width: '200px', borderRight: '1px solid rgba(255,255,255,0.05)', background: '#0a0a1a', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#475569' }}>Diapositivas</span>
@@ -439,8 +440,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 </header>
 
                 <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                    <div style={{ flex: 1, padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'auto' }}>
-                        <div ref={canvasContainerRef} style={{ width: '100%', maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 50px 100px -20px black', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ flex: 1, padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'auto' }} onClick={() => setSelectedElementId(null)}>
+                        <div ref={canvasContainerRef} style={{ width: '100%', maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 50px 100px -20px black', border: '1px solid rgba(255,255,255,0.1)' }} onClick={(e) => e.stopPropagation()}>
                             {currentSlide?.image_url ? (
                                 <img src={currentSlide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                             ) : (
@@ -480,9 +481,14 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             {currentSlide?.elements.map(el => (
                                 <div
                                     key={el.id}
-                                    onClick={() => setDraggingElementId(el.id)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedElementId(el.id);
+                                    }}
                                     onMouseDown={(e) => {
+                                        e.stopPropagation();
                                         setDraggingElementId(el.id);
+                                        setSelectedElementId(el.id);
                                     }}
                                     style={{
                                         position: 'absolute',
@@ -492,7 +498,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         zIndex: 100,
                                         cursor: 'move',
                                         padding: '10px',
-                                        border: draggingElementId === el.id ? '2px solid var(--primary)' : '1px dashed rgba(255,255,255,0.3)',
+                                        border: (draggingElementId === el.id || selectedElementId === el.id) ? '2px solid var(--primary)' : '1px dashed rgba(255,255,255,0.3)',
                                         borderRadius: '12px',
                                         background: 'rgba(0,0,0,0.5)',
                                         backdropFilter: 'blur(10px)',
@@ -566,17 +572,17 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            {/* Element Specific Tools - Always visible */}
-                            {draggingElementId && localSlides[selectedIdx]?.elements.find(e => e.id === draggingElementId) && (
+                            {/* Element Specific Tools - Always visible when selected */}
+                            {selectedElementId && localSlides[selectedIdx]?.elements.find(e => e.id === selectedElementId) && (
                                 <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
                                     <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', marginBottom: '15px', textTransform: 'uppercase' }}>Opciones del Elemento</h4>
-                                    {localSlides[selectedIdx].elements.find(e => e.id === draggingElementId)?.type === 'drag' && (
+                                    {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.type === 'drag' && (
                                         <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
                                             <Upload size={16} /> Subir Imagen
-                                            <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === draggingElementId))} />
+                                            <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === selectedElementId))} />
                                         </label>
                                     )}
-                                    <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== draggingElementId); setLocalSlides(copy); setDraggingElementId(null); }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
+                                    <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== selectedElementId); setLocalSlides(copy); setSelectedElementId(null); setDraggingElementId(null); }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
                                         <Trash2 size={16} /> Eliminar Elemento
                                     </button>
                                 </div>
@@ -592,7 +598,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                             <div style={{ background: 'rgba(124, 58, 237, 0.05)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
                                 <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '8px' }}>Tip de Edici\u00f3n</h4>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>Selecciona un elemento en el canvas para ver sus opciones espec\u00edficas.</p>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{selectedElementId ? 'Edita las opciones del elemento seleccionado arriba.' : 'Haz clic en un elemento para ver sus opciones espec\u00edficas.'}</p>
                             </div>
                         </div>
                     </div>
