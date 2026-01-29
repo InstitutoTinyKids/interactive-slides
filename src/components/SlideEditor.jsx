@@ -581,17 +581,41 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             <div>
                                 <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '25px' }}>Herramientas</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                    {[
-                                        { type: 'draw', icon: Paintbrush, color: '#7c3aed' },
-                                        { type: 'drag', icon: Move, color: '#3b82f6' },
-                                        { type: 'stamp', icon: Target, color: '#ef4444' },
-                                        { type: 'text', icon: Type, color: '#10b981' }
-                                    ].map(t => (
-                                        <button key={t.type} onClick={() => addElement(t.type)} className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: '0.2s', border: '1px solid var(--border)', borderRadius: '16px' }} onMouseEnter={e => e.currentTarget.style.borderColor = t.color} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
-                                            <div style={{ color: t.color }}><t.icon size={22} /></div>
-                                            <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: 'white' }}>{t.type}</span>
-                                        </button>
-                                    ))}
+                                    {(() => {
+                                        const selectedEl = localSlides[selectedIdx]?.elements.find(e => e.id === selectedElementId);
+                                        return [
+                                            { type: 'draw', icon: Paintbrush, color: '#7c3aed', label: 'Draw' },
+                                            { type: 'drag', icon: Move, color: '#3b82f6', label: 'Drag' },
+                                            { type: 'stamp', icon: Target, color: '#ef4444', label: 'Stamp' },
+                                            { type: 'text', icon: Type, color: '#10b981', label: 'Text' }
+                                        ].map(t => {
+                                            const isSelected = selectedEl?.type === t.type;
+                                            return (
+                                                <button
+                                                    key={t.type}
+                                                    onClick={() => addElement(t.type)}
+                                                    className="glass"
+                                                    style={{
+                                                        padding: '20px',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        gap: '10px',
+                                                        transition: '0.2s',
+                                                        border: `2px solid ${isSelected ? t.color : 'var(--border)'}`,
+                                                        borderRadius: '16px',
+                                                        background: isSelected ? `${t.color}15` : 'transparent',
+                                                        boxShadow: isSelected ? `0 0 15px ${t.color}30` : 'none'
+                                                    }}
+                                                    onMouseEnter={e => !isSelected && (e.currentTarget.style.borderColor = t.color)}
+                                                    onMouseLeave={e => !isSelected && (e.currentTarget.style.borderColor = 'var(--border)')}
+                                                >
+                                                    <div style={{ color: t.color, transform: isSelected ? 'scale(1.2)' : 'scale(1)', transition: '0.2s' }}><t.icon size={22} /></div>
+                                                    <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: isSelected ? 'white' : 'var(--text-muted)' }}>{t.label}</span>
+                                                </button>
+                                            );
+                                        });
+                                    })()}
                                 </div>
                             </div>
 
@@ -599,7 +623,19 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 {/* Element Specific Tools - Always visible when selected */}
                                 {selectedElementId && localSlides[selectedIdx]?.elements.find(e => e.id === selectedElementId) && (
                                     <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
-                                        <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', marginBottom: '15px', textTransform: 'uppercase' }}>Opciones del Elemento</h4>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                            <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', textTransform: 'uppercase', margin: 0 }}>Opciones del Elemento</h4>
+                                            <div style={{ background: 'rgba(124, 58, 237, 0.2)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                {(() => {
+                                                    const el = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
+                                                    if (el?.type === 'text') return <><Type size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>TEXTO</span></>;
+                                                    if (el?.type === 'drag') return <><Move size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>ARRASTRE</span></>;
+                                                    if (el?.type === 'draw') return <><Paintbrush size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DIBUJO</span></>;
+                                                    if (el?.type === 'stamp') return <><Target size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>ESTAMPA</span></>;
+                                                    return null;
+                                                })()}
+                                            </div>
+                                        </div>
                                         {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.type === 'drag' && (
                                             <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
                                                 <Upload size={16} /> Subir Imagen
