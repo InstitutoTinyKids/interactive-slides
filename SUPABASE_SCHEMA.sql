@@ -11,9 +11,10 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Projects table
 CREATE TABLE IF NOT EXISTS projects (
-  id TEXT PRIMARY KEY DEFAULT 'main-project',
-  name TEXT NOT NULL DEFAULT 'Mi Presentación',
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
   is_active BOOLEAN DEFAULT FALSE,
+  access_code TEXT DEFAULT '123',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

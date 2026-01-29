@@ -23,9 +23,11 @@ export default function ResultsViewer({ slides = [], onExit }) {
     const fetchInteractions = async () => {
         setLoading(true);
         try {
+            const slideIds = slides.map(s => s.id);
             const { data, error } = await supabase
                 .from('interactions')
                 .select('*')
+                .in('slide_id', slideIds)
                 .order('created_at', { ascending: false });
             if (error) throw error;
             setInteractions(data || []);

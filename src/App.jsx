@@ -10,12 +10,13 @@ const PROJECT_ID = 'main-project';
 
 export default function App() {
     const [view, setView] = useState('entry');
-    console.log('App Rendering, current view:', view);
+    const [role, setRole] = useState('student'); // student, teacher, admin
     const [alias, setAlias] = useState('');
+    const [selectedProject, setSelectedProject] = useState(null);
     const [isActive, setIsActive] = useState(false);
     const [slides, setSlides] = useState([]);
     const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
     useEffect(() => {
@@ -24,60 +25,30 @@ export default function App() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Load project data on mount
-    useEffect(() => {
-        loadProjectData();
-    }, []);
-
     // Preload Slide Assets
     useEffect(() => {
         if (slides.length > 0 && view === 'viewer') {
-            // Preload current and next 2 slides
             const toPreload = [currentSlideIdx, currentSlideIdx + 1, currentSlideIdx + 2];
             toPreload.forEach(idx => {
                 const s = slides[idx];
                 if (s) {
-                    if (s.image_url) {
-                        const img = new Image();
-                        img.src = s.image_url;
-                    }
-                    if (s.audio_url) {
-                        const audio = new Audio();
-                        audio.src = s.audio_url;
-                    }
+                    if (s.image_url) { const img = new Image(); img.src = s.image_url; }
+                    if (s.audio_url) { const audio = new Audio(); audio.src = s.audio_url; }
                 }
             });
         }
     }, [currentSlideIdx, slides, view]);
 
-    const loadProjectData = async () => {
+    const loadProjectSlides = async (projectId) => {
         setLoading(true);
         try {
-            // Get project status
-            const { data: project } = await supabase
-                .from('projects')
-                .select('is_active')
-                .eq('id', PROJECT_ID)
-                .single();
-
-            if (project) {
-                setIsActive(project.is_active);
-            } else {
-                // Initial project creation
-                await supabase
-                    .from('projects')
-                    .upsert({ id: PROJECT_ID, name: 'Guía Tiny Kids', is_active: false });
-            }
-
-            // Get slides
             const { data: slidesData } = await supabase
                 .from('slides')
                 .select('*')
-                .eq('project_id', PROJECT_ID)
+                .eq('project_id', projectId)
                 .order('order_index', { ascending: true });
 
             if (slidesData) {
-                // EXTRACT FORMAT FROM ELEMENTS
                 const processed = slidesData.map(s => {
                     const elements = s.elements || [];
                     const formatEl = elements.find(e => e.type === 'format_metadata');
@@ -90,84 +61,44 @@ export default function App() {
                 setSlides(processed);
             }
         } catch (error) {
-            console.error('Error loading project:', error);
-            // Fallback to localStorage
-            const saved = localStorage.getItem('slides_backup');
-            if (saved) setSlides(JSON.parse(saved));
+            console.error('Error loading project slides:', error);
         }
         setLoading(false);
     };
 
-    const handleSaveSlides = async (newSlides) => {
-        setLoading(true);
-        try {
-            // Ensure project exists
-            const { error: projectError } = await supabase
-                .from('projects')
-                .upsert({ id: PROJECT_ID, name: 'Guía Tiny Kids', is_active: isActive });
+    const handleEnterAsStudent = async (userAlias, project) => {
+        setRole('student');
+        setAlias(userAlias);
+        setSelectedProject(project);
+        setIsActive(project.is_active);
+        await loadProjectSlides(project.id);
+        setCurrentSlideIdx(0);
+        setView('viewer');
+    };
 
-            if (projectError) throw new Error(`Error en proyecto: ${projectError.message}`);
+    const handleEnterAsTeacher = async (project) => {
+        setRole('teacher');
+        setAlias('Teacher');
+        setSelectedProject(project);
+        setIsActive(project.is_active);
+        await loadProjectSlides(project.id);
+        setCurrentSlideIdx(0);
+        setView('viewer');
+    };
 
-            // Delete existing slides
-            const { error: deleteError } = await supabase
-                .from('slides')
-                .delete()
-                .eq('project_id', PROJECT_ID);
-
-            if (deleteError) throw new Error(`Error al limpiar: ${deleteError.message}`);
-
-            // Insert new slides
-            const slidesToInsert = newSlides.map((slide, idx) => {
-                // EMBED FORMAT IN ELEMENTS TO AVOID COLUMN ERROR
-                const elementsWithFormat = [
-                    ...(slide.elements || []).filter(e => e.type !== 'format_metadata'),
-                    { id: 'fmt-meta', type: 'format_metadata', value: slide.format || '16/9' }
-                ];
-
-                return {
-                    id: slide.id,
-                    project_id: PROJECT_ID,
-                    image_url: slide.image_url || null,
-                    audio_url: slide.audio_url || null,
-                    elements: elementsWithFormat,
-                    order_index: idx
-                };
-            });
-
-            if (slidesToInsert.length > 0) {
-                const { error: insertError } = await supabase
-                    .from('slides')
-                    .insert(slidesToInsert);
-
-                if (insertError) throw new Error(`Error al insertar: ${insertError.message}`);
-            }
-
-            setSlides(newSlides);
-            localStorage.setItem('slides_backup', JSON.stringify(newSlides));
-
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-
-            alert('✅ Diapositivas guardadas en Supabase');
-        } catch (error) {
-            console.error('Error saving slides:', error);
-            setSlides(newSlides);
-            localStorage.setItem('slides_backup', JSON.stringify(newSlides));
-            alert(`⚠️ Error de Supabase: ${error.message}\n(Se guardó localmente)`);
-        }
-        setLoading(false);
+    const handleEnterAsAdmin = () => {
+        setRole('admin');
+        setView('editor');
     };
 
     const toggleActive = async () => {
+        if (!selectedProject) return;
         const newState = !isActive;
         try {
             await supabase
                 .from('projects')
                 .update({ is_active: newState })
-                .eq('id', PROJECT_ID);
+                .eq('id', selectedProject.id);
 
             setIsActive(newState);
         } catch (error) {
@@ -177,28 +108,29 @@ export default function App() {
     };
 
     const handleCompleteSlide = async (interactionData) => {
-        try {
-            const currentSlide = slides[currentSlideIdx];
-            const slideElementIds = currentSlide.elements.map(el => el.id);
-            const filteredText = {};
-            Object.entries(interactionData.textValues).forEach(([id, val]) => {
-                if (slideElementIds.includes(id)) filteredText[id] = val;
-            });
+        // Teacher mode: Don't save to DB
+        if (role !== 'teacher') {
+            try {
+                const currentSlide = slides[currentSlideIdx];
+                const slideElementIds = currentSlide.elements.map(el => el.id);
+                const filteredText = {};
+                Object.entries(interactionData.textValues).forEach(([id, val]) => {
+                    if (slideElementIds.includes(id)) filteredText[id] = val;
+                });
 
-            await supabase.from('interactions').insert({
-                slide_id: currentSlide.id,
-                alias: alias,
-                drawings: interactionData.paths || [],
-                stamps: interactionData.stamps || [],
-                text_responses: filteredText,
-                icon_positions: interactionData.dragItems?.map(d => ({
-                    x: d.currentX,
-                    y: d.currentY,
-                    url: d.url
-                })) || []
-            });
-        } catch (err) {
-            console.warn('Error saving interaction:', err);
+                await supabase.from('interactions').insert({
+                    slide_id: currentSlide.id,
+                    alias: alias,
+                    drawings: interactionData.paths || [],
+                    stamps: interactionData.stamps || [],
+                    text_responses: filteredText,
+                    icon_positions: interactionData.dragItems?.map(d => ({
+                        x: d.currentX, y: d.currentY, url: d.url
+                    })) || []
+                });
+            } catch (err) {
+                console.warn('Error saving interaction:', err);
+            }
         }
 
         if (currentSlideIdx < slides.length - 1) {
@@ -209,12 +141,12 @@ export default function App() {
         }
     };
 
-    if (loading) {
+    if (loading && view !== 'editor') {
         return (
             <div className="min-h-screen bg-[#050510] flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-white text-lg">Cargando presentación...</p>
+                    <p className="text-white text-lg">Cargando contenido...</p>
                 </div>
             </div>
         );
@@ -223,13 +155,9 @@ export default function App() {
     if (view === 'entry') {
         return (
             <AliasEntry
-                isActive={isActive}
-                onEnter={(a) => {
-                    setAlias(a);
-                    setCurrentSlideIdx(0);
-                    setView('viewer');
-                }}
-                onAdmin={() => setView('editor')}
+                onEnter={handleEnterAsStudent}
+                onAdmin={handleEnterAsAdmin}
+                onTeacher={handleEnterAsTeacher}
             />
         );
     }
@@ -239,13 +167,24 @@ export default function App() {
             <SlideEditor
                 slides={slides}
                 isActive={isActive}
-                onSave={handleSaveSlides}
-                onExit={() => {
-                    loadProjectData();
-                    setView('entry');
+                onSave={async (newSlides) => {
+                    // This now needs to support multiple projects
+                    // For now, it will use selectedProject.id or stay empty if not selected
+                    if (!selectedProject) {
+                        alert("Selecciona un proyecto primero en la Gallery");
+                        return;
+                    }
+                    // Implementation below will be updated in SlideEditor to handle project selection
                 }}
+                onExit={() => { setView('entry'); }}
                 onToggleActive={toggleActive}
                 onViewResults={() => setView('results')}
+                selectedProject={selectedProject}
+                onSelectProject={(p) => {
+                    setSelectedProject(p);
+                    setIsActive(p.is_active);
+                    loadProjectSlides(p.id);
+                }}
             />
         );
     }
@@ -334,18 +273,45 @@ export default function App() {
                 }}>
                     <div style={{ fontSize: isMobile ? '3.5rem' : '5rem' }}>🎉</div>
                     <div>
-                        <h1 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', marginBottom: '12px', lineHeight: 1.1 }}>¡Misión Cumplida!</h1>
-                        <p style={{ fontSize: isMobile ? '0.9rem' : '1rem', color: '#a78bfa', fontWeight: 800, marginBottom: '6px' }}>Excelente trabajo, {alias}</p>
-                        <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>Tus respuestas han sido registradas exitosamente en el sistema.</p>
+                        <h1 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', marginBottom: '12px', lineHeight: 1.1 }}>
+                            {role === 'teacher' ? 'Lección Finalizada' : '¡Misión Cumplida!'}
+                        </h1>
+                        <p style={{ fontSize: isMobile ? '0.9rem' : '1rem', color: '#a78bfa', fontWeight: 800, marginBottom: '6px' }}>
+                            {role === 'teacher' ? 'Buen trabajo moderando la clase' : `Excelente trabajo, ${alias}`}
+                        </p>
+                        <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
+                            {role === 'teacher'
+                                ? 'Puedes reiniciar esta presentación o volver al inicio para seleccionar otro programa.'
+                                : 'Tus respuestas han sido registradas exitosamente en el sistema.'}
+                        </p>
                     </div>
 
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="btn-premium"
-                        style={{ padding: isMobile ? '12px 30px' : '14px 40px', fontSize: isMobile ? '0.9rem' : '1rem', marginTop: '10px' }}
-                    >
-                        Finalizar Sesión
-                    </button>
+                    {role === 'teacher' ? (
+                        <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
+                            <button
+                                onClick={() => { setCurrentSlideIdx(0); setView('viewer'); }}
+                                className="btn-outline"
+                                style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}
+                            >
+                                Reiniciar
+                            </button>
+                            <button
+                                onClick={() => setView('entry')}
+                                className="btn-premium"
+                                style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}
+                            >
+                                Home
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="btn-premium"
+                            style={{ padding: isMobile ? '12px 30px' : '14px 40px', fontSize: isMobile ? '0.9rem' : '1rem', marginTop: '10px' }}
+                        >
+                            Finalizar Sesión
+                        </button>
+                    )}
                 </div>
             </div>
         );

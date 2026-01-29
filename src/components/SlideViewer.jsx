@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Play, Pause, RotateCcw, Paintbrush, Move, Type, Target, ChevronLeft, ChevronRight, Undo2, Eraser, CheckCircle2, Volume2, Settings2 } from 'lucide-react';
 
-export default function SlideViewer({ slide, alias, currentIndex, totalSlides, onComplete, onNext, onPrev, isFirst, isLast }) {
+export default function SlideViewer({ slide, alias, currentIndex, totalSlides, onComplete, onNext, onPrev, isFirst, isLast, role, onRestart, onHome }) {
     const canvasRef = useRef(null);
     const stageRef = useRef(null);
     const audioRef = useRef(null);
