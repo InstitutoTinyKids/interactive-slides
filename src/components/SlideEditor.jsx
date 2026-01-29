@@ -220,52 +220,68 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     if (showGallery) {
         return (
-            <div className="flex flex-col h-screen w-full bg-[#050510] overflow-hidden p-10">
-                <div className="flex justify-between items-center mb-10">
+            <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '40px' }}>
+                {/* Header Gallery */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                     <div>
-                        <h1 className="text-3xl font-black text-white">Galería de Programas</h1>
-                        <p className="text-slate-400">Selecciona o crea un programa educativo</p>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Galería de Programas</h1>
+                        <p style={{ color: '#94a3b8', fontSize: '1rem' }}>Selecciona o crea un programa educativo para gestionar sus láminas</p>
                     </div>
-                    <div className="flex gap-4">
-                        <button onClick={onExit} className="btn-outline">Volver al Inicio</button>
-                        <button onClick={handleCreateProject} className="btn-premium"><Plus size={20} /> Nuevo Programa</button>
+                    <div style={{ display: 'flex', gap: '15px' }}>
+                        <button onClick={onExit} className="btn-outline" style={{ padding: '12px 25px' }}>Volver al Inicio</button>
+                        <button onClick={handleCreateProject} className="btn-premium" style={{ padding: '12px 25px' }}>
+                            <Plus size={20} /> Nuevo Programa
+                        </button>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-4">
+                <div style={{ flex: 1, overflowY: 'auto', paddingRight: '10px' }}>
                     {projects.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full gap-6 text-center">
-                            <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-slate-600">
-                                <LayoutGrid size={40} />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60%', textAlign: 'center' }}>
+                            <div style={{ width: '100px', height: '100px', background: 'rgba(255,255,255,0.03)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', marginBottom: '20px' }}>
+                                <LayoutGrid size={50} />
                             </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-white mb-2">No hay programas creados</h2>
-                                <p className="text-slate-400 max-w-sm mb-6">Comienza creando tu primer programa educativo (ej. Baby Program) para añadir láminas.</p>
-                                <button onClick={handleCreateProject} className="btn-premium mx-auto">
-                                    <Plus size={20} /> Crear Primer Programa
-                                </button>
-                            </div>
+                            <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '10px' }}>No hay programas creados</h2>
+                            <p style={{ color: '#64748b', maxWidth: '400px', marginBottom: '25px' }}>Crea tu primer programa (ej. Baby Program) para empezar a subir tus láminas e interactividades.</p>
+                            <button onClick={handleCreateProject} className="btn-premium" style={{ width: 'fit-content' }}>
+                                <Plus size={20} /> Crear Primer Programa
+                            </button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '25px' }}>
                             {projects.map(p => (
-                                <div key={p.id} className="glass p-6 rounded-2xl border border-white/5 hover:border-purple-500/50 transition-all group flex flex-col gap-4">
-                                    <div className="flex justify-between items-start">
-                                        <div className={`p - 3 rounded - xl ${p.is_active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-800 text-slate-500'} `}>
-                                            <ShieldCheck size={24} />
+                                <div key={p.id} className="glass" style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', transition: '0.3s', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                        <div style={{ padding: '12px', background: p.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)', borderRadius: '12px', color: p.is_active ? '#10b981' : '#64748b' }}>
+                                            <ShieldCheck size={28} />
                                         </div>
-                                        <span className={`text - [10px] font - bold px - 2 py - 1 rounded - full ${p.is_active ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-500'} `}>
-                                            {p.is_active ? 'ACTIVO' : 'PAUSADO'}
-                                        </span>
+                                        <div style={{
+                                            fontSize: '0.65rem',
+                                            fontWeight: 900,
+                                            padding: '4px 12px',
+                                            borderRadius: '100px',
+                                            background: p.is_active ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)',
+                                            color: p.is_active ? '#10b981' : '#64748b',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '1px'
+                                        }}>
+                                            {p.is_active ? '● ACTIVO' : '○ PAUSADO'}
+                                        </div>
                                     </div>
+
                                     <div>
-                                        <h3 className="text-xl font-bold text-white">{p.name}</h3>
-                                        <p className="text-xs text-slate-500 font-mono">ID: {p.id}</p>
+                                        <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '4px' }}>{p.name}</h3>
+                                        <p style={{ fontSize: '0.7rem', color: '#475569', fontFamily: 'monospace' }}>ID: {p.id}</p>
                                     </div>
-                                    <div className="flex gap-2 items-center text-xs text-slate-400">
-                                        <Key size={12} /> Clave: <span className="text-white font-bold">{p.access_code || 'No requerida'}</span>
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: '#94a3b8', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px' }}>
+                                        <Key size={16} />
+                                        <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
                                     </div>
-                                    <button onClick={() => handleSelectProject(p)} className="btn-premium w-full !py-3 !text-sm">Editar Laminas</button>
+
+                                    <button onClick={() => handleSelectProject(p)} className="btn-premium" style={{ width: '100%', marginTop: 'auto' }}>
+                                        Editar Láminas
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -278,43 +294,43 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const currentSlide = localSlides[selectedIdx] || null;
 
     return (
-        <div className="flex h-screen w-full bg-[#050510] overflow-hidden" onMouseMove={handleCanvasMouseMove} onMouseUp={() => { setDraggingElementId(null); setResizingElementId(null); }} onTouchEnd={() => { setDraggingElementId(null); setResizingElementId(null); }}>
-            <aside style={{ width: '180px', borderRight: '1px solid rgba(255,255,255,0.1)', background: '#0a0a1a', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b' }}>DIAPOSITIVAS</span>
-                    <button onClick={addSlide} style={{ background: 'rgba(124, 58, 237, 0.1)', border: 'none', color: '#a78bfa', padding: '4px', borderRadius: '6px', cursor: 'pointer' }}><Plus size={14} /></button>
+        <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden' }} onMouseMove={handleCanvasMouseMove} onMouseUp={() => { setDraggingElementId(null); setResizingElementId(null); }} onTouchEnd={() => { setDraggingElementId(null); setResizingElementId(null); }}>
+            <aside style={{ width: '200px', borderRight: '1px solid rgba(255,255,255,0.05)', background: '#0a0a1a', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#475569' }}>Diapositivas</span>
+                    <button onClick={addSlide} style={{ background: 'rgba(124, 58, 237, 0.1)', border: 'none', color: '#a78bfa', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}><Plus size={16} /></button>
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {localSlides.map((slide, idx) => (
-                        <div key={slide.id} onClick={() => setSelectedIdx(idx)} style={{ position: 'relative', borderRadius: '8px', border: `2px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'} `, background: '#111', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s' }}>
-                            <span style={{ position: 'absolute', top: '3px', left: '3px', zIndex: 10, fontSize: '9px', background: 'rgba(0,0,0,0.6)', padding: '1px 4px', borderRadius: '3px', color: 'white' }}>{idx + 1}</span>
-                            {slide.image_url ? <img src={slide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div className="h-full flex items-center justify-center opacity-10"><ImageIcon size={20} color="#fff" /></div>}
-                            <button onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx); }} style={{ position: 'absolute', top: '3px', right: '3px', zIndex: 10, background: 'rgba(239, 68, 68, 0.8)', border: 'none', color: 'white', padding: '3px', borderRadius: '3px' }}><Trash2 size={10} /></button>
+                        <div key={slide.id} onClick={() => setSelectedIdx(idx)} style={{ position: 'relative', borderRadius: '12px', border: `2px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'}`, background: '#000', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s', boxShadow: selectedIdx === idx ? '0 0 15px rgba(124, 58, 237, 0.3)' : 'none' }}>
+                            <span style={{ position: 'absolute', top: '5px', left: '5px', zIndex: 10, fontSize: '10px', fontWeight: 900, background: 'rgba(0,0,0,0.7)', width: '20px', height: '20px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>{idx + 1}</span>
+                            {slide.image_url ? <img src={slide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}><ImageIcon size={24} color="white" /></div>}
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx); }} style={{ position: 'absolute', top: '5px', right: '5px', zIndex: 10, background: 'rgba(239, 68, 68, 0.9)', border: 'none', color: 'white', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={12} /></button>
                         </div>
                     ))}
                 </div>
             </aside>
 
-            <main className="flex-1 flex flex-col">
-                <header className="h-[60px] px-6 flex items-center justify-between border-b border-white/5 bg-slate-950/50 backdrop-blur-xl">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setShowGallery(true)} className="p-2 hover:bg-white/5 rounded-lg text-slate-400"><LayoutGrid size={20} /></button>
+            <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #111, #050510)' }}>
+                <header style={{ height: '70px', padding: '0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(10,10,20,0.8)', backdropFilter: 'blur(15px)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <button onClick={() => setShowGallery(true)} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: '#94a3b8', cursor: 'pointer' }}><LayoutGrid size={22} /></button>
                         <div>
-                            <h2 className="text-white font-bold leading-none">{currentProject?.name}</h2>
-                            <span className="text-[10px] text-slate-500 font-mono">ID: {currentProject?.id}</span>
+                            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{currentProject?.name}</h2>
+                            <span style={{ fontSize: '0.65rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Editor de Programa</span>
                         </div>
                     </div>
-                    <div className="flex gap-3">
-                        <button onClick={onViewResults} className="btn-outline !py-2 !text-xs"><Eye size={14} /> Resultados</button>
-                        <button onClick={onToggleActive} className={`btn - outline!py - 2!text - xs ${isActive ? 'text-red-500' : 'text-emerald-500'} `}>
-                            {isActive ? <Pause size={14} /> : <Play size={14} />} {isActive ? 'Parar' : 'Iniciar'}
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '0.85rem' }}><Eye size={18} /> Resultados</button>
+                        <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '0.85rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
+                            {isActive ? <Pause size={18} /> : <Play size={18} />} {isActive ? 'Suspender' : 'Activar Clase'}
                         </button>
-                        <button onClick={handleSaveAll} className="btn-premium !py-2 !text-xs"><Save size={14} /> Guardar Todo</button>
+                        <button onClick={handleSaveAll} className="btn-premium" style={{ padding: '10px 25px', fontSize: '0.85rem' }}><Save size={18} /> Guardar Cambios</button>
                     </div>
                 </header>
 
-                <div className="flex-1 flex overflow-hidden">
-                    <div className="flex-1 p-10 flex flex-col items-center overflow-auto">
+                <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'auto' }}>
                         <div ref={canvasContainerRef} style={{ width: '100%', maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '16px', position: 'relative', overflow: 'hidden', boxShadow: '0 50px 100px -20px black' }}>
                             {currentSlide?.image_url ? (
                                 <img src={currentSlide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
