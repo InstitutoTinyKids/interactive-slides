@@ -22,6 +22,23 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [resizingElementId, setResizingElementId] = useState(null);
 
     const [selectedProjects, setSelectedProjects] = useState([]);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+
+    const PROGRAM_ORDER = [
+        'Baby Program', 'Mini Program', 'Tiny Program', 'Big Program',
+        'Junior Program', 'Reading Club', 'Conversation Club'
+    ];
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+            setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         loadProjects();
@@ -262,32 +279,32 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     if (showGallery) {
         return (
-            <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '40px' }}>
+            <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: isMobile ? '20px' : isTablet ? '30px' : '40px' }}>
                 {/* Header Gallery */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '20px' : '40px', gap: '15px' }}>
                     <div>
-                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Gestión de Programas</h1>
-                        <p style={{ color: '#94a3b8', fontSize: '1rem' }}>Administra los niveles educativos y sus claves de acceso</p>
+                        <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Gestión de Programas</h1>
+                        <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.85rem' : '1rem' }}>Administra los niveles educativos y sus claves de acceso</p>
                     </div>
-                    <div style={{ display: 'flex', gap: '15px' }}>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
                         {selectedProjects.length > 0 && (
-                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '12px 25px' }}>
-                                <Trash2 size={20} /> Eliminar Seleccionados ({selectedProjects.length})
+                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}>
+                                <Trash2 size={isMobile ? 16 : 20} /> {isMobile ? `Eliminar (${selectedProjects.length})` : `Eliminar Seleccionados (${selectedProjects.length})`}
                             </button>
                         )}
-                        <button onClick={onExit} className="btn-outline" style={{ padding: '12px 25px' }}>Volver al Inicio</button>
-                        <button onClick={() => setShowAddModal(true)} className="btn-premium" style={{ padding: '12px 25px' }}>
-                            <Plus size={20} /> Agregar Programa
+                        <button onClick={onExit} className="btn-outline" style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}>Volver</button>
+                        <button onClick={() => setShowAddModal(true)} className="btn-premium" style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}>
+                            <Plus size={isMobile ? 16 : 20} /> Agregar
                         </button>
                     </div>
                 </div>
 
                 {/* Custom Modal for Selection */}
                 {showAddModal && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div className="glass anim-up" style={{ width: '400px', padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <h2 style={{ fontSize: '1.2rem', color: 'white' }}>Seleccionar Programa</h2>
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '20px' : '0' }}>
+                        <div className="glass anim-up" style={{ width: isMobile ? '100%' : '400px', maxWidth: '400px', padding: isMobile ? '20px' : '30px', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: isMobile ? '90vh' : 'auto', overflowY: 'auto' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h2 style={{ fontSize: isMobile ? '1rem' : '1.2rem', color: 'white' }}>Seleccionar Programa</h2>
                                 <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}><X size={20} /></button>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -296,7 +313,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         key={prog}
                                         onClick={() => handleCreateProject(prog)}
                                         className="btn-outline"
-                                        style={{ justifyContent: 'start', padding: '15px' }}
+                                        style={{ justifyContent: 'start', padding: isMobile ? '12px' : '15px', fontSize: isMobile ? '0.85rem' : '1rem' }}
                                         disabled={projects.some(p => p.name === prog)}
                                     >
                                         {prog} {projects.some(p => p.name === prog) && '(Ya existe)'}
@@ -307,20 +324,20 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     </div>
                 )}
 
-                <div style={{ flex: 1, overflowY: 'auto', paddingRight: '10px' }}>
+                <div style={{ flex: 1, overflowY: 'auto', paddingRight: isMobile ? '0' : '10px' }}>
                     {projects.length === 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60%', textAlign: 'center' }}>
-                            <div style={{ width: '100px', height: '100px', background: 'rgba(255,255,255,0.03)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', marginBottom: '20px' }}>
-                                <LayoutGrid size={50} />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60%', textAlign: 'center', padding: isMobile ? '20px' : '0' }}>
+                            <div style={{ width: isMobile ? '70px' : '100px', height: isMobile ? '70px' : '100px', background: 'rgba(255,255,255,0.03)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', marginBottom: '20px' }}>
+                                <LayoutGrid size={isMobile ? 35 : 50} />
                             </div>
-                            <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '10px' }}>No hay programas configurados</h2>
-                            <p style={{ color: '#64748b', maxWidth: '400px', marginBottom: '25px' }}>Comienza agregando los programas educativos de tu institución.</p>
-                            <button onClick={handleCreateProject} className="btn-premium" style={{ width: 'fit-content' }}>
-                                <Plus size={20} /> Agregar Programa
+                            <h2 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', color: 'white', marginBottom: '10px' }}>No hay programas configurados</h2>
+                            <p style={{ color: '#64748b', maxWidth: '400px', marginBottom: '25px', fontSize: isMobile ? '0.85rem' : '1rem' }}>Comienza agregando los programas educativos de tu institución.</p>
+                            <button onClick={() => setShowAddModal(true)} className="btn-premium" style={{ width: 'fit-content', fontSize: isMobile ? '0.85rem' : '1rem' }}>
+                                <Plus size={isMobile ? 16 : 20} /> Agregar Programa
                             </button>
                         </div>
                     ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '25px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: isMobile ? '15px' : '25px' }}>
                             {projects.map(p => (
                                 <div
                                     key={p.id}
