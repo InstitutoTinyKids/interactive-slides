@@ -316,8 +316,8 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         border: 'none',
                                         color: 'white',
                                         opacity: isFirst ? 0.2 : 0.9,
-                                        width: '6cqh',
-                                        height: '6cqh',
+                                        width: isMobile ? 'clamp(42px, 8cqh, 60px)' : '6cqh',
+                                        height: isMobile ? 'clamp(42px, 8cqh, 60px)' : '6cqh',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -325,16 +325,16 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         transition: '0.2s'
                                     }}
                                 >
-                                    <ChevronLeft size="90%" />
+                                    <ChevronLeft size="85%" />
                                 </button>
 
                                 {/* 2. Botón Audio */}
                                 {slide?.audio_url && (
                                     <button
                                         onClick={() => { if (isPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsPlaying(!isPlaying); }}
-                                        style={{ background: isPlaying ? 'rgba(124, 58, 237, 0.2)' : 'none', border: 'none', width: '6cqh', height: '6cqh', borderRadius: '50%', color: isPlaying ? '#a78bfa' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
+                                        style={{ background: isPlaying ? 'rgba(124, 58, 237, 0.2)' : 'none', border: 'none', width: isMobile ? 'clamp(42px, 8cqh, 60px)' : '6cqh', height: isMobile ? 'clamp(42px, 8cqh, 60px)' : '6cqh', borderRadius: '50%', color: isPlaying ? '#a78bfa' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
                                     >
-                                        {isPlaying ? <Pause size="60%" /> : <Volume2 size="60%" />}
+                                        {isPlaying ? <Pause size="55%" /> : <Volume2 size="55%" />}
                                         <audio ref={audioRef} src={slide.audio_url} onEnded={() => setIsPlaying(false)} />
                                     </button>
                                 )}
@@ -351,17 +351,17 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 {tool === 'draw' && (
                                     <>
                                         {/* Undo */}
-                                        <button onClick={undo} style={{ background: 'none', border: 'none', width: '6cqh', height: '6cqh', color: 'white', opacity: 0.9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                            <Undo2 size="65%" />
+                                        <button onClick={undo} style={{ background: 'none', border: 'none', width: isMobile ? 'clamp(40px, 8cqh, 55px)' : '6cqh', height: isMobile ? 'clamp(40px, 8cqh, 55px)' : '6cqh', color: 'white', opacity: 0.9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                            <Undo2 size="60%" />
                                         </button>
 
                                         {/* Grosor (Settings) */}
                                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                             <button
                                                 onClick={() => setActiveMenu(activeMenu === 'width' ? 'none' : 'width')}
-                                                style={{ background: 'none', border: 'none', width: '6cqh', height: '6cqh', color: activeMenu === 'width' ? '#a78bfa' : 'white', opacity: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 300 }}
+                                                style={{ background: 'none', border: 'none', width: isMobile ? 'clamp(40px, 8cqh, 55px)' : '6cqh', height: isMobile ? 'clamp(40px, 8cqh, 55px)' : '6cqh', color: activeMenu === 'width' ? '#a78bfa' : 'white', opacity: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 300 }}
                                             >
-                                                <Settings2 size="3.8cqh" />
+                                                <Settings2 size="clamp(20px, 4cqh, 30px)" />
                                             </button>
                                             {activeMenu === 'width' && (
                                                 <div className="glass anim-up" style={{ position: 'absolute', bottom: '9cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2cqh', padding: '2cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
@@ -379,7 +379,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                             <button
                                                 onClick={() => setActiveMenu(activeMenu === 'color' ? 'none' : 'color')}
-                                                style={{ width: '6cqh', height: '6cqh', borderRadius: '50%', background: color, border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s' }}
+                                                style={{ width: isMobile ? 'clamp(36px, 7cqh, 50px)' : '6cqh', height: isMobile ? 'clamp(36px, 7cqh, 50px)' : '6cqh', borderRadius: '50%', background: color, border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s' }}
                                             />
                                             {activeMenu === 'color' && (
                                                 <div className="glass anim-up" style={{ position: 'absolute', bottom: '9cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2cqh', padding: '2cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
@@ -395,7 +395,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         {/* Reiniciar (Reset) */}
                                         <button
                                             onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }}
-                                            style={{ background: 'none', border: 'none', color: 'white', width: '6cqh', height: '6cqh', opacity: 0.9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            style={{ background: 'none', border: 'none', color: 'white', width: isMobile ? 'clamp(40px, 8cqh, 55px)' : '6cqh', height: isMobile ? 'clamp(40px, 8cqh, 55px)' : '6cqh', opacity: 0.9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                         >
                                             <RotateCcw size="60%" />
                                         </button>
