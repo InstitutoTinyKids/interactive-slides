@@ -292,7 +292,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             border: slide?.format === '1/1' ? '1px solid rgba(255,255,255,0.1)' : 'none',
                             touchAction: 'auto',
                             boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-                            overflow: 'hidden'
+                            overflow: 'visible'
                         }}
                     >
                         {/* Main Content Area - Strictly Centered */}
