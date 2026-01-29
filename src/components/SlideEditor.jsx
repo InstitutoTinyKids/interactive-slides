@@ -27,6 +27,18 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         loadProjects();
     }, []);
 
+    // Sync slides and project when they change in parent App
+    useEffect(() => {
+        if (initialProject) {
+            setCurrentProject(initialProject);
+            setShowGallery(false);
+        }
+    }, [initialProject]);
+
+    useEffect(() => {
+        setLocalSlides(slides || []);
+    }, [slides]);
+
     const loadProjects = async () => {
         const { data } = await supabase.from('projects').select('*').order('name');
         setProjects(data || []);
@@ -151,7 +163,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 await deleteFileFromStorage(oldSlide.elements[elementIdx].url);
             }
 
-            const fileName = `${Date.now()} -${file.name} `;
+            const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
             const { data, error } = await supabase.storage.from('media').upload(fileName, file);
             if (error) throw error;
             const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
@@ -160,7 +172,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             if (type === 'bg') newSlides[slideIdx].image_url = publicUrl;
             else if (type === 'audio') newSlides[slideIdx].audio_url = publicUrl;
             else if (type === 'drag_img') newSlides[slideIdx].elements[elementIdx].url = publicUrl;
-            setLocalSlides([...newSlides]);
+            setLocalSlides(newSlides);
         } catch (error) {
             alert('Error al subir: ' + error.message);
         }
@@ -377,67 +389,70 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                 <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
                     <div style={{ flex: 1, padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'auto' }}>
-                        <div ref={canvasContainerRef} style={{ width: '100%', maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '16px', position: 'relative', overflow: 'hidden', boxShadow: '0 50px 100px -20px black' }}>
+                        <div ref={canvasContainerRef} style={{ width: '100%', maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 50px 100px -20px black', border: '1px solid rgba(255,255,255,0.1)' }}>
                             {currentSlide?.image_url ? (
                                 <img src={currentSlide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                             ) : (
-                                <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-600">
-                                    <ImageIcon size={48} />
-                                    <label className="btn-premium !py-2 !px-4 text-xs cursor-pointer">Subir Fondo <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'bg', selectedIdx)} /></label>
+                                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px', color: '#475569' }}>
+                                    <ImageIcon size={60} />
+                                    <label className="btn-premium" style={{ padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                        Subir Fondo Principal
+                                        <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'bg', selectedIdx)} />
+                                    </label>
                                 </div>
                             )}
 
                             {currentSlide?.elements.map(el => (
-                                <div key={el.id} onMouseDown={() => setDraggingElementId(el.id)} style={{ position: 'absolute', left: `${el.x}% `, top: `${el.y}% `, transform: 'translate(-50%, -50%)', zIndex: 100, cursor: 'move', padding: '10px', border: draggingElementId === el.id ? '2px solid #7c3aed' : '2px dashed white/20', borderRadius: '12px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', width: el.width ? `${(el.width / 9) * 1}% ` : 'auto' }}>
+                                <div key={el.id} onMouseDown={() => setDraggingElementId(el.id)} style={{ position: 'absolute', left: `${el.x}%`, top: `${el.y}%`, transform: 'translate(-50%, -50%)', zIndex: 100, cursor: 'move', padding: '10px', border: draggingElementId === el.id ? '2px solid var(--primary)' : '1px dashed rgba(255,255,255,0.3)', borderRadius: '12px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', width: el.width ? `${(el.width / 900) * 100}%` : 'auto' }}>
                                     {el.type === 'text' && (
-                                        <textarea value={el.text} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value; setLocalSlides(copy); }} className="bg-transparent border-none text-white text-center w-full focus:outline-none font-bold resize-none" />
+                                        <textarea value={el.text} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value; setLocalSlides(copy); }} style={{ background: 'transparent', border: 'none', color: 'white', textAlign: 'center', width: '100%', outline: 'none', fontWeight: 800, resize: 'none', fontFamily: 'Outfit', fontSize: '1.2rem' }} />
                                     )}
                                     {el.type === 'drag' && (
-                                        <div className="w-10 h-10 flex items-center justify-center">
-                                            {el.url ? <img src={el.url} className="max-w-full max-h-full object-contain" /> : <Move size={20} color="#3b82f6" />}
+                                        <div style={{ width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {el.url ? <img src={el.url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} /> : <Move size={24} color="#3b82f6" />}
                                         </div>
                                     )}
-                                    <div onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }} className="absolute bottom-1 right-1 w-3 h-3 cursor-nwse-resize border-r-2 border-b-2 border-purple-500 rounded-sm" />
+                                    <div onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }} style={{ position: 'absolute', bottom: '0', right: '0', width: '15px', height: '15px', cursor: 'nwse-resize', borderRight: '2px solid var(--primary)', borderBottom: '2px solid var(--primary)' }} />
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div style={{ width: '320px', background: 'rgba(10,10,20,0.8)', borderLeft: '1px solid rgba(255,255,255,0.05)', padding: '30px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                    <div style={{ width: '320px', background: 'rgba(10, 10, 20, 0.9)', borderLeft: '1px solid var(--border)', padding: '30px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
                         <div>
-                            <h3 style={{ color: 'white', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}><SettingsIcon size={16} /> Ajustes del Programa</h3>
+                            <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}><SettingsIcon size={18} /> Ajustes</h3>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: '#475569', textTransform: 'uppercase' }}>Nombre</label>
-                                    <input type="text" value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '0.9rem', outline: 'none' }} />
+                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre del Programa</label>
+                                    <input className="premium-input" type="text" value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} style={{ padding: '12px' }} />
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: '#475569', textTransform: 'uppercase' }}>Clave de Acceso</label>
-                                    <input type="text" value={currentProject?.access_code || ''} onChange={(e) => setCurrentProject({ ...currentProject, access_code: e.target.value })} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '0.9rem', outline: 'none' }} />
+                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clave de Acceso</label>
+                                    <input className="premium-input" type="text" value={currentProject?.access_code || ''} onChange={(e) => setCurrentProject({ ...currentProject, access_code: e.target.value })} style={{ padding: '12px' }} />
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <h3 style={{ color: 'white', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '20px' }}>Herramientas</h3>
+                            <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '25px' }}>Herramientas</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 {[
-                                    { type: 'draw', icon: Paintbrush, color: '#a78bfa' },
+                                    { type: 'draw', icon: Paintbrush, color: '#7c3aed' },
                                     { type: 'drag', icon: Move, color: '#3b82f6' },
                                     { type: 'stamp', icon: Target, color: '#ef4444' },
                                     { type: 'text', icon: Type, color: '#10b981' }
                                 ].map(t => (
-                                    <button key={t.type} onClick={() => addElement(t.type)} className="glass" style={{ padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: '0.2s', border: '1px solid rgba(255,255,255,0.05)' }} onMouseEnter={e => e.currentTarget.style.borderColor = t.color} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}>
-                                        <div style={{ color: t.color }}><t.icon size={20} /></div>
-                                        <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', color: 'white' }}>{t.type}</span>
+                                    <button key={t.type} onClick={() => addElement(t.type)} className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: '0.2s', border: '1px solid var(--border)', borderRadius: '16px' }} onMouseEnter={e => e.currentTarget.style.borderColor = t.color} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                                        <div style={{ color: t.color }}><t.icon size={22} /></div>
+                                        <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: 'white' }}>{t.type}</span>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        <div style={{ marginTop: 'auto', background: 'rgba(16, 185, 129, 0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
-                            <h4 style={{ fontSize: '0.75rem', fontWeight: 900, color: '#10b981', marginBottom: '8px', textTransform: 'uppercase' }}>Tip Profesional</h4>
-                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.4 }}>Recuerda presionar <strong>"Guardar"</strong> antes de cambiar de programa para no perder tus cambios.</p>
+                        <div style={{ marginTop: 'auto', background: 'rgba(124, 58, 237, 0.05)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
+                            <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '8px' }}>Tip de Edición</h4>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>Arrastra los elementos para posicionarlos y usa el borde inferior para ajustar el tamaño.</p>
                         </div>
                     </div>
                 </div>
