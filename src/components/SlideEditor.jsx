@@ -513,7 +513,11 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         borderRadius: '12px',
                                         background: el.url ? 'transparent' : 'rgba(0,0,0,0.5)',
                                         backdropFilter: el.url ? 'none' : 'blur(10px)',
-                                        width: el.width ? `${(el.width / 900) * 100}%` : 'auto'
+                                        width: el.width ? `${(el.width / 900) * 100}%` : 'auto',
+                                        height: el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
                                     }}
                                 >
                                     {el.type === 'text' && (
@@ -531,6 +535,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 color: 'white',
                                                 textAlign: 'center',
                                                 width: '100%',
+                                                height: '100%',
                                                 outline: 'none',
                                                 fontWeight: 800,
                                                 resize: 'none',
@@ -540,8 +545,13 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         />
                                     )}
                                     {el.type === 'drag' && (
-                                        <div style={{ width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             {el.url ? <img src={el.url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} /> : <Move size={24} color="#3b82f6" />}
+                                        </div>
+                                    )}
+                                    {el.type === 'stamp' && (
+                                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '4px solid white', background: 'rgba(239, 68, 68, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Target size={24} color="white" />
                                         </div>
                                     )}
                                     {/* Handle for resizing - Only for Text and Stamp */}
