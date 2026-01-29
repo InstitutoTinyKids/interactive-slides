@@ -74,7 +74,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                 <div style={{ width: '90px', height: '90px', margin: '0 auto 15px' }}>
                     <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                 </div>
-                <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '4px', letterSpacing: '-1px' }}>Guía Tiny Kids</h1>
+                <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '4px', letterSpacing: '-1px', color: 'white' }}>Guía Tiny Kids</h1>
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Selecciona tu rol para continuar</p>
             </div>
 
@@ -90,7 +90,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                         <User size={24} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>Student</h3>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'white' }}>Student</h3>
                         <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Realiza las actividades y guarda tus trazos</p>
                     </div>
                     <ChevronRight size={20} color="#3b82f6" />
@@ -107,7 +107,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                         <GraduationCap size={24} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>Teacher</h3>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'white' }}>Teacher</h3>
                         <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Modera la clase sin guardar registros</p>
                     </div>
                     <ChevronRight size={20} color="#a78bfa" />
@@ -122,7 +122,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                         <Settings size={24} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Administrador</h3>
+                        <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'white' }}>Administrador</h3>
                     </div>
                     <Lock size={18} color="#94a3b8" />
                 </button>
@@ -137,7 +137,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <button onClick={() => setView(alias ? 'student_alias' : 'role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Selecciona Programa</h2>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Selecciona Programa</h2>
                 </div>
 
                 <div style={{ display: 'grid', gap: '10px', maxHeight: '400px', overflowY: 'auto', paddingRight: '5px' }}>
@@ -201,7 +201,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                     <form onSubmit={handleAdminSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Administrador</h2>
+                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Administrador</h2>
                         </div>
                         <input
                             className="premium-input"
@@ -223,7 +223,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                     <form onSubmit={handleTeacherSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Teacher Mode</h2>
+                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Teacher Mode</h2>
                         </div>
                         <input
                             className="premium-input"
@@ -245,7 +245,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                     <form onSubmit={handleStudentStart} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Bienvenido Student</h2>
+                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Bienvenido Student</h2>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>TU NOMBRE / ALIAS</label>
@@ -272,7 +272,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                     <form onSubmit={handleProjectPassSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <button type="button" onClick={() => setView('project_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                            <h2 style={{ fontSize: '1.1rem', fontWeight: 900 }}>Acceso: {selectedProject.name}</h2>
+                            <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white' }}>Acceso: {selectedProject.name}</h2>
                         </div>
                         <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Este programa requiere una clave específica para ingresar.</p>
                         <input

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Plus, Image as ImageIcon, Music, Type, Move, Target, Paintbrush,
     Save, Trash2, X, Play, Pause, Upload, Eye, ChevronLeft, LayoutGrid,
-    Settings as SettingsIcon, ShieldCheck
+    Settings as SettingsIcon, ShieldCheck, Key
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
@@ -130,7 +130,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 await deleteFileFromStorage(oldSlide.elements[elementIdx].url);
             }
 
-            const fileName = `${Date.now()}-${file.name}`;
+            const fileName = `${Date.now()} -${file.name} `;
             const { data, error } = await supabase.storage.from('media').upload(fileName, file);
             if (error) throw error;
             const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
@@ -232,27 +232,44 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pr-4">
-                    {projects.map(p => (
-                        <div key={p.id} className="glass p-6 rounded-2xl border border-white/5 hover:border-purple-500/50 transition-all group flex flex-col gap-4">
-                            <div className="flex justify-between items-start">
-                                <div className={`p-3 rounded-xl ${p.is_active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-800 text-slate-500'}`}>
-                                    <ShieldCheck size={24} />
-                                </div>
-                                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${p.is_active ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-500'}`}>
-                                    {p.is_active ? 'ACTIVO' : 'PAUSADO'}
-                                </span>
+                <div className="flex-1 overflow-y-auto pr-4">
+                    {projects.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-6 text-center">
+                            <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-slate-600">
+                                <LayoutGrid size={40} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-white">{p.name}</h3>
-                                <p className="text-xs text-slate-500 font-mono">ID: {p.id}</p>
+                                <h2 className="text-2xl font-bold text-white mb-2">No hay programas creados</h2>
+                                <p className="text-slate-400 max-w-sm mb-6">Comienza creando tu primer programa educativo (ej. Baby Program) para añadir láminas.</p>
+                                <button onClick={handleCreateProject} className="btn-premium mx-auto">
+                                    <Plus size={20} /> Crear Primer Programa
+                                </button>
                             </div>
-                            <div className="flex gap-2 items-center text-xs text-slate-400">
-                                <Key size={12} /> Clave: <span className="text-white font-bold">{p.access_code || 'No requerida'}</span>
-                            </div>
-                            <button onClick={() => handleSelectProject(p)} className="btn-premium w-full !py-3 !text-sm">Editar Laminas</button>
                         </div>
-                    ))}
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {projects.map(p => (
+                                <div key={p.id} className="glass p-6 rounded-2xl border border-white/5 hover:border-purple-500/50 transition-all group flex flex-col gap-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className={`p - 3 rounded - xl ${p.is_active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-800 text-slate-500'} `}>
+                                            <ShieldCheck size={24} />
+                                        </div>
+                                        <span className={`text - [10px] font - bold px - 2 py - 1 rounded - full ${p.is_active ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-500'} `}>
+                                            {p.is_active ? 'ACTIVO' : 'PAUSADO'}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">{p.name}</h3>
+                                        <p className="text-xs text-slate-500 font-mono">ID: {p.id}</p>
+                                    </div>
+                                    <div className="flex gap-2 items-center text-xs text-slate-400">
+                                        <Key size={12} /> Clave: <span className="text-white font-bold">{p.access_code || 'No requerida'}</span>
+                                    </div>
+                                    <button onClick={() => handleSelectProject(p)} className="btn-premium w-full !py-3 !text-sm">Editar Laminas</button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -269,7 +286,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {localSlides.map((slide, idx) => (
-                        <div key={slide.id} onClick={() => setSelectedIdx(idx)} style={{ position: 'relative', borderRadius: '8px', border: `2px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'}`, background: '#111', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s' }}>
+                        <div key={slide.id} onClick={() => setSelectedIdx(idx)} style={{ position: 'relative', borderRadius: '8px', border: `2px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'} `, background: '#111', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s' }}>
                             <span style={{ position: 'absolute', top: '3px', left: '3px', zIndex: 10, fontSize: '9px', background: 'rgba(0,0,0,0.6)', padding: '1px 4px', borderRadius: '3px', color: 'white' }}>{idx + 1}</span>
                             {slide.image_url ? <img src={slide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div className="h-full flex items-center justify-center opacity-10"><ImageIcon size={20} color="#fff" /></div>}
                             <button onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx); }} style={{ position: 'absolute', top: '3px', right: '3px', zIndex: 10, background: 'rgba(239, 68, 68, 0.8)', border: 'none', color: 'white', padding: '3px', borderRadius: '3px' }}><Trash2 size={10} /></button>
@@ -289,7 +306,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     </div>
                     <div className="flex gap-3">
                         <button onClick={onViewResults} className="btn-outline !py-2 !text-xs"><Eye size={14} /> Resultados</button>
-                        <button onClick={onToggleActive} className={`btn-outline !py-2 !text-xs ${isActive ? 'text-red-500' : 'text-emerald-500'}`}>
+                        <button onClick={onToggleActive} className={`btn - outline!py - 2!text - xs ${isActive ? 'text-red-500' : 'text-emerald-500'} `}>
                             {isActive ? <Pause size={14} /> : <Play size={14} />} {isActive ? 'Parar' : 'Iniciar'}
                         </button>
                         <button onClick={handleSaveAll} className="btn-premium !py-2 !text-xs"><Save size={14} /> Guardar Todo</button>
@@ -309,7 +326,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             )}
 
                             {currentSlide?.elements.map(el => (
-                                <div key={el.id} onMouseDown={() => setDraggingElementId(el.id)} style={{ position: 'absolute', left: `${el.x}%`, top: `${el.y}%`, transform: 'translate(-50%, -50%)', zIndex: 100, cursor: 'move', padding: '10px', border: draggingElementId === el.id ? '2px solid #7c3aed' : '2px dashed white/20', borderRadius: '12px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', width: el.width ? `${(el.width / 9) * 1}%` : 'auto' }}>
+                                <div key={el.id} onMouseDown={() => setDraggingElementId(el.id)} style={{ position: 'absolute', left: `${el.x}% `, top: `${el.y}% `, transform: 'translate(-50%, -50%)', zIndex: 100, cursor: 'move', padding: '10px', border: draggingElementId === el.id ? '2px solid #7c3aed' : '2px dashed white/20', borderRadius: '12px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', width: el.width ? `${(el.width / 9) * 1}% ` : 'auto' }}>
                                     {el.type === 'text' && (
                                         <textarea value={el.text} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value; setLocalSlides(copy); }} className="bg-transparent border-none text-white text-center w-full focus:outline-none font-bold resize-none" />
                                     )}
