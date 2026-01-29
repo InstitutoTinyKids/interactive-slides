@@ -224,6 +224,7 @@ export default function App() {
                 key={currentSlideIdx} // CRITICAL: Reset state on slide change
                 slide={slides[currentSlideIdx]}
                 alias={alias}
+                role={role}
                 currentIndex={currentSlideIdx}
                 totalSlides={slides.length}
                 isFirst={currentSlideIdx === 0}

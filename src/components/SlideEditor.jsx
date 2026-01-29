@@ -99,10 +99,30 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
         setLoading(true);
         try {
+            // 1. Fetch all slides for these projects to get their file URLs
+            const { data: slidesToDelete } = await supabase
+                .from('slides')
+                .select('image_url, audio_url, elements')
+                .in('project_id', selectedProjects);
+
+            if (slidesToDelete) {
+                for (const slide of slidesToDelete) {
+                    if (slide.image_url) await deleteFileFromStorage(slide.image_url);
+                    if (slide.audio_url) await deleteFileFromStorage(slide.audio_url);
+                    if (slide.elements) {
+                        for (const el of slide.elements) {
+                            if (el.url) await deleteFileFromStorage(el.url);
+                        }
+                    }
+                }
+            }
+
+            // 2. Delete the projects (cascading will handle slides in DB)
             const { error } = await supabase.from('projects').delete().in('id', selectedProjects);
             if (error) throw error;
+
             loadProjects();
-            alert('Programas eliminados correctamente.');
+            alert('Programas y archivos eliminados correctamente.');
         } catch (err) {
             alert('Error al eliminar: ' + err.message);
         }
@@ -494,7 +514,12 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 110, background: 'rgba(16, 185, 129, 0.2)', padding: '10px 15px', borderRadius: '12px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '10px', backdropFilter: 'blur(10px)' }}>
                                     <button onClick={() => { const a = new Audio(currentSlide.audio_url); a.play(); }} style={{ background: '#10b981', border: 'none', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Play size={12} fill="white" /></button>
                                     <span style={{ fontSize: '10px', fontWeight: 900 }}>AUDIO CARGADO</span>
-                                    <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].audio_url = ''; setLocalSlides(copy); }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
+                                    <button onClick={async () => {
+                                        if (currentSlide.audio_url) await deleteFileFromStorage(currentSlide.audio_url);
+                                        const copy = [...localSlides];
+                                        copy[selectedIdx].audio_url = '';
+                                        setLocalSlides(copy);
+                                    }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                 </div>
                             )}
 
@@ -669,7 +694,15 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === selectedElementId))} />
                                             </label>
                                         )}
-                                        <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== selectedElementId); setLocalSlides(copy); setSelectedElementId(null); setDraggingElementId(null); }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
+                                        <button onClick={async () => {
+                                            const elementToDelete = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
+                                            if (elementToDelete?.url) await deleteFileFromStorage(elementToDelete.url);
+                                            const copy = [...localSlides];
+                                            copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== selectedElementId);
+                                            setLocalSlides(copy);
+                                            setSelectedElementId(null);
+                                            setDraggingElementId(null);
+                                        }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
                                             <Trash2 size={16} /> Eliminar Elemento
                                         </button>
                                     </div>

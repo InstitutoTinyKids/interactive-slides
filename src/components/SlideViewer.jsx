@@ -276,169 +276,136 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                     <div
                         style={{
                             position: 'absolute',
-                            bottom: slide?.format === '1/1' ? '2cqh' : 0,
-                            left: slide?.format === '1/1' ? '2.5%' : 0,
-                            right: slide?.format === '1/1' ? '2.5%' : 0,
-                            width: slide?.format === '1/1' ? '95%' : '100%',
-                            height: isMobile
-                                ? (slide?.format === '1/1' ? '15cqh' : '20cqh')
-                                : (slide?.format === '1/1' ? '10cqh' : '12cqh'),
-                            background: slide?.format === '1/1'
-                                ? 'rgba(10, 10, 26, 0.85)'
-                                : 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 100%)',
-                            backdropFilter: 'blur(15px)',
+                            bottom: slide?.format === '1/1' ? '2.5cqh' : 0,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: slide?.format === '1/1' ? '90%' : '100%',
+                            height: 'auto',
+                            minHeight: isMobile ? '13cqh' : '11cqh',
+                            background: 'rgba(15, 15, 35, 0.98)',
+                            backdropFilter: 'blur(30px)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            zIndex: 100,
+                            borderRadius: slide?.format === '1/1' ? '3cqh' : 0,
+                            borderTop: '1px solid rgba(255,255,255,0.1)',
+                            border: slide?.format === '1/1' ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                            touchAction: 'auto',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+                            overflow: 'hidden'
+                        }}
+                    >
+                        {/* Main Content Area - Strictly Centered */}
+                        <div style={{
+                            flex: 1,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: isMobile
-                                ? (slide?.format === '1/1' ? '0 3cqw' : '0 3cqw 6cqh 3cqw')
-                                : '0 3cqw',
-                            gap: '1.5cqw',
-                            zIndex: 100,
-                            borderRadius: slide?.format === '1/1' ? '2.5cqh' : 0,
-                            border: slide?.format === '1/1' ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                            borderTop: '1px solid rgba(255,255,255,0.1)',
-                            touchAction: 'auto',
-                            boxShadow: slide?.format === '1/1' ? '0 10px 40px rgba(0,0,0,0.5)' : 'none'
-                        }}
-                    >
-                        {/* Audio & Info */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '2cqw', flexShrink: 0 }}>
-                            {slide?.audio_url && (
-                                <button
-                                    onClick={() => { if (isPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsPlaying(!isPlaying); }}
-                                    style={{ background: isPlaying ? '#7c3aed' : 'rgba(255,255,255,0.1)', border: 'none', width: '7cqh', height: '7cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
-                                >
-                                    {isPlaying ? <Pause size="50%" /> : <Volume2 size="50%" />}
-                                    <audio ref={audioRef} src={slide.audio_url} onEnded={() => setIsPlaying(false)} />
-                                </button>
-                            )}
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontSize: '2.2cqh', fontWeight: 800, color: 'white', opacity: 0.9, lineHeight: 1 }}>{alias}</span>
-                                <span style={{ fontSize: '1.6cqh', color: '#a78bfa', fontWeight: 700 }}>PAG {currentIndex + 1} / {totalSlides}</span>
-                            </div>
-                        </div>
-
-                        {/* Middle Controls */}
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: slide?.format === '1/1' ? '6cqw' : '10cqw' }}>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <button onClick={onPrev} disabled={isFirst} style={{ background: 'none', border: 'none', color: 'white', opacity: isFirst ? 0.2 : 0.8, cursor: 'pointer', width: '8cqh', height: '8cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <ChevronLeft size="70%" />
-                                </button>
-                                <button onClick={onNext} disabled={isLast} style={{ background: 'none', border: 'none', color: 'white', opacity: isLast ? 0.2 : 0.8, cursor: 'pointer', width: '8cqh', height: '8cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <ChevronRight size="70%" />
-                                </button>
-                            </div>
-
-                            {tool === 'draw' && (
-                                <div style={{ display: 'flex', gap: '4cqw', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.6cqh 2cqh', borderRadius: '1.5cqh' }}>
-                                    <button onClick={undo} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '5.5cqh', height: '5.5cqh', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Undo2 size="60%" />
+                            padding: isMobile ? '0 5cqw' : '0 4cqw',
+                            height: isMobile ? '13cqh' : '11cqh',
+                            width: '100%'
+                        }}>
+                            {/* Left: Audio & Info */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '2.5cqw', flexShrink: 0 }}>
+                                {slide?.audio_url && (
+                                    <button
+                                        onClick={() => { if (isPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsPlaying(!isPlaying); }}
+                                        style={{ background: isPlaying ? 'rgba(124, 58, 237, 0.2)' : 'none', border: 'none', width: '7cqh', height: '7cqh', borderRadius: '50%', color: isPlaying ? '#a78bfa' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
+                                    >
+                                        {isPlaying ? <Pause size="55%" /> : <Volume2 size="55%" />}
+                                        <audio ref={audioRef} src={slide.audio_url} onEnded={() => setIsPlaying(false)} />
                                     </button>
+                                )}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                                    <span style={{ fontSize: isMobile ? '2.4cqh' : '2.8cqh', fontWeight: 900, color: 'white', lineHeight: 1 }}>{alias}</span>
+                                    <span style={{ fontSize: isMobile ? '1.5cqh' : '1.8cqh', color: '#a78bfa', fontWeight: 700, opacity: 0.8 }}>PAG {currentIndex + 1}/{totalSlides}</span>
+                                </div>
+                            </div>
 
-                                    {/* Width Settings Button */}
-                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                        <button
-                                            onClick={() => setActiveMenu(activeMenu === 'width' ? 'none' : 'width')}
-                                            style={{
-                                                background: activeMenu === 'width' ? 'white' : 'rgba(255,255,255,0.1)',
-                                                border: 'none',
-                                                width: '5.5cqh',
-                                                height: '5.5cqh',
-                                                borderRadius: '1.2cqh',
-                                                color: activeMenu === 'width' ? '#7c3aed' : 'white',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                                transition: '0.2s',
-                                                zIndex: 300
-                                            }}
-                                        >
-                                            <Settings2 size="3.5cqh" />
+                            {/* Middle: Drawing Tools (Unified Clean Style) */}
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '4cqw' : '6cqw' }}>
+                                {tool === 'draw' && (
+                                    <>
+                                        <button onClick={undo} style={{ background: 'none', border: 'none', width: '7cqh', height: '7cqh', color: 'white', opacity: 0.9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                            <Undo2 size="65%" />
                                         </button>
 
-                                        {activeMenu === 'width' && (
-                                            <div className="glass anim-up" style={{
-                                                position: 'absolute', bottom: '8cqh', left: '50%', transform: 'translateX(-50%)',
-                                                background: 'rgba(10, 10, 26, 0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)',
-                                                borderRadius: '2cqh', padding: '2cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2.5cqh',
-                                                zIndex: 200, boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
-                                            }}>
-                                                <div style={{ height: '16cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1cqh' }}>
-                                                    <div style={{ width: '4cqh', height: '4cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <div style={{ width: `${Math.max(2, lineWidth / 2.2)}px`, height: `${Math.max(2, lineWidth / 2.2)}px`, background: 'white', borderRadius: '50%' }} />
-                                                    </div>
-                                                    <div style={{ height: '10cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <input
-                                                            type="range" min="2" max="30" value={lineWidth}
-                                                            onChange={(e) => setLineWidth(parseInt(e.target.value))}
-                                                            style={{
-                                                                outline: 'none',
-                                                                width: '10cqh',
-                                                                height: '6px',
-                                                                transform: 'rotate(-90deg)',
-                                                                accentColor: '#7c3aed',
-                                                                cursor: 'pointer',
-                                                                background: 'rgba(255,255,255,0.1)',
-                                                                borderRadius: '10px',
-                                                                appearance: 'none',
-                                                                margin: 0
-                                                            }}
-                                                        />
+                                        {/* Width Selection */}
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                            <button
+                                                onClick={() => setActiveMenu(activeMenu === 'width' ? 'none' : 'width')}
+                                                style={{ background: 'none', border: 'none', width: '7cqh', height: '7cqh', color: activeMenu === 'width' ? '#a78bfa' : 'white', opacity: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 300 }}
+                                            >
+                                                <Settings2 size="4cqh" />
+                                            </button>
+                                            {activeMenu === 'width' && (
+                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: '10cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2.5cqh', padding: '2.5cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+                                                    <div style={{ height: '18cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1cqh' }}>
+                                                        <div style={{ width: '4.5cqh', height: '4.5cqh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <div style={{ width: `${Math.max(3, lineWidth / 2)}px`, height: `${Math.max(3, lineWidth / 2)}px`, background: 'white', borderRadius: '50%' }} />
+                                                        </div>
+                                                        <input type="range" min="2" max="30" value={lineWidth} onChange={(e) => setLineWidth(parseInt(e.target.value))} style={{ width: '12cqh', height: '6px', transform: 'rotate(-90deg)', accentColor: '#7c3aed', cursor: 'pointer', marginTop: '4cqh' }} />
                                                     </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                            )}
+                                        </div>
 
-                                    {/* Color Settings Button */}
-                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                        <button
-                                            onClick={() => setActiveMenu(activeMenu === 'color' ? 'none' : 'color')}
-                                            style={{
-                                                width: '5.5cqh', height: '5.5cqh', borderRadius: '50%', background: color,
-                                                border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)',
-                                                cursor: 'pointer', flexShrink: 0, transition: '0.2s'
-                                            }}
-                                        />
-
-                                        {activeMenu === 'color' && (
-                                            <div className="glass anim-up" style={{
-                                                position: 'absolute', bottom: '8cqh', left: '50%', transform: 'translateX(-50%)',
-                                                background: 'rgba(10, 10, 26, 0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)',
-                                                borderRadius: '2cqh', padding: '2cqh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2.5cqh',
-                                                zIndex: 200, boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
-                                            }}>
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.2cqh' }}>
-                                                    {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
-                                                        <button
-                                                            key={c}
-                                                            onClick={() => { setColor(c); setActiveMenu('none'); }}
-                                                            style={{
-                                                                width: '5cqh', height: '5cqh', borderRadius: '50%', background: c,
-                                                                border: color === c ? '2.5px solid white' : '1px solid rgba(255,255,255,0.1)',
-                                                                cursor: 'pointer', boxShadow: color === c ? `0 0 15px ${c}` : 'none'
-                                                            }}
-                                                        />
-                                                    ))}
+                                        {/* Color Selection */}
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                            <button
+                                                onClick={() => setActiveMenu(activeMenu === 'color' ? 'none' : 'color')}
+                                                style={{ width: '6.5cqh', height: '6.5cqh', borderRadius: '50%', background: color, border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s' }}
+                                            />
+                                            {activeMenu === 'color' && (
+                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: '10cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2.5cqh', padding: '2.5cqh', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5cqh' }}>
+                                                        {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
+                                                            <button key={c} onClick={() => { setColor(c); setActiveMenu('none'); }} style={{ width: '5.5cqh', height: '5.5cqh', borderRadius: '50%', background: c, border: color === c ? '3px solid white' : '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: color === c ? `0 0 20px ${c}` : 'none' }} />
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Right: Actions */}
+                            <div style={{ display: 'flex', gap: '3cqw', alignItems: 'center', flexShrink: 0 }}>
+                                <button
+                                    onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }}
+                                    style={{ background: 'none', border: 'none', color: 'white', width: '7cqh', height: '7cqh', opacity: 0.9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                    <RotateCcw size="60%" />
+                                </button>
+                                <button
+                                    onClick={() => onComplete({ paths, stamps, textValues, dragItems })}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
+                                        border: 'none',
+                                        color: 'white',
+                                        height: '7.5cqh',
+                                        padding: '0 4cqw',
+                                        borderRadius: '1.5cqh',
+                                        fontWeight: 900,
+                                        fontSize: isMobile ? '2.2cqh' : '2.6cqh',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minWidth: '12cqw',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 10px 20px rgba(124, 58, 237, 0.3)'
+                                    }}
+                                >
+                                    {isLast ? 'FIN' : 'SIG'}
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Right: Actions */}
-                        <div style={{ display: 'flex', gap: '5cqw', flexShrink: 0 }}>
-                            <button onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '1cqh 1.5cqh', borderRadius: '1cqh', cursor: 'pointer' }}>
-                                <RotateCcw size="3.5cqh" />
-                            </button>
-                            <button onClick={() => onComplete({ paths, stamps, textValues, dragItems })} style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', border: 'none', color: 'white', padding: isMobile ? '1.5cqh 3cqh' : '1cqh 2.5cqh', borderRadius: '1.2cqh', fontWeight: 800, fontSize: '2cqh' }}>
-                                {isLast ? 'FIN' : 'SIG'}
-                            </button>
-                        </div>
+                        {/* Bottom Safe Area Padding (iPhone) */}
+                        {isMobile && slide?.format !== '1/1' && (
+                            <div style={{ height: 'env(safe-area-inset-bottom)', width: '100%', background: 'transparent' }} />
+                        )}
                     </div>
                 </div>
             </main>
