@@ -293,7 +293,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 <Trash2 size={isMobile ? 16 : 20} /> {isMobile ? `Eliminar (${selectedProjects.length})` : `Eliminar Seleccionados (${selectedProjects.length})`}
                             </button>
                         )}
-                        <button onClick={onExit} className="btn-outline" style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}>Volver</button>
+                        <button onClick={onExit} className="btn-outline" style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <ChevronLeft size={isMobile ? 16 : 20} style={{ marginRight: '-4px' }} /> Home
+                        </button>
                         <button onClick={() => setShowAddModal(true)} className="btn-premium" style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}>
                             <Plus size={isMobile ? 16 : 20} /> Agregar
                         </button>
@@ -533,72 +535,95 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             {el.url ? <img src={el.url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} /> : <Move size={24} color="#3b82f6" />}
                                         </div>
                                     )}
-                                    <div onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }} style={{ position: 'absolute', bottom: '0', right: '0', width: '15px', height: '15px', cursor: 'nwse-resize', borderRight: '2px solid var(--primary)', borderBottom: '2px solid var(--primary)' }} />
+                                    <div
+                                        onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }}
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: '-10px',
+                                            right: '-10px',
+                                            width: '24px',
+                                            height: '24px',
+                                            cursor: 'nwse-resize',
+                                            background: 'var(--primary)',
+                                            borderRadius: '50%',
+                                            border: '3px solid white',
+                                            boxShadow: '0 4px 10px rgba(124, 58, 237, 0.5)',
+                                            zIndex: 110,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'transform 0.2s'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+                                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                                    />
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div style={{ width: '320px', background: 'rgba(10, 10, 20, 0.9)', borderLeft: '1px solid var(--border)', padding: '30px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
-                        <div>
-                            <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}><SettingsIcon size={18} /> Ajustes</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre del Programa</label>
-                                    <input className="premium-input" type="text" value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} style={{ padding: '12px' }} />
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clave de Acceso</label>
-                                    <input className="premium-input" type="text" value={currentProject?.access_code || ''} onChange={(e) => setCurrentProject({ ...currentProject, access_code: e.target.value })} style={{ padding: '12px' }} />
+                    <div style={{ width: '320px', background: 'rgba(10, 10, 20, 0.95)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                        <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+                            <div>
+                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}><SettingsIcon size={18} /> Ajustes</h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre del Programa</label>
+                                        <input className="premium-input" type="text" value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} style={{ padding: '12px' }} />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clave de Acceso</label>
+                                        <input className="premium-input" type="text" value={currentProject?.access_code || ''} onChange={(e) => setCurrentProject({ ...currentProject, access_code: e.target.value })} style={{ padding: '12px' }} />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div>
-                            <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '25px' }}>Herramientas</h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                {[
-                                    { type: 'draw', icon: Paintbrush, color: '#7c3aed' },
-                                    { type: 'drag', icon: Move, color: '#3b82f6' },
-                                    { type: 'stamp', icon: Target, color: '#ef4444' },
-                                    { type: 'text', icon: Type, color: '#10b981' }
-                                ].map(t => (
-                                    <button key={t.type} onClick={() => addElement(t.type)} className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: '0.2s', border: '1px solid var(--border)', borderRadius: '16px' }} onMouseEnter={e => e.currentTarget.style.borderColor = t.color} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
-                                        <div style={{ color: t.color }}><t.icon size={22} /></div>
-                                        <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: 'white' }}>{t.type}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            {/* Element Specific Tools - Always visible when selected */}
-                            {selectedElementId && localSlides[selectedIdx]?.elements.find(e => e.id === selectedElementId) && (
-                                <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
-                                    <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', marginBottom: '15px', textTransform: 'uppercase' }}>Opciones del Elemento</h4>
-                                    {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.type === 'drag' && (
-                                        <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
-                                            <Upload size={16} /> Subir Imagen
-                                            <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === selectedElementId))} />
-                                        </label>
-                                    )}
-                                    <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== selectedElementId); setLocalSlides(copy); setSelectedElementId(null); setDraggingElementId(null); }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
-                                        <Trash2 size={16} /> Eliminar Elemento
-                                    </button>
-                                </div>
-                            )}
 
                             <div>
-                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio de L\u00e1mina</h3>
-                                <label className="btn-outline" style={{ width: '100%', padding: '15px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                                    <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
-                                    <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
-                                </label>
+                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '25px' }}>Herramientas</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    {[
+                                        { type: 'draw', icon: Paintbrush, color: '#7c3aed' },
+                                        { type: 'drag', icon: Move, color: '#3b82f6' },
+                                        { type: 'stamp', icon: Target, color: '#ef4444' },
+                                        { type: 'text', icon: Type, color: '#10b981' }
+                                    ].map(t => (
+                                        <button key={t.type} onClick={() => addElement(t.type)} className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: '0.2s', border: '1px solid var(--border)', borderRadius: '16px' }} onMouseEnter={e => e.currentTarget.style.borderColor = t.color} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                                            <div style={{ color: t.color }}><t.icon size={22} /></div>
+                                            <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: 'white' }}>{t.type}</span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
-                            <div style={{ background: 'rgba(124, 58, 237, 0.05)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
-                                <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '8px' }}>Tip de Edici\u00f3n</h4>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{selectedElementId ? 'Edita las opciones del elemento seleccionado arriba.' : 'Haz clic en un elemento para ver sus opciones espec\u00edficas.'}</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {/* Element Specific Tools - Always visible when selected */}
+                                {selectedElementId && localSlides[selectedIdx]?.elements.find(e => e.id === selectedElementId) && (
+                                    <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                                        <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', marginBottom: '15px', textTransform: 'uppercase' }}>Opciones del Elemento</h4>
+                                        {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.type === 'drag' && (
+                                            <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
+                                                <Upload size={16} /> Subir Imagen
+                                                <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === selectedElementId))} />
+                                            </label>
+                                        )}
+                                        <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== selectedElementId); setLocalSlides(copy); setSelectedElementId(null); setDraggingElementId(null); }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
+                                            <Trash2 size={16} /> Eliminar Elemento
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio de L\u00e1mina</h3>
+                                    <label className="btn-outline" style={{ width: '100%', padding: '15px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                                        <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
+                                        <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
+                                    </label>
+                                </div>
+
+                                <div style={{ background: 'rgba(124, 58, 237, 0.05)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
+                                    <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '8px' }}>Tip de Edici\u00f3n</h4>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{selectedElementId ? 'Edita las opciones del elemento seleccionado arriba.' : 'Haz clic en un elemento para ver sus opciones espec\u00edficas.'}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
