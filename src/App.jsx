@@ -29,6 +29,27 @@ export default function App() {
         loadProjectData();
     }, []);
 
+    // Preload Slide Assets
+    useEffect(() => {
+        if (slides.length > 0 && view === 'viewer') {
+            // Preload current and next 2 slides
+            const toPreload = [currentSlideIdx, currentSlideIdx + 1, currentSlideIdx + 2];
+            toPreload.forEach(idx => {
+                const s = slides[idx];
+                if (s) {
+                    if (s.image_url) {
+                        const img = new Image();
+                        img.src = s.image_url;
+                    }
+                    if (s.audio_url) {
+                        const audio = new Audio();
+                        audio.src = s.audio_url;
+                    }
+                }
+            });
+        }
+    }, [currentSlideIdx, slides, view]);
+
     const loadProjectData = async () => {
         setLoading(true);
         try {
@@ -45,7 +66,7 @@ export default function App() {
                 // Initial project creation
                 await supabase
                     .from('projects')
-                    .upsert({ id: PROJECT_ID, name: 'Clase Interactiva', is_active: false });
+                    .upsert({ id: PROJECT_ID, name: 'Guía Tiny Kids', is_active: false });
             }
 
             // Get slides
@@ -83,7 +104,7 @@ export default function App() {
             // Ensure project exists
             const { error: projectError } = await supabase
                 .from('projects')
-                .upsert({ id: PROJECT_ID, name: 'Clase Interactiva', is_active: isActive });
+                .upsert({ id: PROJECT_ID, name: 'Guía Tiny Kids', is_active: isActive });
 
             if (projectError) throw new Error(`Error en proyecto: ${projectError.message}`);
 

@@ -1,5 +1,5 @@
 @echo off
-echo Iniciando el Aula Interactiva...
+echo Iniciando la Guía Tiny Kids...
 cd /d "%~dp0"
 echo.
 echo === INSTRUCCIONES PARA COMPARTIR ===

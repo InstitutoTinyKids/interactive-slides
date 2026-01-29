@@ -68,6 +68,14 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
         else if (types.includes('drag')) setTool('drag');
         else if (types.includes('stamp')) setTool('stamp');
         else if (types.includes('text')) setTool('text');
+
+        // Preload Next Slide Image
+        if (onNext) {
+            // This is a bit tricky since we don't have the next slide object here directly, 
+            // but we can infer it or just rely on the parent.
+            // However, SlideViewer is key-ed by currentSlideIdx in App.jsx, 
+            // so we might want to do preloading in App.jsx instead.
+        }
     }, [slide]);
 
     // Canvas Rendering

@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+import { optimizeImage } from '../lib/imageOptimizer';
+
 export default function SlideEditor({ slides, onSave, onExit, isActive, onToggleActive, onViewResults }) {
     const [localSlides, setLocalSlides] = useState(slides || []);
     const [selectedIdx, setSelectedIdx] = useState(0);
@@ -38,11 +40,16 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const currentSlide = localSlides[selectedIdx] || null;
 
     const handleFileUpload = async (event, type, slideIdx, elementIdx = null) => {
-        const file = event.target.files[0];
+        let file = event.target.files[0];
         if (!file) return;
 
         setLoading(true);
         try {
+            // Optimization: Compress the image if it's a background or icon
+            if (type === 'bg' || type === 'drag_img') {
+                file = await optimizeImage(file);
+            }
+
             const fileName = `${Date.now()}-${file.name}`;
             const { data, error } = await supabase.storage.from('media').upload(fileName, file);
             if (error) throw error;

@@ -13,7 +13,7 @@ export default function AliasEntry({ onEnter, onAdmin, isActive }) {
 
     const handleAdminSubmit = (e) => {
         e.preventDefault();
-        if (pass === '123') {
+        if (pass === '3232**') {
             setShowAdminPass(false);
             setPass('');
             onAdmin();
@@ -48,19 +48,17 @@ export default function AliasEntry({ onEnter, onAdmin, isActive }) {
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{
-                        width: '70px',
-                        height: '70px',
-                        background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
-                        borderRadius: '20px',
+                        width: '90px',
+                        height: '90px',
+                        background: 'transparent',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        margin: '0 auto 20px',
-                        boxShadow: '0 10px 25px rgba(124, 58, 237, 0.3)'
+                        margin: '0 auto 10px',
                     }}>
-                        <Play fill="white" size={30} color="white" />
+                        <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                     </div>
-                    <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>Aula Interactiva</h1>
+                    <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '4px', letterSpacing: '-1px' }}>Guía Tiny Kids</h1>
                     <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Ingresa para comenzar la lección</p>
                 </div>
 
