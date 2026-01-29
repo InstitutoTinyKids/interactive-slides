@@ -244,7 +244,16 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     const addElement = (type) => {
         const newSlides = [...localSlides];
-        const newEl = { id: crypto.randomUUID(), type, x: 50, y: 50, width: type === 'text' ? 300 : null, height: type === 'text' ? 150 : null, text: type === 'text' ? 'Escribe aquí...' : '', url: '' };
+        const newEl = {
+            id: crypto.randomUUID(),
+            type,
+            x: 50,
+            y: 50,
+            width: type === 'text' ? 300 : (type === 'drag' ? 50 : null),
+            height: type === 'text' ? 150 : (type === 'drag' ? 50 : null),
+            text: type === 'text' ? 'Escribe aquí...' : '',
+            url: ''
+        };
         newSlides[selectedIdx].elements.push(newEl);
         setLocalSlides(newSlides);
     };
@@ -513,8 +522,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         borderRadius: '12px',
                                         background: el.url ? 'transparent' : 'rgba(0,0,0,0.5)',
                                         backdropFilter: el.url ? 'none' : 'blur(10px)',
-                                        width: el.width ? `${(el.width / 900) * 100}%` : 'auto',
-                                        height: el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto',
+                                        width: el.type === 'drag' ? '50px' : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
+                                        height: el.type === 'drag' ? '50px' : (el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto'),
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
