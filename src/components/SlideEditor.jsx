@@ -40,15 +40,23 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     }, [slides]);
 
     const loadProjects = async () => {
-        const { data } = await supabase.from('projects').select('*').order('name');
-        setProjects(data || []);
-        setSelectedProjects([]); // Reset selection on reload
+        const { data } = await supabase.from('projects').select('*');
+        if (data) {
+            const sorted = data.sort((a, b) => {
+                const idxA = PROGRAM_ORDER.indexOf(a.name);
+                const idxB = PROGRAM_ORDER.indexOf(b.name);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            setProjects(sorted);
+        }
+        setSelectedProjects([]);
     };
 
-    const handleCreateProject = async () => {
-        const name = prompt('Nombre del programa educativo (ej. Baby Program):');
-        if (!name) return;
-        const accessCode = prompt('Define la Clave de Acceso para este programa:', '123');
+    const handleCreateProject = async (name) => {
+        const accessCode = prompt(`Define la Clave de Acceso para ${name}:`, '123');
         if (!accessCode) return;
 
         const newProject = {
@@ -62,6 +70,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         if (error) {
             alert('Error al agregar programa: ' + error.message);
         } else {
+            setShowAddModal(false);
             loadProjects();
         }
     };
@@ -267,11 +276,36 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             </button>
                         )}
                         <button onClick={onExit} className="btn-outline" style={{ padding: '12px 25px' }}>Volver al Inicio</button>
-                        <button onClick={handleCreateProject} className="btn-premium" style={{ padding: '12px 25px' }}>
+                        <button onClick={() => setShowAddModal(true)} className="btn-premium" style={{ padding: '12px 25px' }}>
                             <Plus size={20} /> Agregar Programa
                         </button>
                     </div>
                 </div>
+
+                {/* Custom Modal for Selection */}
+                {showAddModal && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div className="glass anim-up" style={{ width: '400px', padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <h2 style={{ fontSize: '1.2rem', color: 'white' }}>Seleccionar Programa</h2>
+                                <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}><X size={20} /></button>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {PROGRAM_ORDER.map(prog => (
+                                    <button
+                                        key={prog}
+                                        onClick={() => handleCreateProject(prog)}
+                                        className="btn-outline"
+                                        style={{ justifyContent: 'start', padding: '15px' }}
+                                        disabled={projects.some(p => p.name === prog)}
+                                    >
+                                        {prog} {projects.some(p => p.name === prog) && '(Ya existe)'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div style={{ flex: 1, overflowY: 'auto', paddingRight: '10px' }}>
                     {projects.length === 0 ? (
@@ -338,7 +372,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     </div>
 
                                     <button onClick={() => handleSelectProject(p)} className="btn-premium" style={{ width: '100%', marginTop: 'auto' }}>
-                                        Entrar a Editar
+                                        Editar
                                     </button>
                                 </div>
                             ))}
@@ -395,10 +429,34 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             ) : (
                                 <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px', color: '#475569' }}>
                                     <ImageIcon size={60} />
-                                    <label className="btn-premium" style={{ padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer' }}>
-                                        Subir Fondo Principal
-                                        <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'bg', selectedIdx)} />
-                                    </label>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <label className="btn-premium" style={{ padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                            Subir Fondo HD
+                                            <input type="file" style={{ display: 'none' }} onChange={(e) => {
+                                                const copy = [...localSlides];
+                                                copy[selectedIdx].format = '16/9';
+                                                setLocalSlides(copy);
+                                                handleFileUpload(e, 'bg', selectedIdx);
+                                            }} />
+                                        </label>
+                                        <label className="btn-outline" style={{ padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                            Subir Fondo Square
+                                            <input type="file" style={{ display: 'none' }} onChange={(e) => {
+                                                const copy = [...localSlides];
+                                                copy[selectedIdx].format = '1/1';
+                                                setLocalSlides(copy);
+                                                handleFileUpload(e, 'bg', selectedIdx);
+                                            }} />
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentSlide?.audio_url && (
+                                <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 110, background: 'rgba(16, 185, 129, 0.2)', padding: '10px 15px', borderRadius: '12px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '10px', backdropFilter: 'blur(10px)' }}>
+                                    <Music size={18} />
+                                    <span style={{ fontSize: '10px', fontWeight: 900 }}>AUDIO CARGADO</span>
+                                    <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].audio_url = ''; setLocalSlides(copy); }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                 </div>
                             )}
 
@@ -450,9 +508,35 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             </div>
                         </div>
 
-                        <div style={{ marginTop: 'auto', background: 'rgba(124, 58, 237, 0.05)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
-                            <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '8px' }}>Tip de Edición</h4>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>Arrastra los elementos para posicionarlos y usa el borde inferior para ajustar el tamaño.</p>
+                        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {/* Element Specific Tools */}
+                            {draggingElementId && (
+                                <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                                    <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', marginBottom: '15px', textTransform: 'uppercase' }}>Opciones del Elemento</h4>
+                                    {localSlides[selectedIdx].elements.find(e => e.id === draggingElementId)?.type === 'drag' && (
+                                        <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer' }}>
+                                            <Upload size={16} /> Subir Imagen
+                                            <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === draggingElementId))} />
+                                        </label>
+                                    )}
+                                    <button onClick={() => { const copy = [...localSlides]; copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== draggingElementId); setLocalSlides(copy); setDraggingElementId(null); }} className="btn-outline" style={{ width: '100%', marginTop: '10px', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
+                                        <Trash2 size={16} /> Eliminar Elemento
+                                    </button>
+                                </div>
+                            )}
+
+                            <div>
+                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio de Lámina</h3>
+                                <label className="btn-outline" style={{ width: '100%', padding: '15px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                                    <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
+                                    <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
+                                </label>
+                            </div>
+
+                            <div style={{ background: 'rgba(124, 58, 237, 0.05)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
+                                <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '8px' }}>Tip de Edición</h4>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>Selecciona un elemento para ver sus opciones. Usa el botón "Guardar" para sincronizar con la nube.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
