@@ -58,11 +58,11 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         loadProjects();
     }, []);
 
-    // Sync slides and project when they change in parent App
+    // Sync project when it changes in parent App (but don't hide gallery - we want gallery first)
     useEffect(() => {
         if (initialProject) {
             setCurrentProject(initialProject);
-            setShowGallery(false);
+            // Removed: setShowGallery(false) - we always want to show gallery first
         }
     }, [initialProject]);
 

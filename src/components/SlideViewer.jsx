@@ -108,13 +108,14 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
         stamps.forEach(s => {
             ctx.beginPath();
             ctx.fillStyle = 'rgba(239, 68, 68, 0.6)';
-            // Use a proportional radius that maintains circular shape regardless of aspect ratio
-            // Canvas is always 1920x1080, so use width-based radius for consistency
-            const stampRadius = 25;
+            // Use width-based scaling to maintain circular shape
+            // The canvas is always 1920x1080 internally, but displayed at different aspect ratios
+            // Using a radius relative to width ensures consistent circles
+            const stampRadius = 30; // Fixed radius that looks good at 1920x1080 scale
             ctx.arc(s.x, s.y, stampRadius, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = 'white';
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 5;
             ctx.stroke();
         });
     }, [paths, stamps]);
@@ -124,9 +125,13 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
+        // Use dynamic canvas dimensions based on format
+        const canvasWidth = slide?.format === '1/1' ? 1080 : 1920;
+        const canvasHeight = 1080;
+
         return {
-            x: ((clientX - rect.left) / rect.width) * 1920,
-            y: ((clientY - rect.top) / rect.height) * 1080
+            x: ((clientX - rect.left) / rect.width) * canvasWidth,
+            y: ((clientY - rect.top) / rect.height) * canvasHeight
         };
     };
 
@@ -283,10 +288,18 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                         ))}
                     </div>
 
-                    <canvas ref={canvasRef} width={1920} height={1080} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 30, cursor: tool === 'draw' ? 'crosshair' : 'default', touchAction: 'none' }} onMouseDown={handleStart} onTouchStart={handleStart} />
+                    <canvas
+                        ref={canvasRef}
+                        width={slide?.format === '1/1' ? 1080 : 1920}
+                        height={1080}
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 30, cursor: tool === 'draw' ? 'crosshair' : 'default', touchAction: 'none' }}
+                        onMouseDown={handleStart}
+                        onTouchStart={handleStart}
+                    />
 
                     {/* IMMERSIVE CONTROL BAR - Unified style for all formats */}
                     <div
+                        onClick={(e) => e.stopPropagation()}
                         style={{
                             position: 'absolute',
                             bottom: 0,
