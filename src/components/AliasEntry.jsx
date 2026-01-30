@@ -91,7 +91,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                     </div>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'white' }}>Student</h3>
-                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Realiza las actividades y guarda tus trazos</p>
+
                     </div>
                     <ChevronRight size={20} color="#3b82f6" />
                 </button>
@@ -108,7 +108,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                     </div>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'white' }}>Teacher</h3>
-                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Modera la clase sin guardar registros</p>
+
                     </div>
                     <ChevronRight size={20} color="#a78bfa" />
                 </button>

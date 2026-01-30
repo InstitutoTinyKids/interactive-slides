@@ -193,7 +193,10 @@ export default function App() {
         return (
             <ResultsViewer
                 slides={slides}
-                onExit={() => setView('editor')}
+                onExit={() => {
+                    setView('editor');
+                    // Don't reset selectedProject - keep the current project context
+                }}
             />
         );
     }

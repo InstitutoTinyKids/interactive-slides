@@ -18,7 +18,19 @@ export default function ResultsViewer({ slides = [], onExit }) {
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedSlideId, setSelectedSlideId] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showStudentsPanel, setShowStudentsPanel] = useState(window.innerWidth >= 768);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const canvasRef = useRef(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            if (!mobile) setShowStudentsPanel(true);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const fetchInteractions = async () => {
         setLoading(true);
@@ -125,11 +137,19 @@ export default function ResultsViewer({ slides = [], onExit }) {
     }
 
     return (
-        <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'fixed', top: 0, left: 0, zIndex: 1000 }}>
+        <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'auto', position: 'fixed', top: 0, left: 0, zIndex: 1000 }}>
             {/* Header */}
             <header style={{ height: '70px', padding: '0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: '#0a0a1a' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                     <button onClick={onExit} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronLeft /></button>
+                    {isMobile && (
+                        <button
+                            onClick={() => setShowStudentsPanel(!showStudentsPanel)}
+                            style={{ background: showStudentsPanel ? 'rgba(124, 58, 237, 0.2)' : 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '8px', borderRadius: '8px', color: showStudentsPanel ? '#a78bfa' : '#94a3b8', cursor: 'pointer' }}
+                        >
+                            <UserIcon size={18} />
+                        </button>
+                    )}
                     <h2 style={{ fontSize: '1.25rem', color: 'white' }}>Resultados</h2>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -146,38 +166,40 @@ export default function ResultsViewer({ slides = [], onExit }) {
 
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
                 {/* Users Sidebar */}
-                <aside style={{ width: '280px', background: '#0a0a1a', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b' }}>ESTUDIANTES</span>
-                    </div>
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {Object.keys(userGroups).sort().map((alias) => (
-                            <button
-                                key={alias}
-                                onClick={() => { setSelectedUser(alias); setSelectedSlideId(null); }}
-                                style={{
-                                    padding: '12px 16px',
-                                    borderRadius: '12px',
-                                    background: selectedUser === alias ? 'rgba(124, 58, 237, 0.15)' : 'transparent',
-                                    border: `1px solid ${selectedUser === alias ? '#7c3aed' : 'rgba(255,255,255,0.05)'}`,
-                                    color: 'white',
-                                    textAlign: 'left',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    transition: '0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <div style={{ width: '28px', height: '28px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><UserIcon size={14} /></div>
-                                    <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{alias}</span>
-                                </div>
-                                <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '100px' }}>{userGroups[alias].length}</span>
-                            </button>
-                        ))}
-                    </div>
-                </aside>
+                {showStudentsPanel && (
+                    <aside style={{ width: isMobile ? '100%' : '280px', background: '#0a0a1a', borderRight: isMobile ? 'none' : '1px solid rgba(255,255,255,0.05)', borderBottom: isMobile ? '1px solid rgba(255,255,255,0.05)' : 'none', display: 'flex', flexDirection: 'column', maxHeight: isMobile ? '40vh' : 'auto', overflowY: 'auto' }}>
+                        <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b' }}>ESTUDIANTES</span>
+                        </div>
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {Object.keys(userGroups).sort().map((alias) => (
+                                <button
+                                    key={alias}
+                                    onClick={() => { setSelectedUser(alias); setSelectedSlideId(null); }}
+                                    style={{
+                                        padding: '12px 16px',
+                                        borderRadius: '12px',
+                                        background: selectedUser === alias ? 'rgba(124, 58, 237, 0.15)' : 'transparent',
+                                        border: `1px solid ${selectedUser === alias ? '#7c3aed' : 'rgba(255,255,255,0.05)'}`,
+                                        color: 'white',
+                                        textAlign: 'left',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        transition: '0.2s'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div style={{ width: '28px', height: '28px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><UserIcon size={14} /></div>
+                                        <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{alias}</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '100px' }}>{userGroups[alias].length}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </aside>
+                )}
 
                 {/* Main Results Display */}
                 <main style={{ flex: 1, padding: '30px', background: 'radial-gradient(circle at center, #0f0f2d, #050510)', overflowY: 'auto' }}>
