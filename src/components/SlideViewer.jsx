@@ -63,10 +63,14 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
         setStamps([]);
         setTextValues({});
 
+        // Use dynamic canvas dimensions based on format
+        const canvasWidth = slide?.format === '1/1' ? 1080 : 1920;
+        const canvasHeight = 1080;
+
         const draggables = slide?.elements?.filter(e => e.type === 'drag').map(e => ({
             ...e,
-            currentX: (e.x / 100) * 1920,
-            currentY: (e.y / 100) * 1080
+            currentX: (e.x / 100) * canvasWidth,
+            currentY: (e.y / 100) * canvasHeight
         })) || [];
         setDragItems(draggables);
 
