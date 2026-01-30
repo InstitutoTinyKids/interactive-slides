@@ -108,7 +108,10 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
         stamps.forEach(s => {
             ctx.beginPath();
             ctx.fillStyle = 'rgba(239, 68, 68, 0.6)';
-            ctx.arc(s.x, s.y, 20, 0, Math.PI * 2);
+            // Use a proportional radius that maintains circular shape regardless of aspect ratio
+            // Canvas is always 1920x1080, so use width-based radius for consistency
+            const stampRadius = 25;
+            ctx.arc(s.x, s.y, stampRadius, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = 'white';
             ctx.lineWidth = 4;
@@ -189,16 +192,19 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
             onTouchEnd={handleEnd}
         >
             {/* RESPONSIVE MAIN STAGE */}
-            <main style={{
-                flex: 1,
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0',
-                background: '#050510',
-                overflow: 'hidden'
-            }}>
+            <main
+                style={{
+                    flex: 1,
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0',
+                    background: '#050510',
+                    overflow: 'hidden'
+                }}
+                onClick={() => setActiveMenu('none')}
+            >
                 <div
                     ref={stageRef}
                     style={{
@@ -428,7 +434,11 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                                 <Settings2 size="60%" />
                                             </button>
                                             {activeMenu === 'width' && (
-                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: isMobile ? (isLandscape ? 'max(38px, 7cqh)' : 'max(48px, 9cqh)') : 'max(44px, 8cqh)', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+                                                <div
+                                                    className="glass anim-up"
+                                                    style={{ position: 'absolute', bottom: isMobile ? (isLandscape ? 'max(38px, 7cqh)' : 'max(48px, 9cqh)') : 'max(44px, 8cqh)', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
                                                     <div style={{ height: '90px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                                                         <div style={{ width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                             <div style={{ width: `${Math.max(3, lineWidth / 2.2)}px`, height: `${Math.max(3, lineWidth / 2.2)}px`, background: 'white', borderRadius: '50%' }} />

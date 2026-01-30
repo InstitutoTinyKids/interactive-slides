@@ -12,7 +12,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [localSlides, setLocalSlides] = useState(slides || []);
     const [selectedIdx, setSelectedIdx] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [showGallery, setShowGallery] = useState(!initialProject);
+    const [showGallery, setShowGallery] = useState(true); // Always start with Gallery view
     const [projects, setProjects] = useState([]);
     const [currentProject, setCurrentProject] = useState(initialProject);
 
@@ -331,11 +331,11 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     if (showGallery) {
         return (
-            <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: isMobile ? '20px' : isTablet ? '30px' : '40px' }}>
+            <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'auto', padding: isMobile ? '20px' : isTablet ? '30px' : '40px' }}>
                 {/* Header Gallery */}
                 <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '20px' : '40px', gap: '15px' }}>
                     <div>
-                        <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Gestión de Programas</h1>
+                        <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Galería</h1>
                         <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.85rem' : '1rem' }}>Administra los niveles educativos y sus claves de acceso</p>
                     </div>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
@@ -498,10 +498,12 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             </button>
                         )}
                         <button onClick={() => setShowGallery(true)} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: '#94a3b8', cursor: 'pointer' }}><LayoutGrid size={22} /></button>
-                        <div>
-                            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{currentProject?.name}</h2>
-                            <span style={{ fontSize: '0.65rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Editor de Programa</span>
-                        </div>
+                        {!isMobile && (
+                            <div>
+                                <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{currentProject?.name}</h2>
+                                <span style={{ fontSize: '0.65rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Editor de Programa</span>
+                            </div>
+                        )}
                     </div>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                         <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem' }}><Eye size={16} /> {!isCompact && 'Resultados'}</button>

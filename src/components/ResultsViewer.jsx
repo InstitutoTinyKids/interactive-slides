@@ -130,16 +130,16 @@ export default function ResultsViewer({ slides = [], onExit }) {
             <header style={{ height: '70px', padding: '0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: '#0a0a1a' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                     <button onClick={onExit} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronLeft /></button>
-                    <h2 style={{ fontSize: '1.25rem', color: 'white' }}>Seguimiento de Aprendizaje</h2>
+                    <h2 style={{ fontSize: '1.25rem', color: 'white' }}>Resultados</h2>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <button onClick={handleDeleteAll} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}>
                         <Trash2 size={18} />
-                        Borrar Resultados
+                        Borrar
                     </button>
                     <button onClick={fetchInteractions} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                        {loading ? 'Actualizando...' : 'Actualizar Datos'}
+                        {loading ? 'Actualizando...' : 'Actualizar'}
                     </button>
                 </div>
             </header>
