@@ -18,6 +18,7 @@ export default function App() {
     const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
     const [loading, setLoading] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    const [returnFromResults, setReturnFromResults] = useState(false);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -178,12 +179,17 @@ export default function App() {
                 }}
                 onExit={() => { setView('entry'); }}
                 onToggleActive={toggleActive}
-                onViewResults={() => setView('results')}
+                onViewResults={() => {
+                    setReturnFromResults(true);
+                    setView('results');
+                }}
                 selectedProject={selectedProject}
+                returnFromResults={returnFromResults}
                 onSelectProject={(p) => {
                     setSelectedProject(p);
                     setIsActive(p.is_active);
                     loadProjectSlides(p.id);
+                    setReturnFromResults(false);
                 }}
             />
         );

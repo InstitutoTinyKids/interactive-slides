@@ -8,11 +8,12 @@ import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
 import confetti from 'canvas-confetti';
 
-export default function SlideEditor({ slides, onSave, onExit, isActive, onToggleActive, onViewResults, selectedProject: initialProject, onSelectProject }) {
+export default function SlideEditor({ slides, onSave, onExit, isActive, onToggleActive, onViewResults, selectedProject: initialProject, onSelectProject, returnFromResults }) {
     const [localSlides, setLocalSlides] = useState(slides || []);
     const [selectedIdx, setSelectedIdx] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [showGallery, setShowGallery] = useState(true); // Always start with Gallery view
+    // Only show gallery if NOT returning from results and no project selected
+    const [showGallery, setShowGallery] = useState(!returnFromResults && !initialProject);
     const [projects, setProjects] = useState([]);
     const [currentProject, setCurrentProject] = useState(initialProject);
 

@@ -270,22 +270,27 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
 
                     {/* Drag Layer */}
                     <div style={{ position: 'absolute', inset: 0, zIndex: 50, pointerEvents: tool === 'drag' ? 'auto' : 'none' }}>
-                        {dragItems.map((item, idx) => (
-                            <div
-                                key={item.id}
-                                style={{ position: 'absolute', left: `${(item.currentX / 1920) * 100}%`, top: `${(item.currentY / 1080) * 100}%`, transform: 'translate(-50%, -50%)', cursor: tool === 'drag' ? 'grab' : 'default', pointerEvents: 'auto', touchAction: 'none' }}
-                                onMouseDown={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
-                                onTouchStart={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
-                            >
-                                {item.url ? (
-                                    <img src={item.url} style={{ width: '12cqw', height: '12cqw', objectFit: 'contain', pointerEvents: 'none' }} />
-                                ) : (
-                                    <div style={{ width: '8cqw', height: '8cqw', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Move color="white" size="50%" />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                        {dragItems.map((item, idx) => {
+                            // Use dynamic canvas width based on format
+                            const canvasWidth = slide?.format === '1/1' ? 1080 : 1920;
+                            const canvasHeight = 1080;
+                            return (
+                                <div
+                                    key={item.id}
+                                    style={{ position: 'absolute', left: `${(item.currentX / canvasWidth) * 100}%`, top: `${(item.currentY / canvasHeight) * 100}%`, transform: 'translate(-50%, -50%)', cursor: tool === 'drag' ? 'grab' : 'default', pointerEvents: 'auto', touchAction: 'none' }}
+                                    onMouseDown={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
+                                    onTouchStart={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
+                                >
+                                    {item.url ? (
+                                        <img src={item.url} style={{ width: '12cqw', height: '12cqw', objectFit: 'contain', pointerEvents: 'none' }} />
+                                    ) : (
+                                        <div style={{ width: '8cqw', height: '8cqw', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Move color="white" size="50%" />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
 
                     <canvas
