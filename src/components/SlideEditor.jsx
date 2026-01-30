@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Plus, Image as ImageIcon, Music, Type, Move, Target, Paintbrush,
     Save, Trash2, X, Play, Pause, Upload, Eye, ChevronLeft, LayoutGrid,
-    Settings as SettingsIcon, ShieldCheck, Key, PanelLeftClose, PanelRightClose, Layers
+    Settings as SettingsIcon, ShieldCheck, Key, PanelLeftClose, PanelRightClose, Layers, Copy, Video
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
@@ -85,6 +85,62 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             setProjects(sorted);
         }
         setSelectedProjects([]);
+    };
+
+    const handleDuplicateProject = async (project) => {
+        const newName = prompt(`Nombre del nuevo programa:`, `Copia de ${project.name}`);
+        if (!newName) return;
+
+        const timestamp = Date.now();
+        const newId = `copy-${timestamp}`;
+        setLoading(true);
+
+        try {
+            // 1. Create New Project
+            const { error: projectError } = await supabase
+                .from('projects')
+                .insert([{
+                    id: newId,
+                    name: newName,
+                    is_active: false,
+                    access_code: project.access_code || '123'
+                }]);
+
+            if (projectError) throw projectError;
+
+            // 2. Load original slides
+            const { data: originalSlides, error: slidesError } = await supabase
+                .from('slides')
+                .select('*')
+                .eq('project_id', project.id);
+
+            if (slidesError) throw slidesError;
+
+            // 3. Create new slides
+            if (originalSlides && originalSlides.length > 0) {
+                const newSlides = originalSlides.map(s => {
+                    const { id, created_at, ...rest } = s;
+                    return {
+                        ...rest,
+                        project_id: newId
+                    };
+                });
+
+                const { error: insertError } = await supabase
+                    .from('slides')
+                    .insert(newSlides);
+
+                if (insertError) throw insertError;
+            }
+
+            alert('Programa duplicado exitosamente');
+            await loadProjects();
+        } catch (error) {
+            console.error('Error duplicating project:', error);
+            alert('Error al duplicar: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleCreateProject = async (name) => {
@@ -175,6 +231,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 project_id: currentProject.id,
                 image_url: s.image_url,
                 audio_url: s.audio_url,
+                video_url: s.video_url,
                 elements: [
                     ...s.elements.filter(e => e.type !== 'format_metadata'),
                     { id: 'fmt-meta', type: 'format_metadata', value: s.format || '16/9' }
@@ -209,6 +266,11 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         }
     };
 
+    const isVideo = (url) => {
+        if (!url) return false;
+        return url.match(/\.(mp4|webm|ogg|mov)$|^blob:|^data:video/i) || url.includes('supabase.co/storage/v1/object/public/media/') && !url.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i);
+    };
+
     const handleFileUpload = async (event, type, slideIdx, elementIdx = null) => {
         let file = event.target.files[0];
         if (!file) return;
@@ -219,6 +281,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             // Cleanup OLD file if replacing
             const oldSlide = localSlides[slideIdx];
             if (type === 'bg' && oldSlide.image_url) await deleteFileFromStorage(oldSlide.image_url);
+            if (type === 'bg' && oldSlide.video_url) await deleteFileFromStorage(oldSlide.video_url);
+            if (type === 'video' && oldSlide.video_url) await deleteFileFromStorage(oldSlide.video_url);
+            if (type === 'video' && oldSlide.image_url) await deleteFileFromStorage(oldSlide.image_url);
             if (type === 'audio' && oldSlide.audio_url) await deleteFileFromStorage(oldSlide.audio_url);
             if (type === 'drag_img' && elementIdx !== null && oldSlide.elements[elementIdx].url) {
                 await deleteFileFromStorage(oldSlide.elements[elementIdx].url);
@@ -230,9 +295,17 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
 
             const newSlides = [...localSlides];
-            if (type === 'bg') newSlides[slideIdx].image_url = publicUrl;
-            else if (type === 'audio') newSlides[slideIdx].audio_url = publicUrl;
-            else if (type === 'drag_img') newSlides[slideIdx].elements[elementIdx].url = publicUrl;
+            if (type === 'bg') {
+                newSlides[slideIdx].image_url = publicUrl;
+                newSlides[slideIdx].video_url = '';
+            } else if (type === 'video') {
+                newSlides[slideIdx].video_url = publicUrl;
+                newSlides[slideIdx].image_url = '';
+            } else if (type === 'audio') {
+                newSlides[slideIdx].audio_url = publicUrl;
+            } else if (type === 'drag_img') {
+                newSlides[slideIdx].elements[elementIdx].url = publicUrl;
+            }
             setLocalSlides(newSlides);
         } catch (error) {
             alert('Error al subir: ' + error.message);
@@ -443,9 +516,19 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
                                     </div>
 
-                                    <button onClick={() => handleSelectProject(p)} className="btn-premium" style={{ width: '100%', marginTop: 'auto' }}>
-                                        Editar
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+                                        <button onClick={() => handleSelectProject(p)} className="btn-premium" style={{ flex: 2 }}>
+                                            Editar
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
+                                            className="btn-outline"
+                                            style={{ flex: 1, padding: '10px' }}
+                                            title="Duplicar Programa"
+                                        >
+                                            <Copy size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -528,7 +611,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
                     <div style={{ flex: 1, padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'auto' }} onClick={() => setSelectedElementId(null)}>
                         <div ref={canvasContainerRef} style={{ width: '100%', maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 50px 100px -20px black', border: '1px solid rgba(255,255,255,0.1)' }} onClick={(e) => e.stopPropagation()}>
-                            {currentSlide?.image_url ? (
+                            {currentSlide?.video_url || isVideo(currentSlide?.image_url) ? (
+                                <video src={currentSlide.video_url || currentSlide.image_url} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                            ) : currentSlide?.image_url ? (
                                 <img src={currentSlide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                             ) : (
                                 <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px', color: '#475569' }}>
@@ -552,7 +637,24 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 handleFileUpload(e, 'bg', selectedIdx);
                                             }} />
                                         </label>
+                                        <label className="btn-outline" style={{ padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer', borderColor: '#a78bfa', color: '#a78bfa' }}>
+                                            <Video size={16} /> Subir Video
+                                            <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'video', selectedIdx)} accept="video/*" />
+                                        </label>
                                     </div>
+                                </div>
+                            )}
+
+                            {currentSlide?.video_url && (
+                                <div style={{ position: 'absolute', bottom: '20px', left: currentSlide?.audio_url ? '180px' : '20px', zIndex: 110, background: 'rgba(124, 58, 237, 0.2)', padding: '10px 15px', borderRadius: '12px', color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '10px', backdropFilter: 'blur(10px)' }}>
+                                    <Video size={16} />
+                                    <span style={{ fontSize: '10px', fontWeight: 900 }}>VIDEO CARGADO</span>
+                                    <button onClick={async () => {
+                                        if (currentSlide.video_url) await deleteFileFromStorage(currentSlide.video_url);
+                                        const copy = [...localSlides];
+                                        copy[selectedIdx].video_url = '';
+                                        setLocalSlides(copy);
+                                    }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                 </div>
                             )}
 
@@ -744,12 +846,79 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 })()}
                                             </div>
                                         </div>
-                                        {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.type === 'drag' && (
-                                            <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
-                                                <Upload size={16} /> Subir Imagen
-                                                <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === selectedElementId))} />
-                                            </label>
-                                        )}
+                                        {(() => {
+                                            const el = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
+                                            if (el?.type === 'drag') {
+                                                return (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '15px' }}>
+                                                        <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer' }}>
+                                                            <Upload size={16} /> Subir Imagen
+                                                            <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === selectedElementId))} />
+                                                        </label>
+
+                                                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                                                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'white' }}>MODO QUIZ</span>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const copy = [...localSlides];
+                                                                        const elIdx = copy[selectedIdx].elements.findIndex(e => e.id === selectedElementId);
+                                                                        copy[selectedIdx].elements[elIdx].isQuiz = !copy[selectedIdx].elements[elIdx].isQuiz;
+                                                                        setLocalSlides(copy);
+                                                                    }}
+                                                                    style={{
+                                                                        width: '40px', height: '20px', borderRadius: '20px',
+                                                                        background: el.isQuiz ? '#10b981' : 'rgba(255,255,255,0.1)',
+                                                                        position: 'relative', cursor: 'pointer', border: 'none'
+                                                                    }}
+                                                                >
+                                                                    <div style={{
+                                                                        width: '16px', height: '16px', borderRadius: '50%', background: 'white',
+                                                                        position: 'absolute', top: '2px',
+                                                                        left: el.isQuiz ? '22px' : '2px', transition: '0.2s'
+                                                                    }} />
+                                                                </button>
+                                                            </div>
+
+                                                            {el.isQuiz && (
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                                                        <div>
+                                                                            <span style={{ fontSize: '0.6rem', color: '#64748b' }}>Target X (%)</span>
+                                                                            <input type="number" value={el.targetX || 50} onChange={(e) => {
+                                                                                const copy = [...localSlides];
+                                                                                const elIdx = copy[selectedIdx].elements.findIndex(e => e.id === selectedElementId);
+                                                                                copy[selectedIdx].elements[elIdx].targetX = parseInt(e.target.value);
+                                                                                setLocalSlides(copy);
+                                                                            }} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '5px' }} />
+                                                                        </div>
+                                                                        <div>
+                                                                            <span style={{ fontSize: '0.6rem', color: '#64748b' }}>Target Y (%)</span>
+                                                                            <input type="number" value={el.targetY || 50} onChange={(e) => {
+                                                                                const copy = [...localSlides];
+                                                                                const elIdx = copy[selectedIdx].elements.findIndex(e => e.id === selectedElementId);
+                                                                                copy[selectedIdx].elements[elIdx].targetY = parseInt(e.target.value);
+                                                                                setLocalSlides(copy);
+                                                                            }} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '5px' }} />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <span style={{ fontSize: '0.6rem', color: '#64748b' }}>Radio (%)</span>
+                                                                        <input type="number" value={el.targetRadius || 10} onChange={(e) => {
+                                                                            const copy = [...localSlides];
+                                                                            const elIdx = copy[selectedIdx].elements.findIndex(e => e.id === selectedElementId);
+                                                                            copy[selectedIdx].elements[elIdx].targetRadius = parseInt(e.target.value);
+                                                                            setLocalSlides(copy);
+                                                                        }} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '5px' }} />
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                         <button onClick={async () => {
                                             const elementToDelete = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
                                             if (elementToDelete?.url) await deleteFileFromStorage(elementToDelete.url);

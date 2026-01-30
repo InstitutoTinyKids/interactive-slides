@@ -18,6 +18,9 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
     const [stamps, setStamps] = useState([]);
     const [textValues, setTextValues] = useState({});
     const [dragItems, setDragItems] = useState([]);
+    const [fontSizeScale, setFontSizeScale] = useState(1);
+    const [startTime, setStartTime] = useState(Date.now());
+    const [quizResults, setQuizResults] = useState({}); // { itemId: boolean }
 
     // Interaction State
     const [draggingIdx, setDraggingIdx] = useState(null);
@@ -80,14 +83,28 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
         else if (types.includes('stamp')) setTool('stamp');
         else if (types.includes('text')) setTool('text');
 
+        // Reset quiz and time
+        setQuizResults({});
+        setStartTime(Date.now());
+
         // Preload Next Slide Image
         if (onNext) {
-            // This is a bit tricky since we don't have the next slide object here directly, 
-            // but we can infer it or just rely on the parent.
-            // However, SlideViewer is key-ed by currentSlideIdx in App.jsx, 
-            // so we might want to do preloading in App.jsx instead.
+            // Preloading handled in App.jsx V2
         }
     }, [slide]);
+
+    const handleInteractionComplete = () => {
+        const endTime = Date.now();
+        const duration = Math.floor((endTime - startTime) / 1000);
+
+        onComplete({
+            paths,
+            stamps,
+            textValues,
+            dragItems,
+            timeSpent: duration
+        });
+    };
 
     // Canvas Rendering
     useEffect(() => {
@@ -139,6 +156,11 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
         };
     };
 
+    const isVideo = (url) => {
+        if (!url) return false;
+        return url.match(/\.(mp4|webm|ogg|mov)$|^blob:|^data:video/i) || url.includes('supabase.co/storage/v1/object/public/media/') && !url.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i);
+    };
+
     const handleStart = (e) => {
         // Prevent scrolling on touch
         if (e.type === 'touchstart') {
@@ -170,7 +192,35 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
         }
     };
 
+    const checkQuiz = (item, x, y) => {
+        if (!item.targetX || !item.targetY) return;
+
+        const canvasWidth = slide?.format === '1/1' ? 1080 : 1920;
+        const canvasHeight = 1080;
+
+        const tx = (item.targetX / 100) * canvasWidth;
+        const ty = (item.targetY / 100) * canvasHeight;
+        const radius = (item.targetRadius || 10) / 100 * canvasWidth;
+
+        const dist = Math.sqrt(Math.pow(x - tx, 2) + Math.pow(y - ty, 2));
+        const isCorrect = dist < radius;
+
+        if (isCorrect) {
+            setQuizResults(prev => ({ ...prev, [item.id]: true }));
+            // Play success sound if any
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3');
+            audio.volume = 0.3;
+            audio.play().catch(() => { });
+        } else {
+            setQuizResults(prev => ({ ...prev, [item.id]: false }));
+        }
+    };
+
     const handleEnd = () => {
+        if (draggingIdx !== null) {
+            const item = dragItems[draggingIdx];
+            checkQuiz(item, item.currentX, item.currentY);
+        }
         setIsDrawing(false);
         setDraggingIdx(null);
     };
@@ -232,7 +282,18 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                         border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)'
                     }}
                 >
-                    {slide?.image_url && <img src={slide.image_url} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />}
+                    {slide?.video_url || isVideo(slide?.image_url) ? (
+                        <video
+                            src={slide.video_url || slide.image_url}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
+                        />
+                    ) : (
+                        slide?.image_url && <img src={slide.image_url} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                    )}
 
                     {/* Text Layer - Scaled by container size */}
                     {slide?.elements?.filter(e => e.type === 'text').map(el => (
@@ -250,7 +311,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         height: '100%',
                                         textAlign: 'center',
                                         color: '#000',
-                                        fontSize: isMobile ? '12px' : 'clamp(9px, 1.8cqw, 14px)',
+                                        fontSize: isMobile ? `${12 * fontSizeScale}px` : `calc(clamp(9px, 1.8cqw, 14px) * ${fontSizeScale})`,
                                         lineHeight: '1.2',
                                         fontWeight: 800,
                                         resize: 'none',
@@ -285,13 +346,20 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                     onMouseDown={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
                                     onTouchStart={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
                                 >
-                                    {item.url ? (
-                                        <img src={item.url} style={{ width: '12cqw', height: '12cqw', objectFit: 'contain', pointerEvents: 'none' }} />
-                                    ) : (
-                                        <div style={{ width: '8cqw', height: '8cqw', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Move color="white" size="50%" />
-                                        </div>
-                                    )}
+                                    <div style={{ position: 'relative' }}>
+                                        {item.url ? (
+                                            <img src={item.url} style={{ width: '12cqw', height: '12cqw', objectFit: 'contain', pointerEvents: 'none' }} />
+                                        ) : (
+                                            <div style={{ width: '8cqw', height: '8cqw', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Move color="white" size="50%" />
+                                            </div>
+                                        )}
+                                        {quizResults[item.id] && (
+                                            <div style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#10b981', color: 'white', borderRadius: '50%', padding: '4px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', border: '2px solid white' }}>
+                                                <CheckCircle2 size={16} />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             );
                         })}
@@ -462,10 +530,16 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     <div style={{ height: '90px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                                                        <div style={{ width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <div style={{ width: `${Math.max(3, lineWidth / 2.2)}px`, height: `${Math.max(3, lineWidth / 2.2)}px`, background: 'white', borderRadius: '50%' }} />
-                                                        </div>
-                                                        <input type="range" min="2" max="30" value={lineWidth} onChange={(e) => setLineWidth(parseInt(e.target.value))} style={{ width: '70px', height: '6px', transform: 'rotate(-90deg)', accentColor: '#7c3aed', cursor: 'pointer', marginTop: '20px' }} />
+                                                        <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800 }}>TAMAÑO FUENTE</span>
+                                                        <input
+                                                            type="range"
+                                                            min="0.5"
+                                                            max="2.5"
+                                                            step="0.1"
+                                                            value={fontSizeScale}
+                                                            onChange={(e) => setFontSizeScale(parseFloat(e.target.value))}
+                                                            style={{ width: '70px', height: '6px', transform: 'rotate(-90deg)', accentColor: '#7c3aed', cursor: 'pointer', marginTop: '20px' }}
+                                                        />
                                                     </div>
                                                 </div>
                                             )}
@@ -521,7 +595,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             {/* Right Group: Next / Finish */}
                             <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                                 <button
-                                    onClick={() => onComplete({ paths, stamps, textValues, dragItems })}
+                                    onClick={isLast ? handleInteractionComplete : () => { handleInteractionComplete(); onNext(); }}
                                     style={{
                                         background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
                                         border: 'none',
