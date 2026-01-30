@@ -22,13 +22,20 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
     // Interaction State
     const [draggingIdx, setDraggingIdx] = useState(null);
     const [isDrawing, setIsDrawing] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
     const [stageDim, setStageDim] = useState({ w: 0, h: 0 });
 
     useEffect(() => {
         const updateDim = () => {
-            const mobile = window.innerWidth < 1024;
-            setIsMobile(mobile);
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            // Breakpoints: Mobile < 768, Tablet 768-1023, Desktop >= 1024
+            setIsMobile(width < 768);
+            setIsTablet(width >= 768 && width < 1024);
+            setIsLandscape(width > height);
 
             const headerH = 0; // Header is now 0 on all platforms
             const availW = window.innerWidth;
@@ -281,7 +288,12 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             transform: 'translateX(-50%)',
                             width: slide?.format === '1/1' ? '90%' : '100%',
                             height: 'auto',
-                            minHeight: isMobile ? 'max(50px, 12cqh)' : '10cqh',
+                            // Adaptive min-height: taller in portrait, compact in landscape
+                            minHeight: isMobile
+                                ? (isLandscape ? 'max(44px, 10cqh)' : 'max(56px, 11cqh)')
+                                : isTablet
+                                    ? 'max(48px, 9cqh)'
+                                    : '8cqh',
                             background: 'rgba(15, 15, 35, 0.98)',
                             backdropFilter: 'blur(30px)',
                             display: 'flex',
@@ -301,12 +313,16 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            padding: isMobile ? '0 2.5cqw' : '0 3cqw',
-                            height: isMobile ? 'max(48px, 11cqh)' : '9cqh',
+                            padding: isMobile ? '0 2cqw' : isTablet ? '0 2.5cqw' : '0 3cqw',
+                            height: isMobile
+                                ? (isLandscape ? 'max(42px, 9cqh)' : 'max(54px, 10cqh)')
+                                : isTablet
+                                    ? 'max(46px, 8cqh)'
+                                    : '7cqh',
                             width: '100%'
                         }}>
                             {/* Left Group: Back + Audio + Info */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '1.5cqw' : '2.5cqw', flexShrink: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '1.2cqw' : isTablet ? '1.8cqw' : '2.5cqw', flexShrink: 0 }}>
                                 {/* 1. Botón Atrás */}
                                 <button
                                     onClick={onPrev}
@@ -316,8 +332,8 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         border: 'none',
                                         color: 'white',
                                         opacity: isFirst ? 0.2 : 0.9,
-                                        width: isMobile ? 'max(28px, 5.5cqh)' : '5.5cqh',
-                                        height: isMobile ? 'max(28px, 5.5cqh)' : '5.5cqh',
+                                        width: isMobile ? (isLandscape ? 'max(26px, 4.5cqh)' : 'max(32px, 5.5cqh)') : isTablet ? 'max(30px, 5cqh)' : '5cqh',
+                                        height: isMobile ? (isLandscape ? 'max(26px, 4.5cqh)' : 'max(32px, 5.5cqh)') : isTablet ? 'max(30px, 5cqh)' : '5cqh',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -332,7 +348,19 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 {slide?.audio_url && (
                                     <button
                                         onClick={() => { if (isPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsPlaying(!isPlaying); }}
-                                        style={{ background: isPlaying ? 'rgba(124, 58, 237, 0.2)' : 'none', border: 'none', width: isMobile ? 'max(26px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(26px, 5cqh)' : '5.5cqh', borderRadius: '50%', color: isPlaying ? '#a78bfa' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s' }}
+                                        style={{
+                                            background: isPlaying ? 'rgba(124, 58, 237, 0.2)' : 'none',
+                                            border: 'none',
+                                            width: isMobile ? (isLandscape ? 'max(24px, 4cqh)' : 'max(30px, 5cqh)') : isTablet ? 'max(28px, 4.5cqh)' : '4.5cqh',
+                                            height: isMobile ? (isLandscape ? 'max(24px, 4cqh)' : 'max(30px, 5cqh)') : isTablet ? 'max(28px, 4.5cqh)' : '4.5cqh',
+                                            borderRadius: '50%',
+                                            color: isPlaying ? '#a78bfa' : 'white',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            transition: '0.3s'
+                                        }}
                                     >
                                         {isPlaying ? <Pause size="55%" /> : <Volume2 size="55%" />}
                                         <audio ref={audioRef} src={slide.audio_url} onEnded={() => setIsPlaying(false)} />
@@ -340,18 +368,43 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                 )}
 
                                 {/* 3. Info del Usuario */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginLeft: '0.5cqw' }}>
-                                    <span style={{ fontSize: isMobile ? 'max(12px, 2cqh)' : '2.2cqh', fontWeight: 900, color: 'white', lineHeight: 1 }}>{alias}</span>
-                                    <span style={{ fontSize: isMobile ? 'max(9px, 1.3cqh)' : '1.5cqh', color: '#a78bfa', fontWeight: 700, opacity: 0.8 }}>PAG {currentIndex + 1}/{totalSlides}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginLeft: '0.3cqw' }}>
+                                    <span style={{
+                                        fontSize: isMobile
+                                            ? (isLandscape ? 'max(11px, 1.8cqh)' : 'max(13px, 2.2cqh)')
+                                            : isTablet ? 'max(12px, 2cqh)' : '2cqh',
+                                        fontWeight: 900,
+                                        color: 'white',
+                                        lineHeight: 1
+                                    }}>{alias}</span>
+                                    <span style={{
+                                        fontSize: isMobile
+                                            ? (isLandscape ? 'max(8px, 1.1cqh)' : 'max(10px, 1.4cqh)')
+                                            : isTablet ? 'max(9px, 1.3cqh)' : '1.4cqh',
+                                        color: '#a78bfa',
+                                        fontWeight: 700,
+                                        opacity: 0.8
+                                    }}>{currentIndex + 1}/{totalSlides}</span>
                                 </div>
                             </div>
 
                             {/* Middle Group: Drawing Tools */}
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '2cqw' : '4cqw' }}>
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? (isLandscape ? '1.5cqw' : '2cqw') : isTablet ? '3cqw' : '4cqw' }}>
                                 {tool === 'draw' && (
                                     <>
                                         {/* Undo */}
-                                        <button onClick={undo} style={{ background: 'none', border: 'none', width: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', color: 'white', opacity: 0.9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                        <button onClick={undo} style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            width: isMobile ? (isLandscape ? 'max(22px, 4cqh)' : 'max(28px, 5cqh)') : isTablet ? 'max(26px, 4.5cqh)' : '4.5cqh',
+                                            height: isMobile ? (isLandscape ? 'max(22px, 4cqh)' : 'max(28px, 5cqh)') : isTablet ? 'max(26px, 4.5cqh)' : '4.5cqh',
+                                            color: 'white',
+                                            opacity: 0.9,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer'
+                                        }}>
                                             <Undo2 size="60%" />
                                         </button>
 
@@ -359,17 +412,29 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                             <button
                                                 onClick={() => setActiveMenu(activeMenu === 'width' ? 'none' : 'width')}
-                                                style={{ background: 'none', border: 'none', width: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', color: activeMenu === 'width' ? '#a78bfa' : 'white', opacity: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 300 }}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    width: isMobile ? (isLandscape ? 'max(22px, 4cqh)' : 'max(28px, 5cqh)') : isTablet ? 'max(26px, 4.5cqh)' : '4.5cqh',
+                                                    height: isMobile ? (isLandscape ? 'max(22px, 4cqh)' : 'max(28px, 5cqh)') : isTablet ? 'max(26px, 4.5cqh)' : '4.5cqh',
+                                                    color: activeMenu === 'width' ? '#a78bfa' : 'white',
+                                                    opacity: 1,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    zIndex: 300
+                                                }}
                                             >
                                                 <Settings2 size="60%" />
                                             </button>
                                             {activeMenu === 'width' && (
-                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: isMobile ? 'max(40px, 8cqh)' : '8cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
-                                                    <div style={{ height: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                                        <div style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: isMobile ? (isLandscape ? 'max(38px, 7cqh)' : 'max(48px, 9cqh)') : 'max(44px, 8cqh)', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+                                                    <div style={{ height: '90px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                                                        <div style={{ width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                             <div style={{ width: `${Math.max(3, lineWidth / 2.2)}px`, height: `${Math.max(3, lineWidth / 2.2)}px`, background: 'white', borderRadius: '50%' }} />
                                                         </div>
-                                                        <input type="range" min="2" max="30" value={lineWidth} onChange={(e) => setLineWidth(parseInt(e.target.value))} style={{ width: '80px', height: '6px', transform: 'rotate(-90deg)', accentColor: '#7c3aed', cursor: 'pointer', marginTop: '24px' }} />
+                                                        <input type="range" min="2" max="30" value={lineWidth} onChange={(e) => setLineWidth(parseInt(e.target.value))} style={{ width: '70px', height: '6px', transform: 'rotate(-90deg)', accentColor: '#7c3aed', cursor: 'pointer', marginTop: '20px' }} />
                                                     </div>
                                                 </div>
                                             )}
@@ -379,13 +444,21 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                             <button
                                                 onClick={() => setActiveMenu(activeMenu === 'color' ? 'none' : 'color')}
-                                                style={{ width: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', borderRadius: '50%', background: color, border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s' }}
+                                                style={{
+                                                    width: isMobile ? (isLandscape ? 'max(22px, 4cqh)' : 'max(28px, 5cqh)') : isTablet ? 'max(26px, 4.5cqh)' : '4.5cqh',
+                                                    height: isMobile ? (isLandscape ? 'max(22px, 4cqh)' : 'max(28px, 5cqh)') : isTablet ? 'max(26px, 4.5cqh)' : '4.5cqh',
+                                                    borderRadius: '50%',
+                                                    background: color,
+                                                    border: activeMenu === 'color' ? '3px solid white' : '2px solid rgba(255,255,255,0.3)',
+                                                    cursor: 'pointer',
+                                                    transition: '0.2s'
+                                                }}
                                             />
                                             {activeMenu === 'color' && (
-                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: isMobile ? 'max(40px, 8cqh)' : '8cqh', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
-                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                                                <div className="glass anim-up" style={{ position: 'absolute', bottom: isMobile ? (isLandscape ? 'max(38px, 7cqh)' : 'max(48px, 9cqh)') : 'max(44px, 8cqh)', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10, 10, 26, 0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px', zIndex: 200, boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
                                                         {['#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#000000'].map(c => (
-                                                            <button key={c} onClick={() => { setColor(c); setActiveMenu('none'); }} style={{ width: '32px', height: '32px', borderRadius: '50%', background: c, border: color === c ? '3px solid white' : '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: color === c ? `0 0 20px ${c}` : 'none' }} />
+                                                            <button key={c} onClick={() => { setColor(c); setActiveMenu('none'); }} style={{ width: '28px', height: '28px', borderRadius: '50%', background: c, border: color === c ? '3px solid white' : '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: color === c ? `0 0 15px ${c}` : 'none' }} />
                                                         ))}
                                                     </div>
                                                 </div>
@@ -395,7 +468,18 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         {/* Reiniciar (Reset) */}
                                         <button
                                             onClick={() => { setPaths([]); setStamps([]); setTextValues({}); }}
-                                            style={{ background: 'none', border: 'none', color: 'white', width: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', height: isMobile ? 'max(24px, 5cqh)' : '5.5cqh', opacity: 0.9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                color: 'white',
+                                                width: isMobile ? (isLandscape ? 'max(22px, 4cqh)' : 'max(28px, 5cqh)') : isTablet ? 'max(26px, 4.5cqh)' : '4.5cqh',
+                                                height: isMobile ? (isLandscape ? 'max(22px, 4cqh)' : 'max(28px, 5cqh)') : isTablet ? 'max(26px, 4.5cqh)' : '4.5cqh',
+                                                opacity: 0.9,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
                                         >
                                             <RotateCcw size="55%" />
                                         </button>
@@ -411,17 +495,21 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
                                         border: 'none',
                                         color: 'white',
-                                        height: isMobile ? 'max(34px, 6cqh)' : '6cqh',
-                                        padding: isMobile ? '0 3cqw' : '0 3.5cqw',
-                                        borderRadius: isMobile ? 'max(8px, 1.2cqh)' : '1cqh',
+                                        height: isMobile
+                                            ? (isLandscape ? 'max(32px, 5cqh)' : 'max(38px, 6cqh)')
+                                            : isTablet ? 'max(36px, 5.5cqh)' : '5.5cqh',
+                                        padding: isMobile ? '0 2.5cqw' : isTablet ? '0 3cqw' : '0 3.5cqw',
+                                        borderRadius: isMobile ? 'max(6px, 1cqh)' : '0.9cqh',
                                         fontWeight: 900,
-                                        fontSize: isMobile ? 'max(11px, 1.8cqh)' : '2cqh',
+                                        fontSize: isMobile
+                                            ? (isLandscape ? 'max(10px, 1.6cqh)' : 'max(12px, 1.9cqh)')
+                                            : isTablet ? 'max(11px, 1.7cqh)' : '1.8cqh',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        minWidth: isMobile ? 'max(50px, 9cqw)' : '9cqw',
+                                        minWidth: isMobile ? (isLandscape ? 'max(42px, 7cqw)' : 'max(50px, 9cqw)') : 'max(48px, 8cqw)',
                                         cursor: 'pointer',
-                                        boxShadow: '0 10px 20px rgba(124, 58, 237, 0.3)',
+                                        boxShadow: '0 8px 16px rgba(124, 58, 237, 0.3)',
                                         transition: '0.2s'
                                     }}
                                 >

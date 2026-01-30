@@ -26,6 +26,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [showAddModal, setShowAddModal] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
     const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
     const [showSlidesPanel, setShowSlidesPanel] = useState(window.innerWidth >= 1200);
     const [showSettingsPanel, setShowSettingsPanel] = useState(window.innerWidth >= 1200);
@@ -38,8 +39,10 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     useEffect(() => {
         const handleResize = () => {
             const width = window.innerWidth;
+            const height = window.innerHeight;
             setIsMobile(width < 768);
             setIsTablet(width >= 768 && width < 1024);
+            setIsLandscape(width > height);
             setIsCompact(width < 1200);
             // Auto-show panels on larger screens
             if (width >= 1200) {
