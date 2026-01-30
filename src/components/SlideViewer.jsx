@@ -279,14 +279,14 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
 
                     <canvas ref={canvasRef} width={1920} height={1080} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 30, cursor: tool === 'draw' ? 'crosshair' : 'default', touchAction: 'none' }} onMouseDown={handleStart} onTouchStart={handleStart} />
 
-                    {/* IMMERSIVE CONTROL BAR */}
+                    {/* IMMERSIVE CONTROL BAR - Unified style for all formats */}
                     <div
                         style={{
                             position: 'absolute',
-                            bottom: slide?.format === '1/1' ? '2.5cqh' : 0,
+                            bottom: 0,
                             left: '50%',
                             transform: 'translateX(-50%)',
-                            width: slide?.format === '1/1' ? '90%' : '100%',
+                            width: '100%',
                             height: 'auto',
                             // Adaptive min-height: taller in portrait, compact in landscape
                             minHeight: isMobile
@@ -299,11 +299,10 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             display: 'flex',
                             flexDirection: 'column',
                             zIndex: 100,
-                            borderRadius: slide?.format === '1/1' ? '3cqh' : 0,
+                            borderRadius: 0,
                             borderTop: '1px solid rgba(255,255,255,0.1)',
-                            border: slide?.format === '1/1' ? '1px solid rgba(255,255,255,0.1)' : 'none',
                             touchAction: 'auto',
-                            boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+                            boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
                             overflow: 'visible'
                         }}
                     >
