@@ -26,30 +26,15 @@ export default function App() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Intelligent Preload: Preload next 3 slides for instant transitions
+    // Preload Slide Assets
     useEffect(() => {
         if (slides.length > 0 && view === 'viewer') {
-            const nextIndices = [currentSlideIdx + 1, currentSlideIdx + 2, currentSlideIdx + 3];
-            nextIndices.forEach(idx => {
+            const toPreload = [currentSlideIdx, currentSlideIdx + 1, currentSlideIdx + 2];
+            toPreload.forEach(idx => {
                 const s = slides[idx];
                 if (s) {
-                    // Preload Image or Video thumbnail
-                    if (s.image_url) {
-                        const img = new Image();
-                        img.src = s.image_url;
-                    }
-                    // Preload Audio
-                    if (s.audio_url) {
-                        const audio = new Audio();
-                        audio.src = s.audio_url;
-                        audio.preload = 'auto'; // Suggest browser to preload
-                    }
-                    // Preload Video (if any)
-                    if (s.video_url) {
-                        const video = document.createElement('video');
-                        video.src = s.video_url;
-                        video.preload = 'auto';
-                    }
+                    if (s.image_url) { const img = new Image(); img.src = s.image_url; }
+                    if (s.audio_url) { const audio = new Audio(); audio.src = s.audio_url; }
                 }
             });
         }
@@ -140,8 +125,9 @@ export default function App() {
                     drawings: interactionData.paths || [],
                     stamps: interactionData.stamps || [],
                     text_responses: filteredText,
-                    icon_positions: interactionData.dragItems || [],
-                    time_spent: interactionData.timeSpent || 0
+                    icon_positions: interactionData.dragItems?.map(d => ({
+                        x: d.currentX, y: d.currentY, url: d.url
+                    })) || []
                 });
             } catch (err) {
                 console.warn('Error saving interaction:', err);
