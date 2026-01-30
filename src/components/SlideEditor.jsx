@@ -25,6 +25,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     const [selectedProjects, setSelectedProjects] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [newProjectName, setNewProjectName] = useState('');
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
     const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
@@ -87,13 +88,15 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         setSelectedProjects([]);
     };
 
-    const handleCreateProject = async (name) => {
-        const accessCode = prompt(`Define la Clave de Acceso para ${name}:`, '123');
+    const handleCreateProject = async () => {
+        if (!newProjectName.trim()) return;
+
+        const accessCode = prompt(`Define la Clave de Acceso para ${newProjectName}:`, '123');
         if (!accessCode) return;
 
         const newProject = {
-            id: name.toLowerCase().replace(/\s+/g, '-'),
-            name: name,
+            id: crypto.randomUUID(),
+            name: newProjectName.trim(),
             is_active: false,
             access_code: accessCode
         };
@@ -102,6 +105,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         if (error) {
             alert('Error al agregar programa: ' + error.message);
         } else {
+            setNewProjectName('');
             setShowAddModal(false);
             loadProjects();
         }
@@ -402,21 +406,30 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '20px' : '0' }}>
                         <div className="glass anim-up" style={{ width: isMobile ? '100%' : '400px', maxWidth: '400px', padding: isMobile ? '20px' : '30px', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: isMobile ? '90vh' : 'auto', overflowY: 'auto' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h2 style={{ fontSize: isMobile ? '1rem' : '1.2rem', color: 'white' }}>Seleccionar Programa</h2>
-                                <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}><X size={20} /></button>
+                                <h2 style={{ fontSize: isMobile ? '1rem' : '1.2rem', color: 'white' }}>Nueva Presentación</h2>
+                                <button onClick={() => { setShowAddModal(false); setNewProjectName(''); }} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}><X size={20} /></button>
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                {PROGRAM_ORDER.map(prog => (
-                                    <button
-                                        key={prog}
-                                        onClick={() => handleCreateProject(prog)}
-                                        className="btn-outline"
-                                        style={{ justifyContent: 'start', padding: isMobile ? '12px' : '15px', fontSize: isMobile ? '0.85rem' : '1rem' }}
-                                        disabled={projects.some(p => p.name === prog)}
-                                    >
-                                        {prog} {projects.some(p => p.name === prog) && '(Ya existe)'}
-                                    </button>
-                                ))}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase' }}>Nombre de la Presentación</label>
+                                    <input
+                                        className="premium-input"
+                                        type="text"
+                                        placeholder="Ej: Lección de Colores"
+                                        value={newProjectName}
+                                        onChange={(e) => setNewProjectName(e.target.value)}
+                                        style={{ padding: '12px' }}
+                                        autoFocus
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleCreateProject}
+                                    className="btn-premium"
+                                    disabled={!newProjectName.trim()}
+                                    style={{ marginTop: '10px' }}
+                                >
+                                    Crear Presentación
+                                </button>
                             </div>
                         </div>
                     </div>
