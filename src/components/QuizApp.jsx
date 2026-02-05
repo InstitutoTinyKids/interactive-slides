@@ -132,7 +132,7 @@ export default function QuizApp({ onExit }) {
         setSelectedOption(null);
         setHiddenOptions([]);
         setIsRunning(true);
-        setShowReview(false); // Resetear revisión al iniciar
+        setShowReview(false);
         setView('playing');
     };
 
@@ -154,16 +154,15 @@ export default function QuizApp({ onExit }) {
 
     // --- LOGICA DEL JUEGO ---
     const handleAnswer = (optionIndex) => {
-        if (feedback !== null) return; // Evitar doble click
+        if (feedback !== null) return;
 
         const currentQ = questions[currentQIndex];
         const isCorrect = optionIndex === currentQ.correctAnswer;
 
-        setIsRunning(false); // Pausar timer durante feedback
+        setIsRunning(false);
         setSelectedOption(optionIndex);
         setFeedback(isCorrect ? 'correct' : 'incorrect');
 
-        // Guardar respuesta
         const logEntry = {
             question: currentQ,
             selected: optionIndex,
@@ -171,42 +170,34 @@ export default function QuizApp({ onExit }) {
             isSkipped: optionIndex === -1
         };
 
-        // Retraso para mostrar feedback visual
         setTimeout(() => {
             setAnswersLog(prev => [...prev, logEntry]);
 
             if (currentQIndex < questions.length - 1) {
-                // Siguiente pregunta
                 setCurrentQIndex(prev => prev + 1);
                 setFeedback(null);
                 setSelectedOption(null);
                 setHiddenOptions([]);
                 setIsRunning(true);
             } else {
-                // Fin del juego
                 setView('results');
             }
         }, 1500);
     };
 
     const handleFiftyFifty = () => {
-        // Penalización: +10 segundos
         setTimer(prev => prev + 10);
-
         const currentQ = questions[currentQIndex];
         const wrongIndices = currentQ.options
             .map((_, idx) => idx)
             .filter(idx => idx !== currentQ.correctAnswer);
-
-        // Mezclar y tomar 2 para ocultar
         const shuffledWrong = wrongIndices.sort(() => 0.5 - Math.random());
         setHiddenOptions(shuffledWrong.slice(0, 2));
     };
 
     const handlePass = () => {
-        // Penalización: +30 segundos y cuenta como incorrecta/saltada
         setTimer(prev => prev + 30);
-        handleAnswer(-1); // -1 indica saltada
+        handleAnswer(-1);
     };
 
     const formatTime = (seconds) => {
@@ -215,44 +206,44 @@ export default function QuizApp({ onExit }) {
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    // --- RENDERIZADO ---
-
     if (view === 'home') {
         return (
-            <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 font-sans" style={{ zIndex: 1000 }}>
-                <div className="max-w-md w-full bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-700 relative">
-                    <button
-                        onClick={onExit}
-                        className="absolute top-4 right-4 text-gray-400 hover:text-white"
-                    >
+            <div className="min-h-screen bg-[#050510] text-white flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                    <div className="absolute top-[10%] left-[10%] w-[30vw] h-[30vw] bg-blue-600/10 blur-[120px] rounded-full"></div>
+                    <div className="absolute bottom-[10%] right-[10%] w-[30vw] h-[30vw] bg-purple-600/10 blur-[120px] rounded-full"></div>
+                </div>
+
+                <div className="max-w-md w-full glass p-8 relative z-10 animate-up">
+                    <button onClick={onExit} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
                         <X size={24} />
                     </button>
-                    <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Grammar Quiz</h1>
-                    <p className="text-gray-400 text-center mb-8">Demuestra tus conocimientos en inglés.</p>
 
-                    <button
-                        onClick={startQuiz}
-                        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all transform hover:scale-105 mb-6"
-                    >
-                        <Play size={24} />
+                    <div className="text-center mb-8">
+                        <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-500/20">
+                            <HelpCircle size={40} className="text-white" />
+                        </div>
+                        <h1 className="text-4xl font-black mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Grammar Quiz</h1>
+                        <p className="text-slate-400">Demuestra tus conocimientos en inglés.</p>
+                    </div>
+
+                    <button onClick={startQuiz} className="btn-premium w-full py-5 text-lg group">
+                        <Play size={24} className="group-hover:scale-110 transition-transform" />
                         INICIAR ACTIVIDAD
                     </button>
 
-                    <div className="border-t border-gray-700 pt-6">
-                        <p className="text-sm text-gray-500 mb-2">Administración</p>
+                    <div className="mt-12 pt-8 border-t border-white/5">
+                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Administración</p>
                         <div className="flex gap-2">
                             <input
                                 type="password"
                                 placeholder="Clave (123)"
-                                className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 flex-1 text-white focus:outline-none focus:border-blue-500"
+                                className="premium-input flex-1 !py-3"
                                 value={adminPass}
                                 onChange={(e) => setAdminPass(e.target.value)}
                             />
-                            <button
-                                onClick={goToAdmin}
-                                className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-gray-300"
-                            >
-                                <Settings size={20} />
+                            <button onClick={goToAdmin} className="btn-outline !p-3 bg-white/5">
+                                <Settings size={20} className="text-slate-400" />
                             </button>
                         </div>
                     </div>
@@ -262,23 +253,34 @@ export default function QuizApp({ onExit }) {
     }
 
     if (view === 'admin') {
-        // Calcular el índice de la pregunta en edición para mostrarlo
         const editingIndex = editingQ ? questions.findIndex(q => q.id === editingQ.id) : -1;
-
         return (
-            <div className="min-h-screen bg-gray-900 text-white p-6 overflow-y-auto">
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-2xl font-bold flex items-center gap-2">
-                            <Edit2 className="text-blue-400" /> Panel de Administración
-                        </h2>
-                        <button onClick={restartApp} className="text-gray-400 hover:text-white">Atrás</button>
-                    </div>
+            <div className="min-h-screen bg-[#050510] text-white p-4 md:p-8 overflow-y-auto">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    <header className="flex justify-between items-center bg-white/5 p-6 rounded-3xl border border-white/10">
+                        <div>
+                            <h2 className="text-2xl font-black flex items-center gap-3">
+                                <div className="p-2 bg-blue-500/20 rounded-xl text-blue-400"><Edit2 size={24} /></div>
+                                Panel de Administración
+                            </h2>
+                            <p className="text-slate-400 text-sm mt-1">Gestiona las preguntas del cuestionario</p>
+                        </div>
+                        <button onClick={restartApp} className="btn-outline flex items-center gap-2">
+                            <RotateCcw size={18} /> Salir
+                        </button>
+                    </header>
 
-                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-6 transition-all">
-                        <h3 className="text-lg font-semibold mb-4 text-purple-400">
-                            {editingQ ? `Editar Pregunta #${editingIndex + 1}` : 'Crear Nueva Pregunta'}
-                        </h3>
+                    <section className="glass p-8 animate-up">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-purple-400">
+                                {editingQ ? `Editando Pregunta #${editingIndex + 1}` : 'Crear Nueva Pregunta'}
+                            </h3>
+                            {editingQ && (
+                                <button onClick={() => setEditingQ(null)} className="text-xs font-bold text-slate-500 uppercase tracking-widest hover:text-white transition-colors">
+                                    Cancelar Edición
+                                </button>
+                            )}
+                        </div>
                         <AdminForm
                             initialData={editingQ}
                             onSave={(q) => {
@@ -291,40 +293,38 @@ export default function QuizApp({ onExit }) {
                             }}
                             onCancel={() => setEditingQ(null)}
                         />
-                    </div>
+                    </section>
 
-                    <div className="space-y-4">
+                    <div className="grid gap-4">
+                        <div className="flex items-center justify-between px-2">
+                            <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">Preguntas Actuales ({questions.length})</h3>
+                        </div>
                         {questions.map((q, idx) => {
                             const isActive = editingQ?.id === q.id;
                             return (
                                 <div
                                     key={q.id}
-                                    onClick={() => setEditingQ(q)}
-                                    className={`bg-gray-800 p-4 rounded-lg flex justify-between items-center border transition-all cursor-pointer ${isActive ? 'border-blue-500 bg-blue-900/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'border-gray-700 hover:border-gray-600'}`}
+                                    className={`bg-white/5 p-5 rounded-2xl flex justify-between items-center border transition-all ${isActive ? 'border-blue-500 bg-blue-500/5' : 'border-white/5 hover:bg-white/10'}`}
                                 >
-                                    <div className="flex-1">
-                                        <span className={`${isActive ? 'text-blue-400' : 'text-blue-500'} font-bold mr-2`}>#{idx + 1}</span>
-                                        <span className={isActive ? 'text-white font-medium' : 'text-gray-200'}>{q.question}</span>
+                                    <div className="flex-1 min-w-0 pr-4">
+                                        <div className="flex items-center gap-3 mb-1">
+                                            <span className="text-xs font-black text-blue-500">#{idx + 1}</span>
+                                            <span className="text-slate-500 text-[10px] uppercase font-bold tracking-tighter">ID: {q.id}</span>
+                                        </div>
+                                        <p className="text-slate-200 truncate font-medium">{q.question}</p>
                                     </div>
-                                    <div className="flex gap-2 ml-4">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setEditingQ(q);
-                                            }}
-                                            className={`p-2 rounded-full transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-900/50 text-blue-400'}`}
-                                        >
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setEditingQ(q)} className="p-3 bg-white/5 rounded-xl hover:bg-blue-500/20 text-blue-400 transition-colors">
                                             <Edit2 size={18} />
                                         </button>
                                         <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (window.confirm('¿Estás seguro de que deseas eliminar esta pregunta?')) {
+                                            onClick={() => {
+                                                if (window.confirm('¿Eliminar esta pregunta?')) {
                                                     setQuestions(questions.filter(item => item.id !== q.id));
                                                     if (editingQ?.id === q.id) setEditingQ(null);
                                                 }
                                             }}
-                                            className="p-2 hover:bg-red-900/50 text-red-400 rounded-full transition-colors"
+                                            className="p-3 bg-white/5 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors"
                                         >
                                             <Trash2 size={18} />
                                         </button>
@@ -341,34 +341,63 @@ export default function QuizApp({ onExit }) {
     if (view === 'playing') {
         const currentQ = questions[currentQIndex];
         return (
-            <div className="min-h-screen bg-black text-white flex flex-col items-center p-4">
-                {/* Header */}
-                <div className="w-full max-w-3xl flex justify-between items-center mb-8 pt-4">
-                    <div className="bg-gray-800 px-4 py-2 rounded-full text-sm font-mono text-blue-300 border border-gray-700">
-                        Pregunta {currentQIndex + 1} / {questions.length}
+            <div className="min-h-screen bg-[#050510] text-white flex flex-col p-4 md:p-8 font-sans">
+                {/* HUD */}
+                <header className="w-full max-w-4xl mx-auto flex justify-between items-center py-6 animate-fade-in relative z-10">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Progreso</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl font-black text-blue-400">{currentQIndex + 1}</span>
+                            <span className="text-slate-600 text-lg font-bold">/ {questions.length}</span>
+                        </div>
                     </div>
-                    <div className={`flex items-center gap-2 text-xl font-bold font-mono px-4 py-2 rounded-lg ${feedback ? 'text-yellow-400' : 'text-white'}`}>
-                        <Clock size={20} />
-                        {formatTime(timer)}
+
+                    <div className={`flex flex-col items-center bg-white/5 px-8 py-3 rounded-2xl border border-white/10 backdrop-blur-md ${feedback ? 'ring-2 ring-yellow-500/50' : ''}`}>
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Cronómetro</span>
+                        <div className="flex items-center gap-3 text-2xl font-black italic tracking-wider">
+                            <Clock size={20} className="text-blue-500" />
+                            {formatTime(timer)}
+                        </div>
                     </div>
+
+                    <button onClick={() => { if (confirm('¿Salir del Quiz?')) restartApp(); }} className="btn-outline !p-3">
+                        <X size={20} className="text-slate-500" />
+                    </button>
+                </header>
+
+                {/* Progress Bar */}
+                <div className="w-full max-w-4xl mx-auto h-1.5 bg-white/5 rounded-full mt-2 mb-12 overflow-hidden border border-white/5">
+                    <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                        style={{ width: `${((currentQIndex + 1) / questions.length) * 100}%` }}
+                    />
                 </div>
 
-                {/* Question Area */}
-                <div className="w-full max-w-3xl flex-1 flex flex-col justify-center">
-                    <h2 className="text-2xl md:text-3xl font-medium leading-relaxed mb-10 text-center">
-                        {currentQ.question}
-                    </h2>
+                {/* Question Section */}
+                <main className="w-full max-w-3xl mx-auto flex-1 flex flex-col justify-center animate-up relative z-10">
+                    <div className="text-center mb-16">
+                        <h2 className="text-2xl md:text-4xl font-extrabold leading-[1.3] text-white text-balance drop-shadow-sm">
+                            {currentQ.question}
+                        </h2>
+                    </div>
 
-                    <div className="grid grid-cols-1 gap-4 mb-8">
+                    <div className="grid grid-cols-1 gap-4">
                         {currentQ.options.map((opt, idx) => {
-                            if (hiddenOptions.includes(idx)) return <div key={idx} className="h-16"></div>; // Espacio vacío para opciones ocultas
+                            if (hiddenOptions.includes(idx)) return <div key={idx} className="h-[74px] border border-white/5 rounded-2xl opacity-10"></div>;
 
-                            let btnClass = "bg-gray-800 hover:bg-gray-700 border-gray-700 text-gray-200";
+                            let styles = "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-slate-200";
+                            let icon = <span className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sm font-black text-slate-500 group-hover:text-white transition-colors uppercase">{String.fromCharCode(65 + idx)}</span>;
 
                             if (feedback) {
-                                if (idx === currentQ.correctAnswer) btnClass = "bg-green-600 border-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.5)]";
-                                else if (idx === selectedOption) btnClass = "bg-red-600 border-red-500 text-white";
-                                else btnClass = "opacity-50 bg-gray-800 border-gray-700";
+                                if (idx === currentQ.correctAnswer) {
+                                    styles = "bg-green-500/20 border-green-500 text-white shadow-[0_0_30px_rgba(34,197,94,0.15)]";
+                                    icon = <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white"><Check size={20} /></div>;
+                                } else if (idx === selectedOption) {
+                                    styles = "bg-red-500/20 border-red-500 text-white shadow-[0_0_30px_rgba(239,68,68,0.15)]";
+                                    icon = <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center text-white"><X size={20} /></div>;
+                                } else {
+                                    styles = "opacity-20 grayscale scale-95 border-white/5";
+                                }
                             }
 
                             return (
@@ -376,135 +405,121 @@ export default function QuizApp({ onExit }) {
                                     key={idx}
                                     onClick={() => handleAnswer(idx)}
                                     disabled={feedback !== null}
-                                    className={`relative p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center ${btnClass} w-full`}
+                                    className={`group flex items-center gap-6 p-4 rounded-2xl border-2 transition-all duration-300 text-left relative overflow-hidden ${styles}`}
                                 >
-                                    <span className="w-8 h-8 rounded-full border border-current flex items-center justify-center mr-4 text-sm font-bold opacity-70">
-                                        {String.fromCharCode(65 + idx)}
-                                    </span>
-                                    <span className="text-lg">{opt}</span>
-                                    {feedback && idx === currentQ.correctAnswer && <Check className="absolute right-4" />}
-                                    {feedback && idx === selectedOption && idx !== currentQ.correctAnswer && <X className="absolute right-4" />}
+                                    {icon}
+                                    <span className="text-lg font-semibold tracking-tight leading-tight">{opt}</span>
                                 </button>
                             );
                         })}
                     </div>
-                </div>
+                </main>
 
-                {/* Lifelines / Footer */}
-                <div className="w-full max-w-3xl mt-auto pb-6">
-                    <div className="flex justify-center gap-4">
+                {/* Footer Controls */}
+                <footer className="w-full max-w-4xl mx-auto py-8">
+                    <div className="flex justify-center items-center gap-10">
                         <button
                             onClick={handleFiftyFifty}
                             disabled={feedback !== null || hiddenOptions.length > 0}
-                            className="flex flex-col items-center gap-1 text-sm text-blue-400 disabled:opacity-30 hover:text-blue-300 transition-colors"
+                            className="flex flex-col items-center group disabled:opacity-30 transition-all"
                         >
-                            <div className="w-12 h-12 rounded-full bg-gray-800 border border-blue-900 flex items-center justify-center shadow-lg">
-                                <span className="font-bold">50:50</span>
+                            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 group-hover:border-blue-500/50 group-hover:bg-blue-500/10 transition-all text-blue-400 shadow-xl group-active:scale-90">
+                                <span className="text-lg font-black tracking-tighter">50:50</span>
                             </div>
-                            <span>+10s</span>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">+10s Penalti</span>
                         </button>
 
                         <button
                             onClick={handlePass}
                             disabled={feedback !== null}
-                            className="flex flex-col items-center gap-1 text-sm text-purple-400 disabled:opacity-30 hover:text-purple-300 transition-colors"
+                            className="flex flex-col items-center group disabled:opacity-30 transition-all"
                         >
-                            <div className="w-12 h-12 rounded-full bg-gray-800 border border-purple-900 flex items-center justify-center shadow-lg">
-                                <SkipForward size={20} />
+                            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 group-hover:border-purple-500/50 group-hover:bg-purple-500/10 transition-all text-purple-400 shadow-xl group-active:scale-90">
+                                <SkipForward size={24} />
                             </div>
-                            <span>Pasar (+30s)</span>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Saltar (+30s)</span>
                         </button>
                     </div>
-
-                    <div className="text-center mt-6">
-                        <button
-                            className="text-gray-600 text-sm hover:text-gray-400 flex items-center justify-center gap-1 mx-auto"
-                            onClick={() => {
-                                const pass = prompt('Ingresa la clave de administrador para cancelar el juego:');
-                                if (pass === '123') {
-                                    restartApp();
-                                } else if (pass !== null) {
-                                    alert('Clave incorrecta');
-                                }
-                            }}
-                        >
-                            Cancelar Juego
-                        </button>
-                    </div>
-                </div>
+                </footer>
             </div>
         );
     }
 
     if (view === 'results') {
         const correctCount = answersLog.filter(a => a.isCorrect).length;
-        const incorrectCount = answersLog.filter(a => !a.isCorrect && !a.isSkipped).length;
-        const skippedCount = answersLog.filter(a => a.isSkipped).length;
+        const totalCount = questions.length;
+        const pScore = Math.floor((correctCount / totalCount) * 100);
 
         return (
-            <div className="min-h-screen bg-gray-900 text-white p-6 overflow-y-auto">
-                <div className="max-w-2xl mx-auto">
-                    <div className="text-center mb-10">
-                        <h2 className="text-3xl font-bold mb-2">Resultados</h2>
-                        <div className="text-6xl font-mono text-blue-400 font-bold mb-4">{formatTime(timer)}</div>
-                        <p className="text-gray-400">Tiempo Total</p>
+            <div className="min-h-screen bg-[#050510] text-white p-6 md:p-12 overflow-y-auto font-sans relative">
+                <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none"></div>
+
+                <div className="max-w-3xl mx-auto relative z-10">
+                    <header className="text-center mb-16 animate-up">
+                        <h2 className="text-sm font-black text-blue-400 uppercase tracking-[0.4em] mb-4">Resultado Final</h2>
+                        <div className="inline-flex items-end gap-2 mb-2">
+                            <div className="text-8xl font-black italic tracking-tighter leading-none bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">{pScore}</div>
+                            <div className="text-4xl font-black text-slate-600 italic mb-2">%</div>
+                        </div>
+                        <p className="text-slate-400 font-medium italic">¡Has completado el Grammar Quiz!</p>
+                    </header>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 animate-up delay-100">
+                        <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center shadow-xl">
+                            <Clock size={20} className="mx-auto mb-3 text-blue-400 opacity-50" />
+                            <div className="text-2xl font-black italic">{formatTime(timer)}</div>
+                            <div className="text-[10px] font-black text-slate-500 uppercase mt-1">Tiempo</div>
+                        </div>
+                        <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center shadow-xl">
+                            <Check size={20} className="mx-auto mb-3 text-green-400 opacity-50" />
+                            <div className="text-2xl font-black italic">{correctCount}</div>
+                            <div className="text-[10px] font-black text-slate-500 uppercase mt-1">Correctas</div>
+                        </div>
+                        <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center shadow-xl">
+                            <X size={20} className="mx-auto mb-3 text-red-400 opacity-50" />
+                            <div className="text-2xl font-black italic text-red-400/80">{answersLog.filter(a => !a.isCorrect && !a.isSkipped).length}</div>
+                            <div className="text-[10px] font-black text-slate-500 uppercase mt-1">Errores</div>
+                        </div>
+                        <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center shadow-xl">
+                            <SkipForward size={20} className="mx-auto mb-3 text-yellow-400 opacity-50" />
+                            <div className="text-2xl font-black italic text-yellow-400/80">{answersLog.filter(a => a.isSkipped).length}</div>
+                            <div className="text-[10px] font-black text-slate-500 uppercase mt-1">Saltadas</div>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 mb-8">
-                        <div className="bg-green-900/30 border border-green-800 p-4 rounded-xl text-center">
-                            <div className="text-2xl font-bold text-green-400">{correctCount}</div>
-                            <div className="text-xs text-green-200">Correctas</div>
-                        </div>
-                        <div className="bg-red-900/30 border border-red-800 p-4 rounded-xl text-center">
-                            <div className="text-2xl font-bold text-red-400">{incorrectCount}</div>
-                            <div className="text-xs text-red-200">Incorrectas</div>
-                        </div>
-                        <div className="bg-yellow-900/30 border border-yellow-800 p-4 rounded-xl text-center">
-                            <div className="text-2xl font-bold text-yellow-400">{skippedCount}</div>
-                            <div className="text-xs text-yellow-200">Saltadas</div>
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 mb-8">
-                        <div
-                            className="flex items-center justify-between cursor-pointer"
+                    <div className="glass p-8 mb-12 animate-up delay-200">
+                        <button
+                            className="w-full flex items-center justify-between text-left group"
                             onClick={() => setShowReview(!showReview)}
                         >
-                            <div className="flex items-center gap-2">
-                                <Eye size={20} className="text-blue-400" />
-                                <h3 className="text-lg font-bold">Revisión</h3>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-blue-400 group-hover:bg-blue-400/10 transition-colors"><Eye size={24} /></div>
+                                <div>
+                                    <h3 className="text-xl font-black">Revisión de Errores</h3>
+                                    <p className="text-sm text-slate-500">Analiza tus respuestas una a una</p>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300">
-                                <span>{showReview ? 'Ocultar' : 'Ver más'}</span>
-                                {showReview ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                            </div>
-                        </div>
+                            {showReview ? <ChevronUp className="text-slate-600" /> : <ChevronDown className="text-slate-600" />}
+                        </button>
 
                         {showReview && (
-                            <div className="space-y-6 mt-6 border-t border-gray-700 pt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="space-y-6 mt-10 border-t border-white/5 pt-8">
                                 {answersLog.map((log, idx) => (
-                                    <div key={idx} className="border-b border-gray-700 pb-4 last:border-0">
-                                        <div className="flex items-start justify-between mb-2">
-                                            <p className="font-medium text-gray-200 w-10/12">
-                                                <span className="text-gray-500 mr-2">{idx + 1}.</span>
-                                                {log.question.question}
-                                            </p>
-                                            {log.isCorrect ? <Check className="text-green-500" /> : <X className="text-red-500" />}
+                                    <div key={idx} className="bg-white/2 p-6 rounded-2xl border border-white/5">
+                                        <div className="flex items-start gap-4 mb-4">
+                                            <span className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-black text-slate-500 flex-shrink-0">{idx + 1}</span>
+                                            <p className="font-bold text-lg leading-snug">{log.question.question}</p>
                                         </div>
-
-                                        <div className="ml-6 text-sm">
-                                            {log.isSkipped ? (
-                                                <p className="text-yellow-500 italic">Pregunta Saltada (+30s)</p>
-                                            ) : (
-                                                <p className={`${log.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                                                    Tu respuesta: <span className="font-semibold">{log.question.options[log.selected]}</span>
-                                                </p>
-                                            )}
-
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-12">
+                                            <div className={`p-4 rounded-xl border text-sm flex items-center justify-between ${log.isSkipped ? 'border-yellow-500/30 bg-yellow-500/5' : (log.isCorrect ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5')}`}>
+                                                <span>{log.isSkipped ? '⚠️ Pregunta Saltada' : log.question.options[log.selected]}</span>
+                                                {log.isCorrect ? <Check size={16} className="text-green-500" /> : <X size={16} className="text-red-500" />}
+                                            </div>
                                             {!log.isCorrect && (
-                                                <p className="text-blue-400 mt-1">
-                                                    Correcta: <span className="font-semibold">{log.question.options[log.question.correctAnswer]}</span>
-                                                </p>
+                                                <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/10 text-sm flex items-center justify-between">
+                                                    <span className="font-bold text-blue-400">{log.question.options[log.question.correctAnswer]}</span>
+                                                    <Check size={16} className="text-blue-500" />
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -513,12 +528,20 @@ export default function QuizApp({ onExit }) {
                         )}
                     </div>
 
-                    <button
-                        onClick={restartApp}
-                        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg"
-                    >
-                        <RotateCcw /> REINICIAR ACTIVIDAD
-                    </button>
+                    <div className="flex gap-4 animate-up delay-300">
+                        <button
+                            onClick={restartApp}
+                            className="btn-premium flex-1 py-5 text-lg shadow-blue-500/40"
+                        >
+                            <RotateCcw /> REINICIAR CUESTIONARIO
+                        </button>
+                        <button
+                            onClick={onExit}
+                            className="btn-outline !py-5 px-8"
+                        >
+                            Galería
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -527,7 +550,6 @@ export default function QuizApp({ onExit }) {
     return null;
 }
 
-// Sub-componente para formulario
 function AdminForm({ initialData, onSave, onCancel }) {
     const [formData, setFormData] = useState({
         question: '',
@@ -549,38 +571,44 @@ function AdminForm({ initialData, onSave, onCancel }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!formData.question || formData.options.some(o => !o)) return alert("Completa todos los campos");
+        if (!formData.question || formData.options.some(o => !o)) return alert("Por favor completa todos los campos para continuar.");
         onSave(formData);
-        // Reset si es nuevo
         if (!initialData) setFormData({ question: '', options: ['', '', '', ''], correctAnswer: 0 });
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-                <label className="block text-sm text-gray-400 mb-1">Pregunta</label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Cuerpo de la Pregunta</label>
                 <textarea
-                    className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white"
-                    rows="2"
+                    className="premium-input w-full min-h-[100px] text-lg"
+                    placeholder="Escribe el enunciado de la pregunta aquí..."
+                    rows="3"
                     value={formData.question}
                     onChange={e => setFormData({ ...formData, question: e.target.value })}
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {formData.options.map((opt, idx) => (
-                    <div key={idx} className="flex gap-2 items-center">
-                        <input
-                            type="radio"
-                            name="correct"
-                            checked={formData.correctAnswer === idx}
-                            onChange={() => setFormData({ ...formData, correctAnswer: idx })}
-                            className="accent-blue-500 w-4 h-4"
-                        />
+                    <div key={idx} className={`relative p-5 rounded-2xl border-2 transition-all ${formData.correctAnswer === idx ? 'border-blue-500 bg-blue-500/5' : 'border-white/5 bg-white/2'}`}>
+                        <div className="flex items-center gap-4 mb-3">
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                                <input
+                                    type="radio"
+                                    name="correct"
+                                    checked={formData.correctAnswer === idx}
+                                    onChange={() => setFormData({ ...formData, correctAnswer: idx })}
+                                    className="w-5 h-5 accent-blue-500"
+                                />
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Opción {String.fromCharCode(65 + idx)}</span>
+                            </label>
+                            {formData.correctAnswer === idx && <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded-md">Correcta</span>}
+                        </div>
                         <input
                             type="text"
-                            placeholder={`Opción ${idx + 1}`}
-                            className={`flex-1 bg-gray-900 border ${formData.correctAnswer === idx ? 'border-blue-500' : 'border-gray-600'} rounded p-2 text-white`}
+                            placeholder="Texto de la respuesta..."
+                            className="bg-transparent border-none p-0 w-full text-white font-bold focus:ring-0 placeholder:text-slate-700"
                             value={opt}
                             onChange={e => handleChangeOption(idx, e.target.value)}
                         />
@@ -588,13 +616,13 @@ function AdminForm({ initialData, onSave, onCancel }) {
                 ))}
             </div>
 
-            <div className="flex gap-3 mt-4">
-                <button type="submit" className="flex-1 bg-green-600 hover:bg-green-500 py-2 rounded text-white flex justify-center gap-2 items-center">
-                    <Save size={18} /> Guardar
+            <div className="flex gap-4 pt-4">
+                <button type="submit" className="btn-premium flex-1 py-4">
+                    <Save size={20} /> Guardar Pregunta
                 </button>
                 {onCancel && (
-                    <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">
-                        Cancelar
+                    <button type="button" onClick={onCancel} className="btn-outline px-10">
+                        Limpiar
                     </button>
                 )}
             </div>
