@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Plus, Image as ImageIcon, Music, Type, Move, Target, Paintbrush,
     Save, Trash2, X, Play, Pause, Upload, Eye, ChevronLeft, LayoutGrid,
-    Settings as SettingsIcon, ShieldCheck, Key, PanelLeftClose, PanelRightClose, Layers, Copy
+    Settings as SettingsIcon, ShieldCheck, Key, PanelLeftClose, PanelRightClose, Layers, Copy, HelpCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
 import confetti from 'canvas-confetti';
 
-export default function SlideEditor({ slides, onSave, onExit, isActive, onToggleActive, onViewResults, selectedProject: initialProject, onSelectProject, returnFromResults }) {
+export default function SlideEditor({ slides, onSave, onExit, isActive, onToggleActive, onViewResults, selectedProject: initialProject, onSelectProject, returnFromResults, onOpenQuiz }) {
     const [localSlides, setLocalSlides] = useState(slides || []);
     const [selectedIdx, setSelectedIdx] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -32,6 +32,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
     const [showSlidesPanel, setShowSlidesPanel] = useState(window.innerWidth >= 1200);
     const [showSettingsPanel, setShowSettingsPanel] = useState(window.innerWidth >= 1200);
+    const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
     const PROGRAM_ORDER = [
         'Baby Program', 'Mini Program', 'Tiny Program', 'Big Program',
@@ -59,6 +60,14 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     useEffect(() => {
         loadProjects();
     }, []);
+
+    useEffect(() => {
+        const handleClickOutside = () => setShowTypeDropdown(false);
+        if (showTypeDropdown) {
+            window.addEventListener('click', handleClickOutside);
+        }
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, [showTypeDropdown]);
 
     // Sync project when it changes in parent App (but don't hide gallery - we want gallery first)
     useEffect(() => {
@@ -383,7 +392,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 {/* Header Gallery */}
                 <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '20px' : '40px', gap: '15px' }}>
                     <div>
-                        <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Galería</h1>
+                        <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Galería TK</h1>
                         <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.85rem' : '1rem' }}>Administra los niveles educativos y sus claves de acceso</p>
                     </div>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
@@ -395,9 +404,51 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         <button onClick={onExit} className="btn-outline" style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <ChevronLeft size={isMobile ? 16 : 20} style={{ marginRight: '-4px' }} /> Home
                         </button>
-                        <button onClick={() => setShowAddModal(true)} className="btn-premium" style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}>
-                            <Plus size={isMobile ? 16 : 20} /> Agregar
-                        </button>
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setShowTypeDropdown(!showTypeDropdown);
+                                }}
+                                className="btn-premium"
+                                style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}
+                            >
+                                <Plus size={isMobile ? 16 : 20} /> Agregar
+                            </button>
+
+                            {showTypeDropdown && (
+                                <div className="glass" style={{
+                                    position: 'absolute',
+                                    top: 'calc(100% + 10px)',
+                                    right: 0,
+                                    width: '200px',
+                                    zIndex: 9999,
+                                    overflow: 'hidden',
+                                    padding: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px',
+                                    background: 'rgba(15, 15, 30, 0.95)',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                                }}>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setShowAddModal(true); setShowTypeDropdown(false); }}
+                                        className="btn-outline"
+                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
+                                    >
+                                        <LayoutGrid size={18} color="#a78bfa" /> <span>Guías</span>
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onOpenQuiz(); setShowTypeDropdown(false); }}
+                                        className="btn-outline"
+                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
+                                    >
+                                        <HelpCircle size={18} color="#3b82f6" /> <span>Quiz</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

@@ -3,6 +3,7 @@ import AliasEntry from './components/AliasEntry';
 import SlideViewer from './components/SlideViewer';
 import SlideEditor from './components/SlideEditor';
 import ResultsViewer from './components/ResultsViewer';
+import QuizApp from './components/QuizApp';
 import { supabase } from './lib/supabase';
 import confetti from 'canvas-confetti';
 
@@ -163,6 +164,10 @@ export default function App() {
         );
     }
 
+    if (view === 'quiz') {
+        return <QuizApp onExit={() => setView('editor')} />;
+    }
+
     if (view === 'editor') {
         return (
             <SlideEditor
@@ -191,6 +196,7 @@ export default function App() {
                     loadProjectSlides(p.id);
                     setReturnFromResults(false);
                 }}
+                onOpenQuiz={() => setView('quiz')}
             />
         );
     }
