@@ -75,7 +75,7 @@ export default function App() {
         setIsActive(project.is_active);
         await loadProjectSlides(project.id);
         setCurrentSlideIdx(0);
-        setView('viewer');
+        setView(project.id.startsWith('quiz-') ? 'quiz' : 'viewer');
     };
 
     const handleEnterAsTeacher = async (project) => {
@@ -85,7 +85,7 @@ export default function App() {
         setIsActive(project.is_active);
         await loadProjectSlides(project.id);
         setCurrentSlideIdx(0);
-        setView('viewer');
+        setView(project.id.startsWith('quiz-') ? 'quiz' : 'viewer');
     };
 
     const handleEnterAsAdmin = () => {
@@ -165,7 +165,14 @@ export default function App() {
     }
 
     if (view === 'quiz') {
-        return <QuizApp onExit={() => setView('editor')} />;
+        return <QuizApp
+            onExit={() => setView('editor')}
+            isAdmin={role === 'admin' || role === 'teacher'}
+            project={selectedProject}
+            isActive={isActive}
+            onToggleActive={toggleActive}
+            onViewResults={() => setView('results')}
+        />;
     }
 
     if (view === 'editor') {
@@ -196,7 +203,13 @@ export default function App() {
                     loadProjectSlides(p.id);
                     setReturnFromResults(false);
                 }}
-                onOpenQuiz={() => setView('quiz')}
+                onOpenQuiz={(p) => {
+                    if (p) {
+                        setSelectedProject(p);
+                        setIsActive(p.is_active);
+                    }
+                    setView('quiz');
+                }}
             />
         );
     }

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS projects (
   name TEXT NOT NULL,
   is_active BOOLEAN DEFAULT FALSE,
   access_code TEXT DEFAULT '123',
+  questions JSONB DEFAULT '[]',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

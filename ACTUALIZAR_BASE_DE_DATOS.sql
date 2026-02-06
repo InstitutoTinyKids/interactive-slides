@@ -2,8 +2,9 @@
 -- UPDATE PARA SOPORTE MULTI-PROGRAMA
 -- ============================================
 
--- 1. Agregar columna para la clave de acceso de cada programa
+-- 1. Agregar columnas para la clave de acceso y preguntas de cada programa
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS access_code TEXT DEFAULT '123';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS questions JSONB;
 
 -- 2. Asegurar que el ID de proyectos sea flexible (quitar default fijo)
 ALTER TABLE projects ALTER COLUMN id DROP DEFAULT;

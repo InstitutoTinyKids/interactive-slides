@@ -1,5 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Play, Clock, Check, X, HelpCircle, SkipForward, RotateCcw, Edit2, Trash2, Plus, Save, ArrowRight, Eye, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import {
+    Settings, Play, Clock, Check, X, HelpCircle, SkipForward,
+    RotateCcw, Edit2, Trash2, Plus, Save, ArrowRight, Eye,
+    AlertTriangle, ChevronDown, ChevronUp, LayoutGrid, Pause, Key
+} from 'lucide-react';
 
 // --- DATOS INICIALES (Extraídos de tus imágenes) ---
 const INITIAL_QUESTIONS = [
@@ -85,10 +89,12 @@ const INITIAL_QUESTIONS = [
     }
 ];
 
-export default function QuizApp({ onExit }) {
+export default function QuizApp({ onExit, isAdmin = false, project, isActive, onToggleActive, onViewResults }) {
     // --- ESTADOS ---
-    const [view, setView] = useState('home'); // home, admin, playing, results
+    const [view, setView] = useState(isAdmin ? 'admin' : 'home'); // home, admin, playing, results
     const [questions, setQuestions] = useState(INITIAL_QUESTIONS);
+    const [selectedQIdx, setSelectedQIdx] = useState(0);
+    const [projectLocal, setProjectLocal] = useState(project);
 
     // Estados del Admin
     const [adminPass, setAdminPass] = useState('');
@@ -106,10 +112,62 @@ export default function QuizApp({ onExit }) {
     // Estados de Ayudas
     const [hiddenOptions, setHiddenOptions] = useState([]); // Índices ocultos por 50/50
 
-    // Estado nuevo para la revisión
     const [showReview, setShowReview] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [localAccessCode, setLocalAccessCode] = useState(project?.access_code || '123');
 
     const timerRef = useRef(null);
+
+    // Sync project details when changed from parent
+    useEffect(() => {
+        if (project) {
+            setProjectLocal(project);
+            setLocalAccessCode(project.access_code);
+        }
+    }, [project]);
+
+    // --- CARGA DE DATOS ---
+    useEffect(() => {
+        if (project && project.id) {
+            loadQuizData();
+        }
+    }, [project]);
+
+    const loadQuizData = async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('projects')
+                .select('questions')
+                .eq('id', project.id)
+                .single();
+
+            if (data && data.questions) {
+                setQuestions(data.questions);
+            }
+        } catch (err) {
+            console.error("Error loading quiz data:", err);
+        }
+        setLoading(false);
+    };
+
+    const handleSaveQuiz = async (updatedQuestions) => {
+        if (!project || !project.id) return;
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('projects')
+                .update({ questions: updatedQuestions })
+                .eq('id', project.id);
+
+            if (error) throw error;
+            setQuestions(updatedQuestions);
+            alert('✅ Quiz guardado correctamente');
+        } catch (err) {
+            alert('Error al guardar: ' + err.message);
+        }
+        setLoading(false);
+    };
 
     // --- LOGICA DEL CRONOMETRO ---
     useEffect(() => {
@@ -231,109 +289,163 @@ export default function QuizApp({ onExit }) {
                         <Play size={24} className="group-hover:scale-110 transition-transform" />
                         INICIAR ACTIVIDAD
                     </button>
-
-                    <div className="mt-12 pt-8 border-t border-white/5">
-                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Administración</p>
-                        <div className="flex gap-2">
-                            <input
-                                type="password"
-                                placeholder="Clave (123)"
-                                className="premium-input flex-1 !py-3"
-                                value={adminPass}
-                                onChange={(e) => setAdminPass(e.target.value)}
-                            />
-                            <button onClick={goToAdmin} className="btn-outline !p-3 bg-white/5">
-                                <Settings size={20} className="text-slate-400" />
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         );
     }
 
     if (view === 'admin') {
-        const editingIndex = editingQ ? questions.findIndex(q => q.id === editingQ.id) : -1;
+        const currentEditingQ = questions[selectedQIdx] || null;
+
         return (
-            <div className="min-h-screen bg-[#050510] text-white p-4 md:p-8 overflow-y-auto">
-                <div className="max-w-4xl mx-auto space-y-8">
-                    <header className="flex justify-between items-center bg-white/5 p-6 rounded-3xl border border-white/10">
-                        <div>
-                            <h2 className="text-2xl font-black flex items-center gap-3">
-                                <div className="p-2 bg-blue-500/20 rounded-xl text-blue-400"><Edit2 size={24} /></div>
-                                Panel de Administración
-                            </h2>
-                            <p className="text-slate-400 text-sm mt-1">Gestiona las preguntas del cuestionario</p>
-                        </div>
-                        <button onClick={restartApp} className="btn-outline flex items-center gap-2">
-                            <RotateCcw size={18} /> Salir
+            <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden' }}>
+                {/* Panel Izquierdo: Lista de Preguntas */}
+                <aside style={{
+                    width: '300px',
+                    minWidth: '300px',
+                    borderRight: '1px solid rgba(255,255,255,0.05)',
+                    background: '#0a0a1a',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden'
+                }}>
+                    <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#475569' }}>Preguntas ({questions.length})</span>
+                        <button
+                            onClick={() => {
+                                const newQ = { id: Date.now(), question: 'Nueva Pregunta...', options: ['', '', '', ''], correctAnswer: 0 };
+                                setQuestions([...questions, newQ]);
+                                setSelectedQIdx(questions.length);
+                            }}
+                            style={{ background: 'rgba(124, 58, 237, 0.1)', border: 'none', color: '#a78bfa', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
+                        >
+                            <Plus size={16} />
                         </button>
+                    </div>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {questions.map((q, idx) => (
+                            <div
+                                key={q.id}
+                                onClick={() => setSelectedQIdx(idx)}
+                                style={{
+                                    padding: '12px 15px',
+                                    borderRadius: '12px',
+                                    border: `1px solid ${selectedQIdx === idx ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`,
+                                    background: selectedQIdx === idx ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)',
+                                    cursor: 'pointer',
+                                    transition: '0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px'
+                                }}
+                            >
+                                <span style={{ fontSize: '0.6rem', fontWeight: 900, color: selectedQIdx === idx ? '#3b82f6' : '#475569' }}>#{idx + 1}</span>
+                                <p style={{ flex: 1, fontSize: '0.8rem', color: selectedQIdx === idx ? 'white' : '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.question}</p>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (window.confirm('¿Eliminar esta pregunta?')) {
+                                            const updated = questions.filter((_, i) => i !== idx);
+                                            setQuestions(updated);
+                                            if (selectedQIdx >= updated.length) setSelectedQIdx(Math.max(0, updated.length - 1));
+                                        }
+                                    }}
+                                    style={{ background: 'none', border: 'none', color: '#ef4444', padding: '4px', cursor: 'pointer', opacity: 0.5 }}
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </aside>
+
+                {/* Área Central: Editor */}
+                <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #111, #050510)' }}>
+                    <header style={{ height: '70px', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(10,10,20,0.8)', backdropFilter: 'blur(15px)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <button onClick={onExit} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: '#94a3b8', cursor: 'pointer' }}><LayoutGrid size={22} /></button>
+                            <div>
+                                <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{projectLocal?.name || 'Cargando...'}</h2>
+                                <span style={{ fontSize: '0.65rem', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Editor de Quiz</span>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem' }}><Eye size={16} /> Resultados</button>
+                            <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
+                                {isActive ? <Pause size={16} /> : <Play size={16} />} {isActive ? 'Suspender' : 'Activar'}
+                            </button>
+                            <button onClick={() => handleSaveQuiz(questions)} className="btn-premium" style={{ padding: '10px 15px', fontSize: '0.8rem' }} disabled={loading}><Save size={16} /> Guardar</button>
+                        </div>
                     </header>
 
-                    <section className="glass p-8 animate-up">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold text-purple-400">
-                                {editingQ ? `Editando Pregunta #${editingIndex + 1}` : 'Crear Nueva Pregunta'}
-                            </h3>
-                            {editingQ && (
-                                <button onClick={() => setEditingQ(null)} className="text-xs font-bold text-slate-500 uppercase tracking-widest hover:text-white transition-colors">
-                                    Cancelar Edición
-                                </button>
-                            )}
+                    <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+                        <div className="max-w-3xl mx-auto">
+                            <section className="glass p-8 animate-up">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h3 className="text-xl font-bold text-blue-400">
+                                        Editando Pregunta #{selectedQIdx + 1}
+                                    </h3>
+                                    <span style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>ID: {currentEditingQ?.id}</span>
+                                </div>
+                                <AdminForm
+                                    initialData={currentEditingQ}
+                                    onSave={(q) => {
+                                        const newQuestions = questions.map(item => item.id === q.id ? q : item);
+                                        setQuestions(newQuestions);
+                                        alert('Pregunta actualizada en memoria. No olvides Guardar para subir a la nube.');
+                                    }}
+                                />
+                            </section>
                         </div>
-                        <AdminForm
-                            initialData={editingQ}
-                            onSave={(q) => {
-                                if (editingQ) {
-                                    setQuestions(questions.map(item => item.id === q.id ? q : item));
-                                } else {
-                                    setQuestions([...questions, { ...q, id: Date.now() }]);
-                                }
-                                setEditingQ(null);
-                            }}
-                            onCancel={() => setEditingQ(null)}
-                        />
-                    </section>
+                    </div>
+                </main>
 
-                    <div className="grid gap-4">
-                        <div className="flex items-center justify-between px-2">
-                            <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">Preguntas Actuales ({questions.length})</h3>
-                        </div>
-                        {questions.map((q, idx) => {
-                            const isActive = editingQ?.id === q.id;
-                            return (
-                                <div
-                                    key={q.id}
-                                    className={`bg-white/5 p-5 rounded-2xl flex justify-between items-center border transition-all ${isActive ? 'border-blue-500 bg-blue-500/5' : 'border-white/5 hover:bg-white/10'}`}
-                                >
-                                    <div className="flex-1 min-w-0 pr-4">
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <span className="text-xs font-black text-blue-500">#{idx + 1}</span>
-                                            <span className="text-slate-500 text-[10px] uppercase font-bold tracking-tighter">ID: {q.id}</span>
-                                        </div>
-                                        <p className="text-slate-200 truncate font-medium">{q.question}</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => setEditingQ(q)} className="p-3 bg-white/5 rounded-xl hover:bg-blue-500/20 text-blue-400 transition-colors">
-                                            <Edit2 size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                if (window.confirm('¿Eliminar esta pregunta?')) {
-                                                    setQuestions(questions.filter(item => item.id !== q.id));
-                                                    if (editingQ?.id === q.id) setEditingQ(null);
-                                                }
+                {/* Panel Derecho: Ajustes */}
+                <aside style={{
+                    width: '320px',
+                    minWidth: '320px',
+                    background: 'rgba(10, 10, 20, 0.95)',
+                    borderLeft: '1px solid rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden'
+                }}>
+                    <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                        <div>
+                            <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}><Settings size={18} /> Ajustes del Quiz</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase' }}>Clave de Acceso</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <Key size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                                        <input
+                                            className="premium-input"
+                                            value={localAccessCode}
+                                            onChange={async (e) => {
+                                                const val = e.target.value;
+                                                setLocalAccessCode(val);
+                                                // Sync to Supabase directly if you want, or handle via general save
+                                                await supabase.from('projects').update({ access_code: val }).eq('id', project.id);
                                             }}
-                                            className="p-3 bg-white/5 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                            style={{ paddingLeft: '40px', width: '100%' }}
+                                        />
                                     </div>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: 'auto', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '15px', textAlign: 'center' }}>¿Terminaste de editar este cuestionario?</p>
+                            <button
+                                onClick={onExit}
+                                className="btn-outline"
+                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                            >
+                                <LayoutGrid size={18} /> Volver a Galería
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </aside>
             </div>
         );
     }
@@ -550,7 +662,7 @@ export default function QuizApp({ onExit }) {
     return null;
 }
 
-function AdminForm({ initialData, onSave, onCancel }) {
+function AdminForm({ initialData, onSave }) {
     const [formData, setFormData] = useState({
         question: '',
         options: ['', '', '', ''],
@@ -571,61 +683,53 @@ function AdminForm({ initialData, onSave, onCancel }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!formData.question || formData.options.some(o => !o)) return alert("Por favor completa todos los campos para continuar.");
         onSave(formData);
-        if (!initialData) setFormData({ question: '', options: ['', '', '', ''], correctAnswer: 0 });
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex flex-col gap-2">
+        <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="flex flex-col gap-3">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Cuerpo de la Pregunta</label>
                 <textarea
-                    className="premium-input w-full min-h-[100px] text-lg"
-                    placeholder="Escribe el enunciado de la pregunta aquí..."
-                    rows="3"
+                    className="premium-input w-full min-h-[140px] text-xl font-bold leading-relaxed"
+                    placeholder="¿Cuál es la pregunta?"
                     value={formData.question}
                     onChange={e => setFormData({ ...formData, question: e.target.value })}
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {formData.options.map((opt, idx) => (
-                    <div key={idx} className={`relative p-5 rounded-2xl border-2 transition-all ${formData.correctAnswer === idx ? 'border-blue-500 bg-blue-500/5' : 'border-white/5 bg-white/2'}`}>
-                        <div className="flex items-center gap-4 mb-3">
-                            <label className="flex items-center gap-2 cursor-pointer flex-1">
-                                <input
-                                    type="radio"
-                                    name="correct"
-                                    checked={formData.correctAnswer === idx}
-                                    onChange={() => setFormData({ ...formData, correctAnswer: idx })}
-                                    className="w-5 h-5 accent-blue-500"
-                                />
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Opción {String.fromCharCode(65 + idx)}</span>
-                            </label>
-                            {formData.correctAnswer === idx && <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded-md">Correcta</span>}
+                    <div
+                        key={idx}
+                        className={`group relative p-6 rounded-2xl border-2 transition-all cursor-pointer ${formData.correctAnswer === idx ? 'border-blue-500 bg-blue-500/10' : 'border-white/5 bg-white/2 hover:border-white/10'}`}
+                        onClick={() => setFormData({ ...formData, correctAnswer: idx })}
+                    >
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${formData.correctAnswer === idx ? 'border-blue-500 bg-blue-500' : 'border-white/20'}`}>
+                                {formData.correctAnswer === idx && <div className="w-2 h-2 bg-white rounded-full" />}
+                            </div>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Opción {String.fromCharCode(65 + idx)}</span>
+                            {formData.correctAnswer === idx && <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest ml-auto">Correcta</span>}
                         </div>
                         <input
                             type="text"
                             placeholder="Texto de la respuesta..."
-                            className="bg-transparent border-none p-0 w-full text-white font-bold focus:ring-0 placeholder:text-slate-700"
+                            className="bg-transparent border-none p-0 w-full text-white font-black text-lg focus:ring-0 placeholder:text-slate-700"
                             value={opt}
-                            onChange={e => handleChangeOption(idx, e.target.value)}
+                            onChange={(e) => {
+                                e.stopPropagation();
+                                handleChangeOption(idx, e.target.value);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                         />
                     </div>
                 ))}
             </div>
 
-            <div className="flex gap-4 pt-4">
-                <button type="submit" className="btn-premium flex-1 py-4">
-                    <Save size={20} /> Guardar Pregunta
-                </button>
-                {onCancel && (
-                    <button type="button" onClick={onCancel} className="btn-outline px-10">
-                        Limpiar
-                    </button>
-                )}
-            </div>
+            <button type="submit" className="btn-premium w-full py-5 text-lg shadow-blue-500/20">
+                <Save size={24} /> Guardar Pregunta
+            </button>
         </form>
     );
 }

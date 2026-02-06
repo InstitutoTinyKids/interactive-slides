@@ -16,6 +16,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [showGallery, setShowGallery] = useState(!returnFromResults && !initialProject);
     const [projects, setProjects] = useState([]);
     const [currentProject, setCurrentProject] = useState(initialProject);
+    const [galleryTab, setGalleryTab] = useState('guias'); // 'guias' or 'quiz'
 
     // For dragging and resizing in editor
     const canvasContainerRef = useRef(null);
@@ -103,8 +104,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         const accessCode = prompt(`Define la Clave de Acceso para ${newProjectName}:`, '123');
         if (!accessCode) return;
 
+        const projectType = galleryTab === 'quiz' ? 'quiz' : 'guias';
         const newProject = {
-            id: crypto.randomUUID(),
+            id: projectType === 'quiz' ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID(),
             name: newProjectName.trim(),
             is_active: false,
             access_code: accessCode
@@ -112,7 +114,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
         const { error } = await supabase.from('projects').insert(newProject);
         if (error) {
-            alert('Error al agregar programa: ' + error.message);
+            alert('Error al agregar: ' + error.message);
         } else {
             setNewProjectName('');
             setShowAddModal(false);
@@ -433,16 +435,16 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
                                 }}>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); setShowAddModal(true); setShowTypeDropdown(false); }}
+                                        onClick={(e) => { e.stopPropagation(); setShowAddModal(true); setGalleryTab('guias'); setShowTypeDropdown(false); }}
                                         className="btn-outline"
-                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
+                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: galleryTab === 'guias' ? 'rgba(124, 58, 237, 0.1)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
                                     >
                                         <LayoutGrid size={18} color="#a78bfa" /> <span>Guías</span>
                                     </button>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); onOpenQuiz(); setShowTypeDropdown(false); }}
+                                        onClick={(e) => { e.stopPropagation(); setGalleryTab('quiz'); setShowTypeDropdown(false); }}
                                         className="btn-outline"
-                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
+                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: galleryTab === 'quiz' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
                                     >
                                         <HelpCircle size={18} color="#3b82f6" /> <span>Quiz</span>
                                     </button>
@@ -500,7 +502,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         </div>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: isMobile ? '15px' : '25px' }}>
-                            {projects.map(p => (
+                            {projects.filter(p => galleryTab === 'quiz' ? p.id.startsWith('quiz-') : !p.id.startsWith('quiz-')).map(p => (
                                 <div
                                     key={p.id}
                                     className="glass"
@@ -523,7 +525,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                                         <div style={{ padding: '12px', background: p.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)', borderRadius: '12px', color: p.is_active ? '#10b981' : '#64748b' }}>
-                                            <ShieldCheck size={28} />
+                                            {galleryTab === 'quiz' ? <HelpCircle size={28} /> : <ShieldCheck size={28} />}
                                         </div>
                                         <div style={{
                                             fontSize: '0.65rem',
@@ -551,14 +553,14 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     </div>
 
                                     <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
-                                        <button onClick={() => handleSelectProject(p)} className="btn-premium" style={{ flex: 2 }}>
-                                            Editar
+                                        <button onClick={() => galleryTab === 'quiz' ? onOpenQuiz(p) : handleSelectProject(p)} className="btn-premium" style={{ flex: 2 }}>
+                                            {galleryTab === 'quiz' ? 'Editar Quiz' : 'Editar Guía'}
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
                                             className="btn-outline"
                                             style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                            title="Duplicar Proyecto"
+                                            title="Duplicar"
                                         >
                                             <Copy size={20} />
                                         </button>
