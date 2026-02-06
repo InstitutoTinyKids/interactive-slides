@@ -454,7 +454,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         <LayoutGrid size={18} color="#a78bfa" /> <span>Guías</span>
                                     </button>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); setGalleryTab('quiz'); setShowTypeDropdown(false); }}
+                                        onClick={(e) => { e.stopPropagation(); setShowAddModal(true); setGalleryTab('quiz'); setShowTypeDropdown(false); }}
                                         className="btn-outline"
                                         style={{ width: '100%', textAlign: 'left', border: 'none', background: galleryTab === 'quiz' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
                                     >
