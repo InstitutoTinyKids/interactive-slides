@@ -282,157 +282,237 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
     }
 
     if (view === 'admin') {
-        const currentEditingQ = questions[selectedQIdx] || null;
+        const currentEditingQ = editingQ || questions[selectedQIdx] || null;
 
         return (
-            <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden' }}>
-                {/* Panel Izquierdo: Lista de Preguntas */}
-                <aside style={{
-                    width: '300px',
-                    minWidth: '300px',
-                    borderRight: '1px solid rgba(255,255,255,0.05)',
-                    background: '#0a0a1a',
+            <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden', flexDirection: 'column' }}>
+                {/* HEADER PROFESIONAL */}
+                <header style={{
+                    height: '75px',
+                    padding: '0 30px',
                     display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden'
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderBottom: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(10,10,25,0.9)',
+                    backdropFilter: 'blur(20px)',
+                    zIndex: 100
                 }}>
-                    <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#475569' }}>Preguntas ({questions.length})</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <div style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '15px', color: '#3b82f6' }}>
+                            <LayoutGrid size={24} />
+                        </div>
+                        <div>
+                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white', lineHeight: 1.1 }}>{projectLocal?.name || 'Cargando...'}</h2>
+                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Panel de Administración</span>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                        <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem' }}>
+                            <Eye size={18} /> Resultados
+                        </button>
                         <button
-                            onClick={() => {
-                                const newQ = { id: Date.now(), question: 'Nueva Pregunta...', options: ['', '', '', ''], correctAnswer: 0 };
-                                setQuestions([...questions, newQ]);
-                                setSelectedQIdx(questions.length);
+                            onClick={onToggleActive}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                padding: '12px 20px',
+                                borderRadius: '14px',
+                                fontSize: '0.85rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                background: isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                color: isActive ? '#ef4444' : '#10b981',
+                                border: `1px solid ${isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}`,
+                                transition: '0.3s'
                             }}
-                            style={{ background: 'rgba(124, 58, 237, 0.1)', border: 'none', color: '#a78bfa', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
                         >
-                            <Plus size={16} />
+                            {isActive ? <Pause size={18} /> : <Play size={18} />} {isActive ? 'Suspender' : 'Activar'}
+                        </button>
+                        <button
+                            onClick={() => handleSaveQuiz(questions)}
+                            className="btn-premium"
+                            style={{ padding: '12px 25px', borderRadius: '14px', fontSize: '0.85rem' }}
+                            disabled={loading}
+                        >
+                            <Save size={18} /> Guardar Cambios
                         </button>
                     </div>
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {questions.map((q, idx) => (
-                            <div
-                                key={q.id}
-                                onClick={() => setSelectedQIdx(idx)}
-                                style={{
-                                    padding: '12px 15px',
-                                    borderRadius: '12px',
-                                    border: `1px solid ${selectedQIdx === idx ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`,
-                                    background: selectedQIdx === idx ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)',
-                                    cursor: 'pointer',
-                                    transition: '0.2s',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '12px'
-                                }}
-                            >
-                                <span style={{ fontSize: '0.6rem', fontWeight: 900, color: selectedQIdx === idx ? '#3b82f6' : '#475569' }}>#{idx + 1}</span>
-                                <p style={{ flex: 1, fontSize: '0.8rem', color: selectedQIdx === idx ? 'white' : '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.question}</p>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (window.confirm('¿Eliminar esta pregunta?')) {
-                                            const updated = questions.filter((_, i) => i !== idx);
-                                            setQuestions(updated);
-                                            if (selectedQIdx >= updated.length) setSelectedQIdx(Math.max(0, updated.length - 1));
-                                        }
-                                    }}
-                                    style={{ background: 'none', border: 'none', color: '#ef4444', padding: '4px', cursor: 'pointer', opacity: 0.5 }}
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </aside>
+                </header>
 
-                {/* Área Central: Editor */}
-                <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #111, #050510)' }}>
-                    <header style={{ height: '70px', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(10,10,20,0.8)', backdropFilter: 'blur(15px)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                            <button onClick={onExit} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: '#94a3b8', cursor: 'pointer' }}><LayoutGrid size={22} /></button>
+                <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                    {/* PANEL IZQUIERDO: LISTA DE PREGUNTAS */}
+                    <aside style={{
+                        width: '380px',
+                        minWidth: '380px',
+                        borderRight: '1px solid rgba(255,255,255,0.05)',
+                        background: '#0a0a1a',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{projectLocal?.name || 'Cargando...'}</h2>
-                                <span style={{ fontSize: '0.65rem', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Editor de Quiz</span>
+                                <h3 style={{ fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'white' }}>Preguntas</h3>
+                                <p style={{ fontSize: '0.7rem', color: '#64748b' }}>{questions.length} preguntas creadas</p>
                             </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem' }}><Eye size={16} /> Resultados</button>
-                            <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
-                                {isActive ? <Pause size={16} /> : <Play size={16} />} {isActive ? 'Suspender' : 'Activar'}
+                            <button
+                                onClick={() => {
+                                    setEditingQ({ id: Date.now(), question: '', options: ['', '', '', ''], correctAnswer: 0, isNew: true });
+                                }}
+                                style={{ background: '#7c3aed', border: 'none', color: 'white', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px rgba(124, 58, 237, 0.3)' }}
+                            >
+                                <Plus size={20} />
                             </button>
-                            <button onClick={() => handleSaveQuiz(questions)} className="btn-premium" style={{ padding: '10px 15px', fontSize: '0.8rem' }} disabled={loading}><Save size={16} /> Guardar</button>
                         </div>
-                    </header>
-
-                    <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
-                        <div className="max-w-3xl mx-auto">
-                            <section className="glass p-8 animate-up">
-                                <div className="flex items-center justify-between mb-8">
-                                    <h3 className="text-xl font-bold text-blue-400">
-                                        Editando Pregunta #{selectedQIdx + 1}
-                                    </h3>
-                                    <span style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>ID: {currentEditingQ?.id}</span>
-                                </div>
-                                <AdminForm
-                                    initialData={currentEditingQ}
-                                    onSave={(q) => {
-                                        const newQuestions = questions.map(item => item.id === q.id ? q : item);
-                                        setQuestions(newQuestions);
-                                        alert('Pregunta actualizada en memoria. No olvides Guardar para subir a la nube.');
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {questions.map((q, idx) => (
+                                <div
+                                    key={q.id}
+                                    onClick={() => { setSelectedQIdx(idx); setEditingQ(q); }}
+                                    style={{
+                                        padding: '18px',
+                                        borderRadius: '16px',
+                                        border: `1px solid ${selectedQIdx === idx && !editingQ?.isNew ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`,
+                                        background: selectedQIdx === idx && !editingQ?.isNew ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255,255,255,0.02)',
+                                        cursor: 'pointer',
+                                        transition: '0.3s',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '10px',
+                                        position: 'relative',
+                                        overflow: 'hidden'
                                     }}
-                                />
-                            </section>
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '2px 8px', borderRadius: '6px' }}>#{idx + 1}</span>
+                                        <div style={{ flex: 1 }} />
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><Edit2 size={14} /></button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (window.confirm('¿ESTÁS SEGURO? Esta acción no se puede deshacer.')) {
+                                                        const updated = questions.filter((_, i) => i !== idx);
+                                                        setQuestions(updated);
+                                                        if (selectedQIdx >= updated.length) setSelectedQIdx(Math.max(0, updated.length - 1));
+                                                    }
+                                                }}
+                                                style={{ background: 'none', border: 'none', color: '#ef4444', opacity: 0.6, cursor: 'pointer' }}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p style={{ fontSize: '0.85rem', color: selectedQIdx === idx && !editingQ?.isNew ? 'white' : '#94a3b8', lineHeight: 1.5, fontWeight: selectedQIdx === idx && !editingQ?.isNew ? 700 : 400 }}>{q.question || <span style={{ fontStyle: 'italic', opacity: 0.5 }}>Sin texto...</span>}</p>
+                                </div>
+                            ))}
                         </div>
-                    </div>
-                </main>
+                    </aside>
 
-                {/* Panel Derecho: Ajustes */}
-                <aside style={{
-                    width: '320px',
-                    minWidth: '320px',
-                    background: 'rgba(10, 10, 20, 0.95)',
-                    borderLeft: '1px solid rgba(255,255,255,0.05)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                        <div>
-                            <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}><Settings size={18} /> Ajustes del Quiz</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase' }}>Clave de Acceso</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <Key size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                        <input
-                                            className="premium-input"
-                                            value={localAccessCode}
-                                            onChange={async (e) => {
-                                                const val = e.target.value;
-                                                setLocalAccessCode(val);
-                                                // Sync to Supabase directly if you want, or handle via general save
-                                                await supabase.from('projects').update({ access_code: val }).eq('id', project.id);
-                                            }}
-                                            style={{ paddingLeft: '40px', width: '100%' }}
-                                        />
+                    {/* AREA CENTRAL: EDITOR PRO */}
+                    <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #0a0a1a, #050510)', overflowY: 'auto', padding: '40px' }}>
+                        <div style={{ maxWidth: '900px', width: '100%', margin: '0 auto' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
+                                <div style={{ width: '40px', height: '40px', background: 'rgba(124, 58, 237, 0.1)', border: '1px solid rgba(124, 58, 237, 0.2)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
+                                    <Edit2 size={20} />
+                                </div>
+                                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'white' }}>{editingQ ? (editingQ.isNew ? 'Nueva Pregunta' : 'Editar Pregunta') : 'Selecciona una Pregunta'}</h2>
+                            </div>
+
+                            {currentEditingQ ? (
+                                <div className="glass" style={{ padding: '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                    <AdminForm
+                                        initialData={currentEditingQ}
+                                        onSave={(q) => {
+                                            let newQuestions;
+                                            if (editingQ?.isNew) {
+                                                const { isNew, ...qData } = q;
+                                                newQuestions = [...questions, qData];
+                                            } else {
+                                                newQuestions = questions.map(item => item.id === q.id ? q : item);
+                                            }
+                                            setQuestions(newQuestions);
+                                            setEditingQ(null);
+                                            alert('✅ Pregunta guardada con éxito.');
+                                        }}
+                                        onCancel={() => setEditingQ(null)}
+                                    />
+                                </div>
+                            ) : (
+                                <div style={{ height: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
+                                    <HelpCircle size={80} color="white" strokeWidth={1} />
+                                    <p style={{ marginTop: '20px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Selecciona o crea una pregunta</p>
+                                </div>
+                            )}
+                        </div>
+                    </main>
+
+                    {/* PANEL DERECHO: AJUSTES */}
+                    <aside style={{
+                        width: '350px',
+                        minWidth: '350px',
+                        background: '#0a0a1a',
+                        borderLeft: '1px solid rgba(255,255,255,0.05)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                            <div>
+                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2.5px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '25px', opacity: 0.6 }}><Settings size={18} /> Configuración</h3>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Clave de Acceso al Quiz</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <Key size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#3b82f6' }} />
+                                            <input
+                                                className="premium-input w-full"
+                                                value={localAccessCode}
+                                                onChange={async (e) => {
+                                                    const val = e.target.value;
+                                                    setLocalAccessCode(val);
+                                                    await supabase.from('projects').update({ access_code: val }).eq('id', project.id);
+                                                }}
+                                                style={{ paddingLeft: '50px', fontSize: '1rem', fontWeight: 700 }}
+                                            />
+                                        </div>
+                                        <p style={{ fontSize: '0.65rem', color: '#475569', lineHeight: 1.5 }}>Esta es la clave que los alumnos deberán ingresar para poder realizar este cuestionario.</p>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div style={{ marginTop: 'auto', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '15px', textAlign: 'center' }}>¿Terminaste de editar este cuestionario?</p>
-                            <button
-                                onClick={onExit}
-                                className="btn-outline"
-                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                            >
-                                <LayoutGrid size={18} /> Volver a Galería
-                            </button>
+                            <div style={{ marginTop: 'auto', padding: '25px', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+                                <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '20px' }}>¿Deseas volver a la galería de proyectos?</p>
+                                <button
+                                    onClick={onExit}
+                                    style={{
+                                        width: '100%',
+                                        padding: '15px',
+                                        borderRadius: '16px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        color: 'white',
+                                        fontWeight: 800,
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '12px',
+                                        transition: '0.3s'
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                                >
+                                    <ArrowRight size={20} style={{ transform: 'rotate(180deg)' }} /> Salir al Dashboard
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </aside>
+                    </aside>
+                </div>
             </div>
         );
     }
@@ -649,7 +729,7 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
     return null;
 }
 
-function AdminForm({ initialData, onSave }) {
+function AdminForm({ initialData, onSave, onCancel }) {
     const [formData, setFormData] = useState({
         question: '',
         options: ['', '', '', ''],
@@ -674,49 +754,106 @@ function AdminForm({ initialData, onSave }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="flex flex-col gap-3">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Cuerpo de la Pregunta</label>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>Pregunta</label>
                 <textarea
-                    className="premium-input w-full min-h-[140px] text-xl font-bold leading-relaxed"
-                    placeholder="¿Cuál es la pregunta?"
+                    style={{
+                        width: '100%',
+                        minHeight: '120px',
+                        background: 'rgba(5, 5, 15, 0.4)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        color: 'white',
+                        fontSize: '1rem',
+                        lineHeight: '1.6',
+                        outline: 'none',
+                        resize: 'vertical'
+                    }}
+                    placeholder="Escribe el enunciado de la pregunta aquí..."
                     value={formData.question}
                     onChange={e => setFormData({ ...formData, question: e.target.value })}
+                    required
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 {formData.options.map((opt, idx) => (
                     <div
                         key={idx}
-                        className={`group relative p-6 rounded-2xl border-2 transition-all cursor-pointer ${formData.correctAnswer === idx ? 'border-blue-500 bg-blue-500/10' : 'border-white/5 bg-white/2 hover:border-white/10'}`}
-                        onClick={() => setFormData({ ...formData, correctAnswer: idx })}
+                        style={{
+                            background: 'rgba(5, 5, 15, 0.4)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '12px',
+                            padding: '12px 20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '15px',
+                            transition: '0.3s',
+                            borderLeft: formData.correctAnswer === idx ? '4px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)'
+                        }}
                     >
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${formData.correctAnswer === idx ? 'border-blue-500 bg-blue-500' : 'border-white/20'}`}>
-                                {formData.correctAnswer === idx && <div className="w-2 h-2 bg-white rounded-full" />}
-                            </div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Opción {String.fromCharCode(65 + idx)}</span>
-                            {formData.correctAnswer === idx && <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest ml-auto">Correcta</span>}
-                        </div>
+                        <input
+                            type="radio"
+                            name="correct-answer"
+                            checked={formData.correctAnswer === idx}
+                            onChange={() => setFormData({ ...formData, correctAnswer: idx })}
+                            style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#3b82f6' }}
+                        />
                         <input
                             type="text"
-                            placeholder="Texto de la respuesta..."
-                            className="bg-transparent border-none p-0 w-full text-white font-black text-lg focus:ring-0 placeholder:text-slate-700"
+                            placeholder={`Opción ${idx + 1}`}
                             value={opt}
-                            onChange={(e) => {
-                                e.stopPropagation();
-                                handleChangeOption(idx, e.target.value);
+                            onChange={(e) => handleChangeOption(idx, e.target.value)}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'white',
+                                width: '100%',
+                                fontSize: '0.95rem',
+                                outline: 'none'
                             }}
-                            onClick={(e) => e.stopPropagation()}
+                            required
                         />
                     </div>
                 ))}
             </div>
 
-            <button type="submit" className="btn-premium w-full py-5 text-lg shadow-blue-500/20">
-                <Save size={24} /> Guardar Pregunta
-            </button>
+            <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                <button
+                    type="submit"
+                    className="btn-premium"
+                    style={{
+                        flex: 1,
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        padding: '15px',
+                        fontSize: '1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px',
+                        border: 'none',
+                        boxShadow: '0 10px 20px rgba(16, 185, 129, 0.2)'
+                    }}
+                >
+                    <Save size={20} /> Guardar Pregunta
+                </button>
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="btn-outline"
+                    style={{
+                        padding: '15px 30px',
+                        fontSize: '1rem',
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'white'
+                    }}
+                >
+                    Cancelar
+                </button>
+            </div>
         </form>
     );
 }
