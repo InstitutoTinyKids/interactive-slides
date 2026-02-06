@@ -224,21 +224,23 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
 
         const currentQ = questions[currentQIndex];
         const isCorrect = optionIndex === currentQ.correctAnswer;
+        const isSkip = optionIndex === -1;
 
         setIsRunning(false);
-        setSelectedOption(optionIndex);
-        setFeedback(isCorrect ? 'correct' : 'incorrect');
+        if (!isSkip) {
+            setSelectedOption(optionIndex);
+            setFeedback(isCorrect ? 'correct' : 'incorrect');
+        }
 
         const logEntry = {
             question: currentQ,
             selected: optionIndex,
             isCorrect: isCorrect,
-            isSkipped: optionIndex === -1
+            isSkipped: isSkip
         };
 
-        setTimeout(() => {
+        const proceed = () => {
             setAnswersLog(prev => [...prev, logEntry]);
-
             if (currentQIndex < questions.length - 1) {
                 setCurrentQIndex(prev => prev + 1);
                 setFeedback(null);
@@ -248,10 +250,17 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
             } else {
                 setView('results');
             }
-        }, 1500);
+        };
+
+        if (isSkip) {
+            proceed();
+        } else {
+            setTimeout(proceed, 1500);
+        }
     };
 
     const handleFiftyFifty = () => {
+        if (feedback !== null || hiddenOptions.length > 0) return;
         setTimer(prev => prev + 10);
         const currentQ = questions[currentQIndex];
         const wrongIndices = currentQ.options
@@ -539,63 +548,65 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
 
     if (view === 'playing') {
         const currentQ = questions[currentQIndex];
+        if (!currentQ) return null;
+
         return (
-            <div className="min-h-screen bg-[#050510] text-white flex flex-col p-4 md:p-8 font-sans">
-                {/* HUD */}
-                <header className="w-full max-w-4xl mx-auto flex justify-between items-center py-6 animate-fade-in relative z-10">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Progreso</span>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl font-black text-blue-400">{currentQIndex + 1}</span>
-                            <span className="text-slate-600 text-lg font-bold">/ {questions.length}</span>
-                        </div>
+            <div style={{ minHeight: '100vh', width: '100vw', background: '#000', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', position: 'relative', overflowX: 'hidden' }}>
+                {/* HUD SUPERIOR */}
+                <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '60px' }}>
+                    <div style={{
+                        background: 'rgba(59, 130, 246, 0.15)',
+                        padding: '10px 25px',
+                        borderRadius: '100px',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        color: '#93c5fd'
+                    }}>
+                        Pregunta {currentQIndex + 1} / {questions.length}
                     </div>
 
-                    <div className={`flex flex-col items-center bg-white/5 px-8 py-3 rounded-2xl border border-white/10 backdrop-blur-md ${feedback ? 'ring-2 ring-yellow-500/50' : ''}`}>
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Cronómetro</span>
-                        <div className="flex items-center gap-3 text-2xl font-black italic tracking-wider">
-                            <Clock size={20} className="text-blue-500" />
-                            {formatTime(timer)}
-                        </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem', fontWeight: 900, color: 'white' }}>
+                        <Clock size={24} style={{ color: '#3b82f6' }} />
+                        <span>{formatTime(timer)}</span>
                     </div>
-
-                    <button onClick={() => { if (confirm('¿Salir del Quiz?')) restartApp(); }} className="btn-outline !p-3">
-                        <X size={20} className="text-slate-500" />
-                    </button>
-                </header>
-
-                {/* Progress Bar */}
-                <div className="w-full max-w-4xl mx-auto h-1.5 bg-white/5 rounded-full mt-2 mb-12 overflow-hidden border border-white/5">
-                    <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(59,130,246,0.3)]"
-                        style={{ width: `${((currentQIndex + 1) / questions.length) * 100}%` }}
-                    />
                 </div>
 
-                {/* Question Section */}
-                <main className="w-full max-w-3xl mx-auto flex-1 flex flex-col justify-center animate-up relative z-10">
-                    <div className="text-center mb-16">
-                        <h2 className="text-2xl md:text-4xl font-extrabold leading-[1.3] text-white text-balance drop-shadow-sm">
-                            {currentQ.question}
-                        </h2>
-                    </div>
+                {/* PREGUNTA CENTRAL */}
+                <div style={{ flex: 1, width: '100%', maxWidth: '850px', display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center' }}>
+                    <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '60px', lineHeight: 1.3 }}>
+                        {currentQ.question}
+                    </h2>
 
-                    <div className="grid grid-cols-1 gap-4">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         {currentQ.options.map((opt, idx) => {
-                            if (hiddenOptions.includes(idx)) return <div key={idx} className="h-[74px] border border-white/5 rounded-2xl opacity-10"></div>;
+                            const isHidden = hiddenOptions.includes(idx);
+                            if (isHidden) return <div key={idx} style={{ height: '70px', opacity: 0 }} />;
 
-                            let styles = "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-slate-200";
-                            let icon = <span className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sm font-black text-slate-500 group-hover:text-white transition-colors uppercase">{String.fromCharCode(65 + idx)}</span>;
+                            let bgColor = 'rgba(255, 255, 255, 0.05)';
+                            let borderColor = 'rgba(255, 255, 255, 0.1)';
+                            let iconColor = '#64748b';
+                            let iconBg = 'rgba(255, 255, 255, 0.05)';
+                            let showCheck = false;
+                            let showX = false;
 
                             if (feedback) {
                                 if (idx === currentQ.correctAnswer) {
-                                    styles = "bg-green-500/20 border-green-500 text-white shadow-[0_0_30px_rgba(34,197,94,0.15)]";
-                                    icon = <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white"><Check size={20} /></div>;
-                                } else if (idx === selectedOption) {
-                                    styles = "bg-red-500/20 border-red-500 text-white shadow-[0_0_30px_rgba(239,68,68,0.15)]";
-                                    icon = <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center text-white"><X size={20} /></div>;
+                                    bgColor = 'rgba(16, 185, 129, 0.15)';
+                                    borderColor = '#10b981';
+                                    iconColor = 'white';
+                                    iconBg = '#10b981';
+                                    showCheck = true;
+                                } else if (idx === selectedOption && feedback === 'incorrect') {
+                                    bgColor = 'rgba(239, 68, 68, 0.15)';
+                                    borderColor = '#ef4444';
+                                    iconColor = 'white';
+                                    iconBg = '#ef4444';
+                                    showX = true;
                                 } else {
-                                    styles = "opacity-20 grayscale scale-95 border-white/5";
+                                    bgColor = 'rgba(255, 255, 255, 0.02)';
+                                    borderColor = 'rgba(255, 255, 255, 0.05)';
+                                    iconBg = 'transparent';
                                 }
                             }
 
@@ -604,42 +615,113 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
                                     key={idx}
                                     onClick={() => handleAnswer(idx)}
                                     disabled={feedback !== null}
-                                    className={`group flex items-center gap-6 p-4 rounded-2xl border-2 transition-all duration-300 text-left relative overflow-hidden ${styles}`}
+                                    style={{
+                                        width: '100%',
+                                        padding: '18px 25px',
+                                        borderRadius: '16px',
+                                        background: bgColor,
+                                        border: `1px solid ${borderColor}`,
+                                        color: 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '20px',
+                                        cursor: feedback ? 'default' : 'pointer',
+                                        transition: '0.3s',
+                                        textAlign: 'left',
+                                        boxShadow: feedback && idx === currentQ.correctAnswer ? '0 0 30px rgba(16, 185, 129, 0.2)' : 'none'
+                                    }}
                                 >
-                                    {icon}
-                                    <span className="text-lg font-semibold tracking-tight leading-tight">{opt}</span>
+                                    <div style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '10px',
+                                        background: iconBg,
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 900,
+                                        color: iconColor
+                                    }}>
+                                        {showCheck ? <Check size={20} /> : (showX ? <X size={20} /> : String.fromCharCode(65 + idx))}
+                                    </div>
+                                    <span style={{ fontSize: '1.2rem', fontWeight: 600 }}>{opt}</span>
+                                    {showCheck && <Check size={24} style={{ marginLeft: 'auto', color: '#10b981' }} />}
+                                    {showX && <X size={24} style={{ marginLeft: 'auto', color: '#ef4444' }} />}
                                 </button>
                             );
                         })}
                     </div>
-                </main>
+                </div>
 
-                {/* Footer Controls */}
-                <footer className="w-full max-w-4xl mx-auto py-8">
-                    <div className="flex justify-center items-center gap-10">
-                        <button
-                            onClick={handleFiftyFifty}
-                            disabled={feedback !== null || hiddenOptions.length > 0}
-                            className="flex flex-col items-center group disabled:opacity-30 transition-all"
-                        >
-                            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 group-hover:border-blue-500/50 group-hover:bg-blue-500/10 transition-all text-blue-400 shadow-xl group-active:scale-90">
-                                <span className="text-lg font-black tracking-tighter">50:50</span>
-                            </div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">+10s Penalti</span>
-                        </button>
+                {/* CONTROLES / AYUDAS */}
+                <div style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '30px', marginTop: '60px' }}>
+                    <div style={{ display: 'flex', gap: '40px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                            <button
+                                onClick={handleFiftyFifty}
+                                disabled={feedback !== null || hiddenOptions.length > 0}
+                                style={{
+                                    width: '64px',
+                                    height: '64px',
+                                    borderRadius: '50%',
+                                    background: 'rgba(59, 130, 246, 0.2)',
+                                    border: '2px solid rgba(59, 130, 246, 0.4)',
+                                    color: '#60a5fa',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 900,
+                                    cursor: 'pointer',
+                                    transition: '0.3s',
+                                    opacity: (feedback || hiddenOptions.length > 0) ? 0.3 : 1
+                                }}
+                            >
+                                50:50
+                            </button>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#3b82f6' }}>+10s</span>
+                        </div>
 
-                        <button
-                            onClick={handlePass}
-                            disabled={feedback !== null}
-                            className="flex flex-col items-center group disabled:opacity-30 transition-all"
-                        >
-                            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 group-hover:border-purple-500/50 group-hover:bg-purple-500/10 transition-all text-purple-400 shadow-xl group-active:scale-90">
-                                <SkipForward size={24} />
-                            </div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Saltar (+30s)</span>
-                        </button>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                            <button
+                                onClick={handlePass}
+                                disabled={feedback !== null}
+                                style={{
+                                    width: '64px',
+                                    height: '64px',
+                                    borderRadius: '50%',
+                                    background: 'rgba(124, 58, 237, 0.2)',
+                                    border: '2px solid rgba(124, 58, 237, 0.4)',
+                                    color: '#a78bfa',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    transition: '0.3s',
+                                    opacity: feedback ? 0.3 : 1
+                                }}
+                            >
+                                <SkipForward size={28} />
+                            </button>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#7c3aed' }}>Pasar (+30s)</span>
+                        </div>
                     </div>
-                </footer>
+
+                    <button
+                        onClick={() => {
+                            const correctPass = project?.access_code || '123';
+                            const pass = prompt('Ingresa la clave de administrador para cancelar el juego:');
+                            if (pass === correctPass) {
+                                restartApp();
+                                onExit();
+                            } else if (pass !== null) {
+                                alert('Clave incorrecta');
+                            }
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6, marginTop: '10px' }}
+                    >
+                        Cancelar Juego
+                    </button>
+                </div>
             </div>
         );
     }
@@ -647,100 +729,75 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
     if (view === 'results') {
         const correctCount = answersLog.filter(a => a.isCorrect).length;
         const totalCount = questions.length;
-        const pScore = Math.floor((correctCount / totalCount) * 100);
+        const incorrectCount = answersLog.filter(a => !a.isCorrect && !a.isSkipped).length;
+        const skippedCount = answersLog.filter(a => a.isSkipped).length;
 
         return (
-            <div className="min-h-screen bg-[#050510] text-white p-6 md:p-12 overflow-y-auto font-sans relative">
-                <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none"></div>
+            <div style={{ minHeight: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                    <div style={{ fontSize: '5rem', marginBottom: '10px' }}>🏆</div>
+                    <h2 style={{ fontSize: '2.5rem', fontWeight: 900 }}>¡Juego Terminado!</h2>
+                    <p style={{ fontSize: '1.2rem', color: '#94a3b8', marginTop: '10px' }}>Este es tu resumen de desempeño</p>
+                </div>
 
-                <div className="max-w-3xl mx-auto relative z-10">
-                    <header className="text-center mb-16 animate-up">
-                        <h2 className="text-sm font-black text-blue-400 uppercase tracking-[0.4em] mb-4">Resultado Final</h2>
-                        <div className="inline-flex items-end gap-2 mb-2">
-                            <div className="text-8xl font-black italic tracking-tighter leading-none bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">{pScore}</div>
-                            <div className="text-4xl font-black text-slate-600 italic mb-2">%</div>
-                        </div>
-                        <p className="text-slate-400 font-medium italic">¡Has completado el Grammar Quiz!</p>
-                    </header>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 animate-up delay-100">
-                        <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center shadow-xl">
-                            <Clock size={20} className="mx-auto mb-3 text-blue-400 opacity-50" />
-                            <div className="text-2xl font-black italic">{formatTime(timer)}</div>
-                            <div className="text-[10px] font-black text-slate-500 uppercase mt-1">Tiempo</div>
-                        </div>
-                        <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center shadow-xl">
-                            <Check size={20} className="mx-auto mb-3 text-green-400 opacity-50" />
-                            <div className="text-2xl font-black italic">{correctCount}</div>
-                            <div className="text-[10px] font-black text-slate-500 uppercase mt-1">Correctas</div>
-                        </div>
-                        <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center shadow-xl">
-                            <X size={20} className="mx-auto mb-3 text-red-400 opacity-50" />
-                            <div className="text-2xl font-black italic text-red-400/80">{answersLog.filter(a => !a.isCorrect && !a.isSkipped).length}</div>
-                            <div className="text-[10px] font-black text-slate-500 uppercase mt-1">Errores</div>
-                        </div>
-                        <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center shadow-xl">
-                            <SkipForward size={20} className="mx-auto mb-3 text-yellow-400 opacity-50" />
-                            <div className="text-2xl font-black italic text-yellow-400/80">{answersLog.filter(a => a.isSkipped).length}</div>
-                            <div className="text-[10px] font-black text-slate-500 uppercase mt-1">Saltadas</div>
-                        </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', width: '100%', maxWidth: '900px', marginBottom: '50px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
+                        <Clock size={32} style={{ color: '#3b82f6', marginBottom: '15px' }} />
+                        <div style={{ fontSize: '2rem', fontWeight: 900 }}>{formatTime(timer)}</div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '5px' }}>Tiempo Total</div>
                     </div>
-
-                    <div className="glass p-8 mb-12 animate-up delay-200">
-                        <button
-                            className="w-full flex items-center justify-between text-left group"
-                            onClick={() => setShowReview(!showReview)}
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-blue-400 group-hover:bg-blue-400/10 transition-colors"><Eye size={24} /></div>
-                                <div>
-                                    <h3 className="text-xl font-black">Revisión de Errores</h3>
-                                    <p className="text-sm text-slate-500">Analiza tus respuestas una a una</p>
-                                </div>
-                            </div>
-                            {showReview ? <ChevronUp className="text-slate-600" /> : <ChevronDown className="text-slate-600" />}
-                        </button>
-
-                        {showReview && (
-                            <div className="space-y-6 mt-10 border-t border-white/5 pt-8">
-                                {answersLog.map((log, idx) => (
-                                    <div key={idx} className="bg-white/2 p-6 rounded-2xl border border-white/5">
-                                        <div className="flex items-start gap-4 mb-4">
-                                            <span className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-black text-slate-500 flex-shrink-0">{idx + 1}</span>
-                                            <p className="font-bold text-lg leading-snug">{log.question.question}</p>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-12">
-                                            <div className={`p-4 rounded-xl border text-sm flex items-center justify-between ${log.isSkipped ? 'border-yellow-500/30 bg-yellow-500/5' : (log.isCorrect ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5')}`}>
-                                                <span>{log.isSkipped ? '⚠️ Pregunta Saltada' : log.question.options[log.selected]}</span>
-                                                {log.isCorrect ? <Check size={16} className="text-green-500" /> : <X size={16} className="text-red-500" />}
-                                            </div>
-                                            {!log.isCorrect && (
-                                                <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/10 text-sm flex items-center justify-between">
-                                                    <span className="font-bold text-blue-400">{log.question.options[log.question.correctAnswer]}</span>
-                                                    <Check size={16} className="text-blue-500" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
+                        <Check size={32} style={{ color: '#10b981', marginBottom: '15px' }} />
+                        <div style={{ fontSize: '2rem', fontWeight: 900, color: '#10b981' }}>{correctCount}</div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#065f46', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '5px' }}>Correctas</div>
                     </div>
-
-                    <div className="flex gap-4 animate-up delay-300">
-                        <button
-                            onClick={restartApp}
-                            className="btn-premium flex-1 py-5 text-lg shadow-blue-500/40"
-                        >
-                            <RotateCcw /> REINICIAR CUESTIONARIO
-                        </button>
-                        <button
-                            onClick={onExit}
-                            className="btn-outline !py-5 px-8"
-                        >
-                            Galería
-                        </button>
+                    <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
+                        <X size={32} style={{ color: '#ef4444', marginBottom: '15px' }} />
+                        <div style={{ fontSize: '2rem', fontWeight: 900, color: '#ef4444' }}>{incorrectCount}</div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#991b1b', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '5px' }}>Incorrectas</div>
                     </div>
+                    <div style={{ background: 'rgba(124, 58, 237, 0.1)', border: '1px solid rgba(124, 58, 237, 0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
+                        <SkipForward size={32} style={{ color: '#a78bfa', marginBottom: '15px' }} />
+                        <div style={{ fontSize: '2rem', fontWeight: 900, color: '#a78bfa' }}>{skippedCount}</div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#5b21b6', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '5px' }}>Saltadas</div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '20px' }}>
+                    <button
+                        onClick={restartApp}
+                        style={{
+                            padding: '18px 40px',
+                            borderRadius: '16px',
+                            background: '#3b82f6',
+                            color: 'white',
+                            fontWeight: 800,
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            boxShadow: '0 10px 20px rgba(59, 130, 246, 0.3)'
+                        }}
+                    >
+                        <RotateCcw size={20} /> Intentar de Nuevo
+                    </button>
+                    <button
+                        onClick={onExit}
+                        style={{
+                            padding: '18px 40px',
+                            borderRadius: '16px',
+                            background: 'rgba(255,255,255,0.05)',
+                            color: 'white',
+                            fontWeight: 800,
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            cursor: 'pointer',
+                            fontSize: '1rem'
+                        }}
+                    >
+                        Volver a Galería
+                    </button>
                 </div>
             </div>
         );
