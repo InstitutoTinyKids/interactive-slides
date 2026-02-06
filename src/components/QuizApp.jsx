@@ -797,7 +797,7 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                             fontSize: '1rem'
                         }}
                     >
-                        Volver a Galería
+                        {isAdmin ? 'Volver a Galería' : 'Home'}
                     </button>
                 </div>
             </div>
