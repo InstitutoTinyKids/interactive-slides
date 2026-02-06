@@ -374,40 +374,59 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
                                     key={q.id}
                                     onClick={() => { setSelectedQIdx(idx); setEditingQ(q); }}
                                     style={{
-                                        padding: '18px',
-                                        borderRadius: '16px',
-                                        border: `1px solid ${selectedQIdx === idx && !editingQ?.isNew ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`,
-                                        background: selectedQIdx === idx && !editingQ?.isNew ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255,255,255,0.02)',
+                                        padding: '20px',
+                                        borderRadius: '20px',
+                                        border: `1px solid ${selectedQIdx === idx ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`,
+                                        background: selectedQIdx === idx ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)',
+                                        boxShadow: selectedQIdx === idx ? '0 0 20px rgba(59, 130, 246, 0.1)' : 'none',
                                         cursor: 'pointer',
                                         transition: '0.3s',
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        gap: '10px',
-                                        position: 'relative',
-                                        overflow: 'hidden'
+                                        gap: '15px',
+                                        position: 'relative'
                                     }}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '2px 8px', borderRadius: '6px' }}>#{idx + 1}</span>
-                                        <div style={{ flex: 1 }} />
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><Edit2 size={14} /></button>
-                                            <button
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{
+                                            fontSize: '0.7rem',
+                                            fontWeight: 900,
+                                            color: '#3b82f6',
+                                            background: 'rgba(59, 130, 246, 0.15)',
+                                            padding: '4px 10px',
+                                            borderRadius: '8px'
+                                        }}>
+                                            #{idx + 1}
+                                        </span>
+                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                            <Edit2 size={16} style={{ color: '#64748b', opacity: 0.6 }} />
+                                            <Trash2
+                                                size={16}
+                                                style={{ color: '#ef4444', opacity: 0.6, cursor: 'pointer' }}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (window.confirm('¿ESTÁS SEGURO? Esta acción no se puede deshacer.')) {
+                                                    if (window.confirm('¿ESTÁS SEGURO? Esta acción borrará la pregunta permanentemente.')) {
                                                         const updated = questions.filter((_, i) => i !== idx);
                                                         setQuestions(updated);
                                                         if (selectedQIdx >= updated.length) setSelectedQIdx(Math.max(0, updated.length - 1));
                                                     }
                                                 }}
-                                                style={{ background: 'none', border: 'none', color: '#ef4444', opacity: 0.6, cursor: 'pointer' }}
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            />
                                         </div>
                                     </div>
-                                    <p style={{ fontSize: '0.85rem', color: selectedQIdx === idx && !editingQ?.isNew ? 'white' : '#94a3b8', lineHeight: 1.5, fontWeight: selectedQIdx === idx && !editingQ?.isNew ? 700 : 400 }}>{q.question || <span style={{ fontStyle: 'italic', opacity: 0.5 }}>Sin texto...</span>}</p>
+                                    <p style={{
+                                        fontSize: '0.9rem',
+                                        color: selectedQIdx === idx ? 'white' : '#94a3b8',
+                                        lineHeight: 1.4,
+                                        fontWeight: 700,
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden',
+                                        margin: 0
+                                    }}>
+                                        {q.question || "Sin enunciado..."}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -508,7 +527,7 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
                                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
                                     onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                                 >
-                                    <ArrowRight size={20} style={{ transform: 'rotate(180deg)' }} /> Salir al Dashboard
+                                    <ArrowRight size={20} style={{ transform: 'rotate(180deg)' }} /> Ir a Galería
                                 </button>
                             </div>
                         </div>
