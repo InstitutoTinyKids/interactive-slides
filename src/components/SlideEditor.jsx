@@ -109,7 +109,19 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             id: projectType === 'quiz' ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID(),
             name: newProjectName.trim(),
             is_active: false,
-            access_code: accessCode
+            access_code: accessCode,
+            questions: projectType === 'quiz' ? [
+                { id: 1, question: "Choose the correct option: The guitarist will play fast ______ the stage ______.", options: ["on / tonight", "at / tomorrow", "at / tonight", "in / right now"], correctAnswer: 0 },
+                { id: 2, question: "Fill in the blanks: 'The singer ______ ______ (perform/passionately) ______ the recording studio tomorrow.'", options: ["performs passionately on", "will perform passionate at", "will passionately perform at", "will perform passionately in"], correctAnswer: 3 },
+                { id: 3, question: "Find the mistake: 'The drummer will play loudly on the concert hall next weekend.'", options: ["The word 'drummer' is incorrect.", "The preposition 'on' should be 'at'.", "The adverb 'loudly' is wrong.", "The time marker 'next weekend' is wrong."], correctAnswer: 1 },
+                { id: 4, question: "Unscramble the sentence: 'at / The / interact / festival / will / music / the / frontman / energetically / tonight'", options: ["The frontman at the music festival will interact energetically tonight.", "The frontman will interact energetically at the music festival tonight.", "Tonight the frontman will energetically interact at the music festival.", "The music festival will interact at the frontman energetically tonight."], correctAnswer: 1 },
+                { id: 5, question: "Challenge: How and where will the singer perform tomorrow? (Venue: Theater / Adverb: Well)", options: ["She will perform well at the theater tomorrow.", "She will play well at the theater later.", "The singer perform well on the theater tomorrow.", "She will perform well in the theater tomorrow."], correctAnswer: 3 },
+                { id: 6, question: "Which sentence describes a bassist's action with high energy in a private space right now?", options: ["The bassist perform loudly on the stage right now.", "The bassist will perform energetically in the recording studio right now.", "The singer will perform energetically in the recording studio right now.", "The bassist will play fast at the concert hall tonight."], correctAnswer: 1 },
+                { id: 7, question: "The ______ will ______ (jump) ______ (fast) on the platform next weekend.", options: ["drummer / jump / loudly", "frontwoman / will jump / fast", "frontwoman / will jump / fastly", "bassist / will jumps / fast"], correctAnswer: 1 },
+                { id: 8, question: "What is the most accurate way to describe a drummer playing with passion in the band's vehicle later?", options: ["The drummer will play passionately at the tour bus later.", "The drummer will plays passionate in the tour bus tonight.", "The guitarist will play passionately on the tour bus later.", "The drummer will play passionately in the tour bus later."], correctAnswer: 3 },
+                { id: 9, question: "The ______ (Frontman) will ______ (interact) ______ (energetically) ______ the music festival ______ (tomorrow).", options: ["singer / will interact / energetically / on / tomorrow", "frontman / will interact / energetically / at / tomorrow", "frontman / interact / energetically / at / tonight", "frontman / will interact / energetic / in / tomorrow"], correctAnswer: 1 },
+                { id: 10, question: "Complete the tour report: 'The bassist will play ______ (well) ______ the backstage ______ (later).'", options: ["well / on / tonight", "good / at / later", "well / at / next weekend", "well / in / later"], correctAnswer: 3 }
+            ] : []
         };
 
         const { error } = await supabase.from('projects').insert(newProject);

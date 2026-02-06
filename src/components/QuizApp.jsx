@@ -91,21 +91,21 @@ const INITIAL_QUESTIONS = [
 
 export default function QuizApp({ onExit, isAdmin = false, project, isActive, onToggleActive, onViewResults }) {
     // --- ESTADOS ---
-    const [view, setView] = useState(isAdmin ? 'admin' : 'home'); // home, admin, playing, results
+    const [view, setView] = useState(isAdmin ? 'admin' : 'playing'); // admin, playing, results
     const [questions, setQuestions] = useState(INITIAL_QUESTIONS);
     const [selectedQIdx, setSelectedQIdx] = useState(0);
     const [projectLocal, setProjectLocal] = useState(project);
 
     // Estados del Admin
     const [adminPass, setAdminPass] = useState('');
-    const [isAdminAuth, setIsAdminAuth] = useState(false);
+    const [isAdminAuth, setIsAdminAuth] = useState(isAdmin);
     const [editingQ, setEditingQ] = useState(null); // Pregunta siendo editada/creada
 
     // Estados del Juego
     const [currentQIndex, setCurrentQIndex] = useState(0);
-    const [answersLog, setAnswersLog] = useState([]); // { qId, selected, correct, timeSpent }
+    const [answersLog, setAnswersLog] = useState([]); // { qId, selected, correct, isSkipped }
     const [timer, setTimer] = useState(0);
-    const [isRunning, setIsRunning] = useState(false);
+    const [isRunning, setIsRunning] = useState(!isAdmin);
     const [feedback, setFeedback] = useState(null); // 'correct', 'incorrect'
     const [selectedOption, setSelectedOption] = useState(null);
 
@@ -205,8 +205,15 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
     };
 
     const restartApp = () => {
-        setIsRunning(false);
-        setView('home');
+        setCurrentQIndex(0);
+        setAnswersLog([]);
+        setTimer(0);
+        setFeedback(null);
+        setSelectedOption(null);
+        setHiddenOptions([]);
+        setIsRunning(true);
+        setShowReview(false);
+        setView('playing');
         setAdminPass('');
     };
 
@@ -264,32 +271,12 @@ export default function QuizApp({ onExit, isAdmin = false, project, isActive, on
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    if (view === 'home') {
+    // Reemplazamos la vista 'home' por un cargador simple si los datos no están listos
+    if (loading && questions === INITIAL_QUESTIONS && !isAdmin) {
         return (
-            <div className="min-h-screen bg-[#050510] text-white flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                    <div className="absolute top-[10%] left-[10%] w-[30vw] h-[30vw] bg-blue-600/10 blur-[120px] rounded-full"></div>
-                    <div className="absolute bottom-[10%] right-[10%] w-[30vw] h-[30vw] bg-purple-600/10 blur-[120px] rounded-full"></div>
-                </div>
-
-                <div className="max-w-md w-full glass p-8 relative z-10 animate-up">
-                    <button onClick={onExit} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
-                        <X size={24} />
-                    </button>
-
-                    <div className="text-center mb-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-500/20">
-                            <HelpCircle size={40} className="text-white" />
-                        </div>
-                        <h1 className="text-4xl font-black mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Grammar Quiz</h1>
-                        <p className="text-slate-400">Demuestra tus conocimientos en inglés.</p>
-                    </div>
-
-                    <button onClick={startQuiz} className="btn-premium w-full py-5 text-lg group">
-                        <Play size={24} className="group-hover:scale-110 transition-transform" />
-                        INICIAR ACTIVIDAD
-                    </button>
-                </div>
+            <div className="min-h-screen bg-[#050510] text-white flex flex-col items-center justify-center font-sans">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Cargando Quiz...</p>
             </div>
         );
     }
