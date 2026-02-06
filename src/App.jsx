@@ -166,7 +166,11 @@ export default function App() {
 
     if (view === 'quiz') {
         return <QuizApp
-            onExit={() => setView('editor')}
+            onExit={() => {
+                setView('editor');
+                setSelectedProject(null);
+                setReturnFromResults(false);
+            }}
             isAdmin={role === 'admin' || role === 'teacher'}
             project={selectedProject}
             isActive={isActive}
