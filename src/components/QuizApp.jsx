@@ -90,8 +90,9 @@ const INITIAL_QUESTIONS = [
     }
 ];
 
-export default function QuizApp({ onExit, isAdmin = false, project, isActive, onToggleActive, onViewResults }) {
+export default function QuizApp({ onExit, isAdmin = false, role = 'student', project, isActive, onToggleActive, onViewResults }) {
     // --- ESTADOS ---
+    const isTeacher = role === 'teacher';
     const [view, setView] = useState(isAdmin ? 'admin' : 'playing'); // admin, playing, results
     const [questions, setQuestions] = useState(INITIAL_QUESTIONS);
     const [selectedQIdx, setSelectedQIdx] = useState(0);

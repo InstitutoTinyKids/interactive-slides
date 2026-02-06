@@ -171,7 +171,8 @@ export default function App() {
                 setSelectedProject(null);
                 setReturnFromResults(false);
             }}
-            isAdmin={role === 'admin' || role === 'teacher'}
+            isAdmin={role === 'admin'}
+            role={role}
             project={selectedProject}
             isActive={isActive}
             onToggleActive={toggleActive}
