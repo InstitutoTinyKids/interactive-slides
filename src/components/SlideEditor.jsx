@@ -514,71 +514,87 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         </div>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: isMobile ? '15px' : '25px' }}>
-                            {projects.filter(p => galleryTab === 'quiz' ? p.id.startsWith('quiz-') : !p.id.startsWith('quiz-')).map(p => (
-                                <div
-                                    key={p.id}
-                                    className="glass"
-                                    style={{
-                                        padding: '25px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '20px',
-                                        transition: '0.3s',
-                                        border: `1px solid ${selectedProjects.includes(p.id) ? '#ef4444' : 'rgba(255,255,255,0.05)'}`,
-                                        position: 'relative'
-                                    }}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedProjects.includes(p.id)}
-                                        onChange={() => toggleProjectSelection(p.id)}
-                                        style={{ position: 'absolute', top: '15px', right: '15px', width: '20px', height: '20px', accentColor: '#ef4444', cursor: 'pointer' }}
-                                    />
+                            {projects.map(p => {
+                                const isQuiz = p.id.startsWith('quiz-');
+                                return (
+                                    <div
+                                        key={p.id}
+                                        className="glass"
+                                        style={{
+                                            padding: '25px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '20px',
+                                            transition: '0.3s',
+                                            border: `1px solid ${selectedProjects.includes(p.id) ? '#ef4444' : 'rgba(255,255,255,0.05)'}`,
+                                            position: 'relative'
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedProjects.includes(p.id)}
+                                            onChange={() => toggleProjectSelection(p.id)}
+                                            style={{ position: 'absolute', top: '15px', right: '15px', width: '20px', height: '20px', accentColor: '#ef4444', cursor: 'pointer', zIndex: 10 }}
+                                        />
 
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                        <div style={{ padding: '12px', background: p.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)', borderRadius: '12px', color: p.is_active ? '#10b981' : '#64748b' }}>
-                                            {galleryTab === 'quiz' ? <HelpCircle size={28} /> : <ShieldCheck size={28} />}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                            <div style={{ padding: '12px', background: p.is_active ? (isQuiz ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)') : 'rgba(255,255,255,0.03)', borderRadius: '12px', color: p.is_active ? (isQuiz ? '#3b82f6' : '#10b981') : '#64748b' }}>
+                                                {isQuiz ? <HelpCircle size={28} /> : <ShieldCheck size={28} />}
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', marginRight: '30px' }}>
+                                                <div style={{
+                                                    fontSize: '0.65rem',
+                                                    fontWeight: 900,
+                                                    padding: '4px 12px',
+                                                    borderRadius: '100px',
+                                                    background: isQuiz ? 'rgba(59, 130, 246, 0.15)' : 'rgba(124, 58, 237, 0.15)',
+                                                    color: isQuiz ? '#3b82f6' : '#a78bfa',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '1px',
+                                                    border: `1px solid ${isQuiz ? 'rgba(59, 130, 246, 0.3)' : 'rgba(124, 58, 237, 0.3)'}`
+                                                }}>
+                                                    {isQuiz ? 'QUIZ' : 'GUIA'}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '0.6rem',
+                                                    fontWeight: 900,
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    background: p.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+                                                    color: p.is_active ? '#10b981' : '#64748b',
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    {p.is_active ? 'Activo' : 'Pausado'}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div style={{
-                                            fontSize: '0.65rem',
-                                            fontWeight: 900,
-                                            padding: '4px 12px',
-                                            borderRadius: '100px',
-                                            background: p.is_active ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)',
-                                            color: p.is_active ? '#10b981' : '#64748b',
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '1px',
-                                            marginRight: '30px'
-                                        }}>
-                                            {p.is_active ? '● ACTIVO' : '○ PAUSADO'}
+
+                                        <div>
+                                            <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '4px' }}>{p.name}</h3>
+                                            <p style={{ fontSize: '0.7rem', color: '#475569', fontFamily: 'monospace' }}>ID: {p.id}</p>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: '#94a3b8', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px' }}>
+                                            <Key size={16} />
+                                            <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+                                            <button onClick={() => isQuiz ? onOpenQuiz(p) : handleSelectProject(p)} className="btn-premium" style={{ flex: 2, background: isQuiz ? 'linear-gradient(135deg, #2563eb, #3b82f6)' : 'linear-gradient(135deg, #7c3aed, #3b82f6)' }}>
+                                                {isQuiz ? 'Editar Quiz' : 'Editar Guía'}
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
+                                                className="btn-outline"
+                                                style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                title="Duplicar"
+                                            >
+                                                <Copy size={20} />
+                                            </button>
                                         </div>
                                     </div>
-
-                                    <div>
-                                        <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '4px' }}>{p.name}</h3>
-                                        <p style={{ fontSize: '0.7rem', color: '#475569', fontFamily: 'monospace' }}>ID: {p.id}</p>
-                                    </div>
-
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: '#94a3b8', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px' }}>
-                                        <Key size={16} />
-                                        <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
-                                        <button onClick={() => galleryTab === 'quiz' ? onOpenQuiz(p) : handleSelectProject(p)} className="btn-premium" style={{ flex: 2 }}>
-                                            {galleryTab === 'quiz' ? 'Editar Quiz' : 'Editar Guía'}
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
-                                            className="btn-outline"
-                                            style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                            title="Duplicar"
-                                        >
-                                            <Copy size={20} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
