@@ -578,20 +578,55 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
                                         </div>
 
-                                        <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
-                                            <button onClick={() => isQuiz ? onOpenQuiz(p) : handleSelectProject(p)} className="btn-premium" style={{ flex: 1.5, background: isQuiz ? 'linear-gradient(135deg, #2563eb, #3b82f6)' : 'linear-gradient(135deg, #7c3aed, #3b82f6)' }}>
-                                                {isQuiz ? 'Editar' : 'Editar'}
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', height: '48px' }}>
+                                            <button
+                                                onClick={() => isQuiz ? onOpenQuiz(p) : handleSelectProject(p)}
+                                                className="btn-premium"
+                                                style={{
+                                                    flex: 1,
+                                                    height: '100%',
+                                                    padding: 0,
+                                                    fontSize: '0.9rem',
+                                                    background: isQuiz ? 'linear-gradient(135deg, #2563eb, #3b82f6)' : 'linear-gradient(135deg, #7c3aed, #3b82f6)'
+                                                }}
+                                            >
+                                                Editar
                                             </button>
-                                            <button onClick={() => onPreview(p, true)} className="btn-outline" style={{ flex: 1, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                            <button
+                                                onClick={() => onPreview(p, true)}
+                                                className="btn-outline"
+                                                style={{
+                                                    flex: 1,
+                                                    height: '100%',
+                                                    padding: 0,
+                                                    background: 'rgba(59, 130, 246, 0.1)',
+                                                    color: '#3b82f6',
+                                                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '5px',
+                                                    fontSize: '0.9rem'
+                                                }}
+                                            >
                                                 <Eye size={16} /> Preview
                                             </button>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
                                                 className="btn-outline"
-                                                style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                style={{
+                                                    width: '48px',
+                                                    height: '100%',
+                                                    padding: 0,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    background: 'rgba(255, 255, 255, 0.05)',
+                                                    flexShrink: 0
+                                                }}
                                                 title="Duplicar"
                                             >
-                                                <Copy size={20} />
+                                                <Copy size={18} />
                                             </button>
                                         </div>
                                     </div>
