@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
 import confetti from 'canvas-confetti';
 
-export default function SlideEditor({ slides, onSave, onExit, isActive, onToggleActive, onViewResults, selectedProject: initialProject, onSelectProject, returnFromResults, onOpenQuiz }) {
+export default function SlideEditor({ slides, onSave, onExit, isActive, onToggleActive, onViewResults, selectedProject: initialProject, onSelectProject, returnFromResults, onOpenQuiz, onPreview }) {
     const [localSlides, setLocalSlides] = useState(slides || []);
     const [selectedIdx, setSelectedIdx] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -406,13 +406,13 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 {/* Header Gallery */}
                 <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '20px' : '40px', gap: '15px' }}>
                     <div>
-                        <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Galería TK</h1>
+                        <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Galería</h1>
                         <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.85rem' : '1rem' }}>Administra los niveles educativos y sus claves de acceso</p>
                     </div>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
                         {selectedProjects.length > 0 && (
                             <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}>
-                                <Trash2 size={isMobile ? 16 : 20} /> {isMobile ? `Eliminar (${selectedProjects.length})` : `Eliminar Seleccionados (${selectedProjects.length})`}
+                                Eliminar ({selectedProjects.length})
                             </button>
                         )}
                         <button onClick={onExit} className="btn-outline" style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -571,7 +571,6 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                                         <div>
                                             <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '4px' }}>{p.name}</h3>
-                                            <p style={{ fontSize: '0.7rem', color: '#475569', fontFamily: 'monospace' }}>ID: {p.id}</p>
                                         </div>
 
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: '#94a3b8', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px' }}>
@@ -580,8 +579,11 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         </div>
 
                                         <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
-                                            <button onClick={() => isQuiz ? onOpenQuiz(p) : handleSelectProject(p)} className="btn-premium" style={{ flex: 2, background: isQuiz ? 'linear-gradient(135deg, #2563eb, #3b82f6)' : 'linear-gradient(135deg, #7c3aed, #3b82f6)' }}>
-                                                {isQuiz ? 'Editar Quiz' : 'Editar Guía'}
+                                            <button onClick={() => isQuiz ? onOpenQuiz(p) : handleSelectProject(p)} className="btn-premium" style={{ flex: 1.5, background: isQuiz ? 'linear-gradient(135deg, #2563eb, #3b82f6)' : 'linear-gradient(135deg, #7c3aed, #3b82f6)' }}>
+                                                {isQuiz ? 'Editar' : 'Editar'}
+                                            </button>
+                                            <button onClick={() => onPreview(p, true)} className="btn-outline" style={{ flex: 1, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                                <Eye size={16} /> Preview
                                             </button>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
@@ -645,7 +647,26 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 <Layers size={20} />
                             </button>
                         )}
-                        <button onClick={() => setShowGallery(true)} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: '#94a3b8', cursor: 'pointer' }}><LayoutGrid size={22} /></button>
+                        <button
+                            onClick={() => setShowGallery(true)}
+                            title="IR A GALERIA"
+                            style={{
+                                padding: '12px',
+                                background: 'rgba(59, 130, 246, 0.1)',
+                                borderRadius: '15px',
+                                color: '#3b82f6',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: '0.3s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                        >
+                            <LayoutGrid size={24} />
+                        </button>
                         {!isMobile && (
                             <div>
                                 <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{currentProject?.name}</h2>
@@ -655,6 +676,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     </div>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                         <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem' }}><Eye size={16} /> {!isCompact && 'Resultados'}</button>
+                        <button onClick={() => onPreview(currentProject, false)} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                            <Play size={16} /> {!isCompact && 'Preview'}
+                        </button>
                         <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
                             {isActive ? <Pause size={16} /> : <Play size={16} />} {!isCompact && (isActive ? 'Suspender' : 'Activar')}
                         </button>

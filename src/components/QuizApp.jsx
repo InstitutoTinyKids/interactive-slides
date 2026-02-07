@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
     Settings, Play, Clock, Check, X, HelpCircle, SkipForward,
     RotateCcw, Edit2, Trash2, Plus, Save, ArrowRight, Eye,
-    AlertTriangle, ChevronDown, ChevronUp, LayoutGrid, Pause, Key
+    AlertTriangle, ChevronDown, ChevronUp, LayoutGrid, Pause, Key, Image as ImageIcon
 } from 'lucide-react';
 
 // --- DATOS INICIALES (Extraídos de tus imágenes) ---
@@ -90,7 +90,7 @@ const INITIAL_QUESTIONS = [
     }
 ];
 
-export default function QuizApp({ onExit, isAdmin = false, role = 'student', project, isActive, onToggleActive, onViewResults }) {
+export default function QuizApp({ onExit, isAdmin = false, role = 'student', project, isActive, onToggleActive, onViewResults, previewMode = false, onPreview }) {
     // --- ESTADOS ---
     const isTeacher = role === 'teacher';
     const [view, setView] = useState(isAdmin ? 'admin' : 'playing'); // admin, playing, results
@@ -110,15 +110,68 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
     const [isRunning, setIsRunning] = useState(!isAdmin);
     const [feedback, setFeedback] = useState(null); // 'correct', 'incorrect'
     const [selectedOption, setSelectedOption] = useState(null);
+    const [fullImage, setFullImage] = useState(null);
 
     // Estados de Ayudas
     const [hiddenOptions, setHiddenOptions] = useState([]); // Índices ocultos por 50/50
 
     const [showReview, setShowReview] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [previewModeLocal] = useState(project?.previewMode || false);
     const [localAccessCode, setLocalAccessCode] = useState(project?.access_code || '123');
 
     const timerRef = useRef(null);
+
+    // Video Range Loop Logic
+    useEffect(() => {
+        let interval;
+        if (view === 'playing' && questions[currentQIndex]?.type === 'video' && questions[currentQIndex]?.videoEnd) {
+            const start = questions[currentQIndex].videoStart || 0;
+            const end = questions[currentQIndex].videoEnd;
+
+            interval = setInterval(() => {
+                const iframe = document.getElementById('quiz-video-player');
+                if (iframe) {
+                    iframe.contentWindow.postMessage(JSON.stringify({
+                        event: 'listening',
+                        id: 1,
+                        channel: 'widget'
+                    }), '*');
+                    // Also try sending as object
+                    iframe.contentWindow.postMessage({
+                        event: 'listening',
+                        id: 1,
+                        channel: 'widget'
+                    }, '*');
+                }
+            }, 500);
+
+            const handleVideoMessage = (event) => {
+                try {
+                    const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+                    if (data.event === 'infoDelivery' && data.info && data.info.currentTime) {
+                        if (data.info.currentTime >= end) {
+                            const iframe = document.getElementById('quiz-video-player');
+                            if (iframe) {
+                                const seekCmd = {
+                                    event: 'command',
+                                    func: 'seekTo',
+                                    args: [Number(start), true]
+                                };
+                                iframe.contentWindow.postMessage(JSON.stringify(seekCmd), '*');
+                                iframe.contentWindow.postMessage(seekCmd, '*');
+                            }
+                        }
+                    }
+                } catch (e) { }
+            };
+            window.addEventListener('message', handleVideoMessage);
+            return () => {
+                clearInterval(interval);
+                window.removeEventListener('message', handleVideoMessage);
+            };
+        }
+    }, [view, currentQIndex, questions]);
 
     // Sync project details when changed from parent
     useEffect(() => {
@@ -144,8 +197,10 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                 .eq('id', project.id)
                 .single();
 
-            if (data && data.questions) {
+            if (data && Array.isArray(data.questions)) {
                 setQuestions(data.questions);
+            } else if (data && !data.questions) {
+                setQuestions([]); // Empty instead of null if no questions yet
             }
         } catch (err) {
             console.error("Error loading quiz data:", err);
@@ -240,8 +295,10 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
             isSkipped: isSkip
         };
 
-        const proceed = () => {
-            setAnswersLog(prev => [...prev, logEntry]);
+        const proceed = async () => {
+            if (!previewMode && project?.previewMode !== true) {
+                setAnswersLog(prev => [...prev, logEntry]);
+            }
             if (currentQIndex < questions.length - 1) {
                 setCurrentQIndex(prev => prev + 1);
                 setFeedback(null);
@@ -310,9 +367,26 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                     zIndex: 100
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <div style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '15px', color: '#3b82f6' }}>
+                        <button
+                            onClick={onExit}
+                            title="IR A GALERIA"
+                            style={{
+                                padding: '12px',
+                                background: 'rgba(59, 130, 246, 0.1)',
+                                borderRadius: '15px',
+                                color: '#3b82f6',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: '0.3s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                        >
                             <LayoutGrid size={24} />
-                        </div>
+                        </button>
                         <div>
                             <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white', lineHeight: 1.1 }}>{projectLocal?.name || 'Cargando...'}</h2>
                             <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Panel de Administración</span>
@@ -322,6 +396,13 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                         <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem' }}>
                             <Eye size={18} /> Resultados
+                        </button>
+                        <button
+                            onClick={() => onPreview ? onPreview(projectLocal) : window.dispatchEvent(new CustomEvent('previewProject', { detail: projectLocal }))}
+                            className="btn-outline"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+                        >
+                            <Play size={18} /> Preview
                         </button>
                         <button
                             onClick={onToggleActive}
@@ -379,7 +460,7 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                             </button>
                         </div>
                         <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {questions.map((q, idx) => (
+                            {(Array.isArray(questions) ? questions : []).map((q, idx) => (
                                 <div
                                     key={q.id}
                                     onClick={() => { setSelectedQIdx(idx); setEditingQ(q); }}
@@ -496,7 +577,7 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Clave de Acceso al Quiz</label>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Clave de Acceso</label>
                                         <div style={{ position: 'relative' }}>
                                             <Key size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#3b82f6' }} />
                                             <input
@@ -515,31 +596,7 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                 </div>
                             </div>
 
-                            <div style={{ marginTop: 'auto', padding: '25px', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
-                                <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '20px' }}>¿Deseas volver a la galería de proyectos?</p>
-                                <button
-                                    onClick={onExit}
-                                    style={{
-                                        width: '100%',
-                                        padding: '15px',
-                                        borderRadius: '16px',
-                                        background: 'rgba(255,255,255,0.05)',
-                                        color: 'white',
-                                        fontWeight: 800,
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '12px',
-                                        transition: '0.3s'
-                                    }}
-                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                                >
-                                    <ArrowRight size={20} style={{ transform: 'rotate(180deg)' }} /> Ir a Galería
-                                </button>
-                            </div>
+
                         </div>
                     </aside>
                 </div>
@@ -552,9 +609,20 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
         if (!currentQ) return null;
 
         return (
-            <div style={{ minHeight: '100vh', width: '100vw', background: '#000', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', position: 'relative', overflowX: 'hidden' }}>
+            <div style={{
+                height: '100vh',
+                width: '100vw',
+                background: '#000',
+                color: 'white',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                padding: '1.5vh 20px',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
                 {/* HUD SUPERIOR */}
-                <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '60px' }}>
+                <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2vh', flexShrink: 0 }}>
                     <div style={{
                         background: 'rgba(59, 130, 246, 0.15)',
                         padding: '10px 25px',
@@ -574,12 +642,112 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                 </div>
 
                 {/* PREGUNTA CENTRAL */}
-                <div style={{ flex: 1, width: '100%', maxWidth: '850px', display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center' }}>
-                    <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '60px', lineHeight: 1.3 }}>
-                        {currentQ.question}
-                    </h2>
+                <div style={{
+                    flex: 1,
+                    width: '100%',
+                    maxWidth: '1000px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: (currentQ.type === 'image' || currentQ.type === 'video') ? 'center' : 'flex-start',
+                    textAlign: 'center',
+                    overflow: 'hidden',
+                    minHeight: 0,
+                    paddingTop: (currentQ.type === 'image' || currentQ.type === 'video') ? '0' : '6vh'
+                }}>
+                    <div style={{
+                        marginBottom: (currentQ.type === 'image' || currentQ.type === 'video' || (currentQ.type === 'audio' && !currentQ.question)) ? '2vh' : '6vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: (currentQ.type === 'image' || currentQ.type === 'video') ? '2vh' : '5vh',
+                        flexShrink: 1,
+                        overflow: 'hidden'
+                    }}>
+                        {currentQ.question && (
+                            <h2 style={{
+                                fontSize: (currentQ.type === 'image' || currentQ.type === 'video')
+                                    ? 'clamp(1.1rem, 2.5vh, 1.6rem)'
+                                    : 'clamp(1.8rem, 5.8vh, 3.5rem)',
+                                fontWeight: 900,
+                                lineHeight: 1.1,
+                                margin: 0,
+                                color: '#fff',
+                                textShadow: '0 4px 10px rgba(0,0,0,0.5)',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: 'vertical'
+                            }}>
+                                {currentQ.question}
+                            </h2>
+                        )}
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {currentQ.type === 'image' && currentQ.mediaUrl && (
+                            <img
+                                src={currentQ.mediaUrl}
+                                alt="Question"
+                                onClick={() => setFullImage(currentQ.mediaUrl)}
+                                style={{
+                                    width: '100%',
+                                    maxWidth: '800px',
+                                    maxHeight: '28vh',
+                                    objectFit: 'contain',
+                                    borderRadius: '15px',
+                                    boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    cursor: 'zoom-in',
+                                    transition: 'transform 0.2s'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            />
+                        )}
+
+                        {currentQ.type === 'audio' && currentQ.mediaUrl && (
+                            <div style={{
+                                marginTop: !currentQ.question ? '15vh' : '0',
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'center'
+                            }}>
+                                <audio controls src={currentQ.mediaUrl} style={{ width: '100%', maxWidth: '550px', height: '54px' }} />
+                            </div>
+                        )}
+
+                        {currentQ.type === 'video' && currentQ.mediaUrl && (
+                            <div style={{ width: '100%', maxWidth: '900px', maxHeight: '42vh', aspectRatio: '16/9', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 15px 30px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                {(() => {
+                                    const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
+                                    const start = currentQ.videoStart || 0;
+                                    const end = currentQ.videoEnd || 0;
+                                    const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${start}${end ? `&end=${end}` : ''}&autoplay=1&mute=0&enablejsapi=1`;
+                                    return (
+                                        <iframe
+                                            id="quiz-video-player"
+                                            width="100%"
+                                            height="100%"
+                                            src={embedUrl}
+                                            title="YouTube video player"
+                                            frameBorder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                        ></iframe>
+                                    );
+                                })()}
+                            </div>
+                        )}
+                    </div>
+
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: (currentQ.type === 'image' || currentQ.type === 'video') && currentQ.options.length > 2 && currentQ.options.some(o => o.length > 30) ? '1fr' : '1fr 1fr',
+                        gap: '1.2vh',
+                        width: '100%',
+                        maxWidth: '1000px',
+                        marginBottom: '3vh',
+                        flexShrink: 0
+                    }}>
                         {currentQ.options.map((opt, idx) => {
                             const isHidden = hiddenOptions.includes(idx);
                             if (isHidden) return <div key={idx} style={{ height: '70px', opacity: 0 }} />;
@@ -618,18 +786,19 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                     disabled={feedback !== null}
                                     style={{
                                         width: '100%',
-                                        padding: '18px 25px',
-                                        borderRadius: '16px',
+                                        padding: '1.2vh 20px',
+                                        borderRadius: '12px',
                                         background: bgColor,
                                         border: `1px solid ${borderColor}`,
                                         color: 'white',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '20px',
+                                        gap: '15px',
                                         cursor: feedback ? 'default' : 'pointer',
                                         transition: '0.3s',
                                         textAlign: 'left',
-                                        boxShadow: feedback && idx === currentQ.correctAnswer ? '0 0 30px rgba(16, 185, 129, 0.2)' : 'none'
+                                        fontSize: 'clamp(0.8rem, 2vh, 1rem)',
+                                        boxShadow: feedback && idx === currentQ.correctAnswer ? '0 0 20px rgba(16, 185, 129, 0.2)' : 'none'
                                     }}
                                 >
                                     <div style={{
@@ -657,20 +826,20 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                 </div>
 
                 {/* CONTROLES / AYUDAS */}
-                <div style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '30px', marginTop: '60px' }}>
-                    <div style={{ display: 'flex', gap: '40px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.2vh', marginTop: '1.5vh', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: '30px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
                             <button
                                 onClick={handleFiftyFifty}
                                 disabled={feedback !== null || hiddenOptions.length > 0}
                                 style={{
-                                    width: '64px',
-                                    height: '64px',
+                                    width: 'clamp(44px, 7.5vh, 60px)',
+                                    height: 'clamp(44px, 7.5vh, 60px)',
                                     borderRadius: '50%',
                                     background: 'rgba(59, 130, 246, 0.2)',
                                     border: '2px solid rgba(59, 130, 246, 0.4)',
                                     color: '#60a5fa',
-                                    fontSize: '0.9rem',
+                                    fontSize: '0.8rem',
                                     fontWeight: 900,
                                     cursor: 'pointer',
                                     transition: '0.3s',
@@ -679,16 +848,16 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                             >
                                 50:50
                             </button>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#3b82f6' }}>+10s</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#3b82f6' }}>+10s</span>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
                             <button
                                 onClick={handlePass}
                                 disabled={feedback !== null}
                                 style={{
-                                    width: '64px',
-                                    height: '64px',
+                                    width: 'clamp(44px, 7.5vh, 60px)',
+                                    height: 'clamp(44px, 7.5vh, 60px)',
                                     borderRadius: '50%',
                                     background: 'rgba(124, 58, 237, 0.2)',
                                     border: '2px solid rgba(124, 58, 237, 0.4)',
@@ -701,9 +870,9 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                     opacity: feedback ? 0.3 : 1
                                 }}
                             >
-                                <SkipForward size={28} />
+                                <SkipForward size={22} />
                             </button>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#7c3aed' }}>Pasar (+30s)</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#7c3aed' }}>Pasar (+30s)</span>
                         </div>
                     </div>
 
@@ -718,11 +887,55 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                 alert('Clave incorrecta');
                             }
                         }}
-                        style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6, marginTop: '10px' }}
+                        style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6 }}
                     >
                         Cancelar Juego
                     </button>
                 </div>
+
+                {/* MODAL IMAGEN FULL SCREEN */}
+                {fullImage && (
+                    <div
+                        onClick={() => setFullImage(null)}
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            backgroundColor: 'rgba(0,0,0,0.95)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 9999,
+                            cursor: 'zoom-out'
+                        }}
+                    >
+                        <img
+                            src={fullImage}
+                            alt="Full Screen"
+                            style={{
+                                maxWidth: '95%',
+                                maxHeight: '95%',
+                                objectFit: 'contain',
+                                borderRadius: '10px',
+                                boxShadow: '0 0 50px rgba(0,0,0,0.8)'
+                            }}
+                        />
+                        <div style={{
+                            position: 'absolute',
+                            top: '20px',
+                            right: '20px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            background: 'rgba(255,255,255,0.1)',
+                            borderRadius: '50%',
+                            padding: '10px'
+                        }}>
+                            <X size={32} />
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -810,15 +1023,41 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
 function AdminForm({ initialData, onSave, onCancel }) {
     const [formData, setFormData] = useState({
         question: '',
+        type: 'text', // text, audio, video, image
+        mediaUrl: '',
+        videoStart: 0,
+        videoEnd: 0,
         options: ['', '', '', ''],
         correctAnswer: 0
     });
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         if (initialData) {
-            setFormData(initialData);
+            setFormData({
+                ...formData,
+                ...initialData,
+                type: initialData.type || 'text',
+                options: initialData.options || ['', '', '', '']
+            });
         }
     }, [initialData]);
+
+    const handleFileUpload = async (e, type) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUploading(true);
+        try {
+            const fileName = `quiz/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+            const { data, error } = await supabase.storage.from('media').upload(fileName, file);
+            if (error) throw error;
+            const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
+            setFormData({ ...formData, mediaUrl: publicUrl });
+        } catch (error) {
+            alert('Error al subir: ' + error.message);
+        }
+        setUploading(false);
+    };
 
     const handleChangeOption = (idx, val) => {
         const newOpts = [...formData.options];
@@ -826,76 +1065,217 @@ function AdminForm({ initialData, onSave, onCancel }) {
         setFormData({ ...formData, options: newOpts });
     };
 
+    const addOption = () => {
+        setFormData({ ...formData, options: [...formData.options, ''] });
+    };
+
+    const removeOption = (idx) => {
+        if (formData.options.length <= 2) return;
+        const newOpts = formData.options.filter((_, i) => i !== idx);
+        let newCorrect = formData.correctAnswer;
+        if (newCorrect === idx) newCorrect = 0;
+        else if (newCorrect > idx) newCorrect--;
+        setFormData({ ...formData, options: newOpts, correctAnswer: newCorrect });
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         onSave(formData);
     };
 
+    const iconStyle = { marginRight: '8px' };
+
     return (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            {/* Tipo de Pregunta */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>Pregunta</label>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>Tipo de Contenido</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                    {[
+                        { id: 'text', label: 'Pregunta', Icon: HelpCircle, color: '#a78bfa' },
+                        { id: 'audio', label: 'Audio', Icon: Clock, color: '#3b82f6' },
+                        { id: 'video', label: 'Video', Icon: Play, color: '#ef4444' },
+                        { id: 'image', label: 'Imagen', Icon: ImageIcon, color: '#10b981' }
+                    ].map(t => (
+                        <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, type: t.id })}
+                            style={{
+                                padding: '12px',
+                                borderRadius: '12px',
+                                background: formData.type === t.id ? `${t.color}20` : 'rgba(255,255,255,0.03)',
+                                border: `1px solid ${formData.type === t.id ? t.color : 'rgba(255,255,255,0.1)'}`,
+                                color: formData.type === t.id ? t.color : '#94a3b8',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: '0.3s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px'
+                            }}
+                        >
+                            <t.Icon size={16} /> {t.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Enunciado */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>Enunciado de la Pregunta</label>
                 <textarea
                     style={{
                         width: '100%',
-                        minHeight: '120px',
+                        minHeight: '80px',
                         background: 'rgba(5, 5, 15, 0.4)',
                         border: '1px solid rgba(255,255,255,0.1)',
                         borderRadius: '12px',
-                        padding: '20px',
+                        padding: '15px',
                         color: 'white',
                         fontSize: '1rem',
-                        lineHeight: '1.6',
+                        lineHeight: '1.4',
                         outline: 'none',
                         resize: 'vertical'
                     }}
-                    placeholder="Escribe el enunciado de la pregunta aquí..."
+                    placeholder="Escribe la pregunta aquí..."
                     value={formData.question}
                     onChange={e => setFormData({ ...formData, question: e.target.value })}
                     required
                 />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                {formData.options.map((opt, idx) => (
-                    <div
-                        key={idx}
-                        style={{
-                            background: 'rgba(5, 5, 15, 0.4)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '12px',
-                            padding: '12px 20px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '15px',
-                            transition: '0.3s',
-                            borderLeft: formData.correctAnswer === idx ? '4px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)'
-                        }}
-                    >
-                        <input
-                            type="radio"
-                            name="correct-answer"
-                            checked={formData.correctAnswer === idx}
-                            onChange={() => setFormData({ ...formData, correctAnswer: idx })}
-                            style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#3b82f6' }}
-                        />
+            {/* Multimedia Specific Controls */}
+            {(formData.type === 'audio' || formData.type === 'image') && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>Cargar Archivo ({formData.type === 'audio' ? 'MP3, WAV' : 'JPG, PNG'})</label>
+                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                        <label className="btn-outline" style={{ flex: 1, padding: '12px', cursor: 'pointer', textAlign: 'center' }}>
+                            {uploading ? 'Subiendo...' : (formData.mediaUrl ? 'Cambiar Archivo' : 'Elegir Archivo')}
+                            <input type="file" hidden accept={formData.type === 'audio' ? 'audio/*' : 'image/*'} onChange={e => handleFileUpload(e, formData.type)} />
+                        </label>
+                        {formData.mediaUrl && (
+                            <div style={{ flex: 2, fontSize: '0.75rem', color: '#10b981', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                ✅ {formData.mediaUrl.split('/').pop()}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {formData.type === 'video' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>Link de Youtube</label>
                         <input
                             type="text"
-                            placeholder={`Opción ${idx + 1}`}
-                            value={opt}
-                            onChange={(e) => handleChangeOption(idx, e.target.value)}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'white',
-                                width: '100%',
-                                fontSize: '0.95rem',
-                                outline: 'none'
-                            }}
-                            required
+                            className="premium-input"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            value={formData.mediaUrl}
+                            onChange={e => setFormData({ ...formData, mediaUrl: e.target.value })}
                         />
                     </div>
-                ))}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>Inicio (p.e. 112 para 1:12)</label>
+                            <input
+                                type="text"
+                                className="premium-input"
+                                placeholder="0"
+                                value={typeof formData.videoStart === 'number' ?
+                                    (Math.floor(formData.videoStart / 60) > 0 ? `${Math.floor(formData.videoStart / 60)}${(formData.videoStart % 60).toString().padStart(2, '0')}` : (formData.videoStart % 60).toString()) :
+                                    formData.videoStart}
+                                onChange={e => {
+                                    const val = e.target.value.replace(/[^0-9]/g, '');
+                                    if (!val) { setFormData({ ...formData, videoStart: 0 }); return; }
+                                    const num = parseInt(val);
+                                    const m = Math.floor(num / 100);
+                                    const s = num % 100;
+                                    setFormData({ ...formData, videoStart: (m * 60) + s });
+                                }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>Fin (p.e. 150 para 1:50)</label>
+                            <input
+                                type="text"
+                                className="premium-input"
+                                placeholder="0"
+                                value={typeof formData.videoEnd === 'number' ?
+                                    (Math.floor(formData.videoEnd / 60) > 0 ? `${Math.floor(formData.videoEnd / 60)}${(formData.videoEnd % 60).toString().padStart(2, '0')}` : (formData.videoEnd % 60).toString()) :
+                                    formData.videoEnd}
+                                onChange={e => {
+                                    const val = e.target.value.replace(/[^0-9]/g, '');
+                                    if (!val) { setFormData({ ...formData, videoEnd: 0 }); return; }
+                                    const num = parseInt(val);
+                                    const m = Math.floor(num / 100);
+                                    const s = num % 100;
+                                    setFormData({ ...formData, videoEnd: (m * 60) + s });
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Opciones */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>Opciones de Respuesta</label>
+                    <button type="button" onClick={addOption} style={{ background: 'rgba(16, 185, 129, 0.1)', border: 'none', color: '#10b981', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Plus size={14} /> Agregar Opción
+                    </button>
+                </div>
+
+                <div style={{ gridTemplateColumns: '1fr 1fr', display: 'grid', gap: '15px' }}>
+                    {(Array.isArray(formData.options) ? formData.options : []).map((opt, idx) => (
+                        <div
+                            key={idx}
+                            style={{
+                                background: 'rgba(5, 5, 15, 0.4)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '12px',
+                                padding: '10px 15px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                transition: '0.3s',
+                                borderLeft: formData.correctAnswer === idx ? '4px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)'
+                            }}
+                        >
+                            <input
+                                type="radio"
+                                name="correct-answer"
+                                title="Marcar como correcta"
+                                checked={formData.correctAnswer === idx}
+                                onChange={() => setFormData({ ...formData, correctAnswer: idx })}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#3b82f6' }}
+                            />
+                            <input
+                                type="text"
+                                placeholder={`Opción ${idx + 1}`}
+                                value={opt}
+                                onChange={(e) => handleChangeOption(idx, e.target.value)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'white',
+                                    width: '100%',
+                                    fontSize: '0.9rem',
+                                    outline: 'none'
+                                }}
+                                required
+                            />
+                            {formData.options.length > 2 && (
+                                <button type="button" onClick={() => removeOption(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', opacity: 0.5, cursor: 'pointer' }}>
+                                    <Trash2 size={16} />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
 
             <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>

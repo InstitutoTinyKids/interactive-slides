@@ -78,53 +78,53 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Selecciona tu rol para continuar</p>
             </div>
 
-            <div style={{ display: 'grid', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
                 <button
                     onClick={() => setView('student_alias')}
                     className="glass"
-                    style={{ padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', textAlign: 'left', transition: '0.2s' }}
+                    style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', textAlign: 'left', transition: '0.2s', width: '100%' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                    <div style={{ width: '50px', height: '50px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
-                        <User size={24} />
+                    <div style={{ width: '55px', height: '55px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', flexShrink: 0 }}>
+                        <User size={28} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'white' }}>Student</h3>
-
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', margin: 0 }}>Student</h3>
                     </div>
-                    <ChevronRight size={20} color="#3b82f6" />
+                    <ChevronRight size={22} color="#3b82f6" />
                 </button>
 
                 <button
                     onClick={() => { setView('teacher_login'); setPass(''); }}
                     className="glass"
-                    style={{ padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', textAlign: 'left', transition: '0.2s' }}
+                    style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', textAlign: 'left', transition: '0.2s', width: '100%' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                    <div style={{ width: '50px', height: '50px', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
-                        <GraduationCap size={24} />
+                    <div style={{ width: '55px', height: '55px', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', flexShrink: 0 }}>
+                        <GraduationCap size={28} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'white' }}>Teacher</h3>
-
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', margin: 0 }}>Teacher</h3>
                     </div>
-                    <ChevronRight size={20} color="#a78bfa" />
+                    <ChevronRight size={22} color="#a78bfa" />
                 </button>
 
                 <button
                     onClick={() => { setView('admin_login'); setPass(''); }}
                     className="glass"
-                    style={{ padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', textAlign: 'left', transition: '0.2s', marginTop: '10px', opacity: 0.8 }}
+                    style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', textAlign: 'left', transition: '0.2s', width: '100%' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                    <div style={{ width: '50px', height: '50px', background: 'rgba(100, 116, 139, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                        <Settings size={24} />
+                    <div style={{ width: '55px', height: '55px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', flexShrink: 0 }}>
+                        <Settings size={28} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'white' }}>Administrador</h3>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', margin: 0 }}>Admin</h3>
                     </div>
-                    <Lock size={18} color="#94a3b8" />
+                    <ChevronRight size={22} color="#10b981" />
                 </button>
             </div>
         </div>

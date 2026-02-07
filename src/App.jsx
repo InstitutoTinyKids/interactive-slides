@@ -18,6 +18,9 @@ export default function App() {
     const [slides, setSlides] = useState([]);
     const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [previewMode, setPreviewMode] = useState(false);
+    const [lastView, setLastView] = useState('entry');
+    const [cameFromGallery, setCameFromGallery] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
     const [returnFromResults, setReturnFromResults] = useState(false);
 
@@ -171,7 +174,7 @@ export default function App() {
                     setView('editor');
                     setSelectedProject(null);
                 } else {
-                    setView('entry');
+                    window.location.href = 'https://guias.institutotinykids.com/';
                 }
                 setReturnFromResults(false);
             }}
@@ -181,7 +184,76 @@ export default function App() {
             isActive={isActive}
             onToggleActive={toggleActive}
             onViewResults={() => setView('results')}
+            previewMode={previewMode}
+            onPreview={(p) => {
+                setLastView('quiz');
+                setCameFromGallery(false);
+                setSelectedProject(p);
+                setView('preview_quiz');
+                setPreviewMode(true);
+            }}
         />;
+    }
+
+    if (view === 'preview_quiz' || view === 'preview_viewer') {
+        const isQuiz = view === 'preview_quiz';
+        return (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 9999, overflowY: 'auto', background: '#000' }}>
+                {isQuiz ? (
+                    <QuizApp
+                        onExit={() => {
+                            setView(lastView);
+                            setPreviewMode(false);
+                            if (lastView === 'editor' && cameFromGallery) {
+                                setSelectedProject(null); // Force gallery in SlideEditor
+                            }
+                        }}
+                        isAdmin={false}
+                        role="student"
+                        project={selectedProject}
+                        isActive={true}
+                        previewMode={true}
+                        onToggleActive={() => { }}
+                        onViewResults={() => { }}
+                    />
+                ) : (
+                    <SlideViewer
+                        slide={slides[currentSlideIdx]}
+                        alias="Preview User"
+                        currentIndex={currentSlideIdx}
+                        totalSlides={slides.length}
+                        onComplete={() => {
+                            if (currentSlideIdx < slides.length - 1) setCurrentSlideIdx(prev => prev + 1);
+                            else {
+                                setView(lastView);
+                                setPreviewMode(false);
+                                if (lastView === 'editor' && cameFromGallery) setSelectedProject(null);
+                            }
+                        }}
+                        onNext={() => { if (currentSlideIdx < slides.length - 1) setCurrentSlideIdx(prev => prev + 1); }}
+                        onPrev={() => { if (currentSlideIdx > 0) setCurrentSlideIdx(prev => prev - 1); }}
+                        isFirst={currentSlideIdx === 0}
+                        isLast={currentSlideIdx === slides.length - 1}
+                        role="student"
+                        onHome={() => {
+                            setView(lastView);
+                            setPreviewMode(false);
+                            if (lastView === 'editor' && cameFromGallery) setSelectedProject(null);
+                        }}
+                    />
+                )}
+                <button
+                    onClick={() => {
+                        setView(lastView);
+                        setPreviewMode(false);
+                        if (lastView === 'editor' && cameFromGallery) setSelectedProject(null);
+                    }}
+                    style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10000, background: 'rgba(239, 68, 68, 0.8)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer' }}
+                >
+                    Salir Preview
+                </button>
+            </div>
+        );
     }
 
     if (view === 'editor') {
@@ -198,7 +270,16 @@ export default function App() {
                     }
                     // Implementation below will be updated in SlideEditor to handle project selection
                 }}
-                onExit={() => { setView('entry'); }}
+                onExit={() => {
+                    if (role === 'admin') {
+                        // If already in gallery, go to Tiny Kids Home
+                        // SlideEditor manages its own internal 'showGallery' state.
+                        // We pass a function that SlideEditor can call.
+                        window.location.href = 'https://guias.institutotinykids.com/';
+                    } else {
+                        setView('entry');
+                    }
+                }}
                 onToggleActive={toggleActive}
                 onViewResults={() => {
                     setReturnFromResults(true);
@@ -219,6 +300,30 @@ export default function App() {
                     }
                     setView('quiz');
                 }}
+                onPreview={(p, fromGallery = false) => {
+                    setLastView(view);
+                    setCameFromGallery(fromGallery);
+                    if (p) {
+                        setSelectedProject(p);
+                        setIsActive(p.is_active);
+                        if (p.id.startsWith('quiz-')) {
+                            setView('preview_quiz');
+                        } else {
+                            loadProjectSlides(p.id).then(() => {
+                                setView('preview_viewer');
+                                setCurrentSlideIdx(0);
+                            });
+                        }
+                    } else if (selectedProject) {
+                        if (selectedProject.id.startsWith('quiz-')) {
+                            setView('preview_quiz');
+                        } else {
+                            setView('preview_viewer');
+                            setCurrentSlideIdx(0);
+                        }
+                    }
+                    setPreviewMode(true);
+                }}
             />
         );
     }
@@ -228,8 +333,8 @@ export default function App() {
             <ResultsViewer
                 slides={slides}
                 onExit={() => {
-                    setView('editor');
-                    // Don't reset selectedProject - keep the current project context
+                    const nextView = (selectedProject && selectedProject.id.startsWith('quiz-')) ? 'quiz' : 'editor';
+                    setView(nextView);
                 }}
             />
         );
@@ -246,7 +351,7 @@ export default function App() {
                             El administrador aún no ha creado diapositivas para esta presentación.
                         </p>
                         <button
-                            onClick={() => setView('entry')}
+                            onClick={() => window.location.href = 'https://guias.institutotinykids.com/'}
                             className="btn-primary px-10 py-4 text-lg"
                         >
                             Volver al Inicio
@@ -334,7 +439,7 @@ export default function App() {
                                 Reiniciar
                             </button>
                             <button
-                                onClick={() => setView('entry')}
+                                onClick={() => window.location.href = 'https://guias.institutotinykids.com/'}
                                 className="btn-premium"
                                 style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}
                             >
