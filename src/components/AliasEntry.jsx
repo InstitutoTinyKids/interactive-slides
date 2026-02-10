@@ -74,7 +74,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                 <div style={{ width: '90px', height: '90px', margin: '0 auto 15px' }}>
                     <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                 </div>
-                <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '4px', letterSpacing: '-1px', color: 'white' }}>Guía Tiny Kids</h1>
+                <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '4px', letterSpacing: '-1px', color: 'white' }}>Central TK</h1>
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Selecciona tu rol para continuar</p>
             </div>
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Plus, Image as ImageIcon, Music, Type, Move, Target, Paintbrush,
     Save, Trash2, X, Play, Pause, Upload, Eye, ChevronLeft, LayoutGrid,
-    Settings as SettingsIcon, ShieldCheck, Key, PanelLeftClose, PanelRightClose, Layers, Copy, HelpCircle
+    Settings as SettingsIcon, ShieldCheck, Key, PanelLeftClose, PanelRightClose, Layers, Copy, HelpCircle, Edit2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
@@ -34,6 +34,13 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [showSlidesPanel, setShowSlidesPanel] = useState(window.innerWidth >= 1200);
     const [showSettingsPanel, setShowSettingsPanel] = useState(window.innerWidth >= 1200);
     const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+
+    // Estados para edición controlada en Ajustes
+    const [isEditingProjectName, setIsEditingProjectName] = useState(false);
+    const [isEditingAccessCode, setIsEditingAccessCode] = useState(false);
+    const [hasUnsavedNameChanges, setHasUnsavedNameChanges] = useState(false);
+    const [hasUnsavedCodeChanges, setHasUnsavedCodeChanges] = useState(false);
+    const [showProjectDetails, setShowProjectDetails] = useState(false);
 
     const PROGRAM_ORDER = [
         'Baby Program', 'Mini Program', 'Tiny Program', 'Big Program',
@@ -110,18 +117,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             name: newProjectName.trim(),
             is_active: false,
             access_code: accessCode,
-            questions: projectType === 'quiz' ? [
-                { id: 1, question: "Choose the correct option: The guitarist will play fast ______ the stage ______.", options: ["on / tonight", "at / tomorrow", "at / tonight", "in / right now"], correctAnswer: 0 },
-                { id: 2, question: "Fill in the blanks: 'The singer ______ ______ (perform/passionately) ______ the recording studio tomorrow.'", options: ["performs passionately on", "will perform passionate at", "will passionately perform at", "will perform passionately in"], correctAnswer: 3 },
-                { id: 3, question: "Find the mistake: 'The drummer will play loudly on the concert hall next weekend.'", options: ["The word 'drummer' is incorrect.", "The preposition 'on' should be 'at'.", "The adverb 'loudly' is wrong.", "The time marker 'next weekend' is wrong."], correctAnswer: 1 },
-                { id: 4, question: "Unscramble the sentence: 'at / The / interact / festival / will / music / the / frontman / energetically / tonight'", options: ["The frontman at the music festival will interact energetically tonight.", "The frontman will interact energetically at the music festival tonight.", "Tonight the frontman will energetically interact at the music festival.", "The music festival will interact at the frontman energetically tonight."], correctAnswer: 1 },
-                { id: 5, question: "Challenge: How and where will the singer perform tomorrow? (Venue: Theater / Adverb: Well)", options: ["She will perform well at the theater tomorrow.", "She will play well at the theater later.", "The singer perform well on the theater tomorrow.", "She will perform well in the theater tomorrow."], correctAnswer: 3 },
-                { id: 6, question: "Which sentence describes a bassist's action with high energy in a private space right now?", options: ["The bassist perform loudly on the stage right now.", "The bassist will perform energetically in the recording studio right now.", "The singer will perform energetically in the recording studio right now.", "The bassist will play fast at the concert hall tonight."], correctAnswer: 1 },
-                { id: 7, question: "The ______ will ______ (jump) ______ (fast) on the platform next weekend.", options: ["drummer / jump / loudly", "frontwoman / will jump / fast", "frontwoman / will jump / fastly", "bassist / will jumps / fast"], correctAnswer: 1 },
-                { id: 8, question: "What is the most accurate way to describe a drummer playing with passion in the band's vehicle later?", options: ["The drummer will play passionately at the tour bus later.", "The drummer will plays passionate in the tour bus tonight.", "The guitarist will play passionately on the tour bus later.", "The drummer will play passionately in the tour bus later."], correctAnswer: 3 },
-                { id: 9, question: "The ______ (Frontman) will ______ (interact) ______ (energetically) ______ the music festival ______ (tomorrow).", options: ["singer / will interact / energetically / on / tomorrow", "frontman / will interact / energetically / at / tomorrow", "frontman / interact / energetically / at / tonight", "frontman / will interact / energetic / in / tomorrow"], correctAnswer: 1 },
-                { id: 10, question: "Complete the tour report: 'The bassist will play ______ (well) ______ the backstage ______ (later).'", options: ["well / on / tonight", "good / at / later", "well / at / next weekend", "well / in / later"], correctAnswer: 3 }
-            ] : []
+            questions: []
         };
 
         const { error } = await supabase.from('projects').insert(newProject);
@@ -883,13 +879,147 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     }}>
                         <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
                             <div>
-                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}><SettingsIcon size={18} /> Ajustes</h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clave de Acceso</label>
-                                        <input className="premium-input" type="text" value={currentProject?.access_code || ''} onChange={(e) => setCurrentProject({ ...currentProject, access_code: e.target.value })} style={{ padding: '12px' }} />
+                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '25px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><SettingsIcon size={18} /> Ajustes</div>
+                                    <button
+                                        onClick={() => setShowProjectDetails(!showProjectDetails)}
+                                        style={{
+                                            border: 'none',
+                                            color: 'var(--primary-light)',
+                                            fontSize: '0.65rem',
+                                            fontWeight: 900,
+                                            cursor: 'pointer',
+                                            textTransform: 'uppercase',
+                                            padding: '4px 8px',
+                                            borderRadius: '6px',
+                                            background: 'rgba(124, 58, 237, 0.1)'
+                                        }}
+                                    >
+                                        {showProjectDetails ? 'Ocultar' : 'Ver más'}
+                                    </button>
+                                </h3>
+
+                                {showProjectDetails && (
+                                    <div className="anim-up" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '25px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                        {/* Nombre del Proyecto */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre del Proyecto</label>
+                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <input
+                                                    className="premium-input"
+                                                    type="text"
+                                                    value={currentProject?.name || ''}
+                                                    readOnly={!isEditingProjectName}
+                                                    onChange={(e) => {
+                                                        setCurrentProject({ ...currentProject, name: e.target.value });
+                                                        setHasUnsavedNameChanges(true);
+                                                    }}
+                                                    style={{
+                                                        padding: '12px',
+                                                        paddingRight: '45px',
+                                                        flex: 1,
+                                                        fontSize: '0.85rem',
+                                                        opacity: isEditingProjectName ? 1 : 0.7,
+                                                        cursor: isEditingProjectName ? 'text' : 'not-allowed',
+                                                        borderColor: isEditingProjectName ? 'var(--primary)' : 'var(--border)'
+                                                    }}
+                                                />
+                                                <button
+                                                    onClick={async () => {
+                                                        if (isEditingProjectName && hasUnsavedNameChanges && currentProject?.id) {
+                                                            try {
+                                                                await supabase.from('projects').update({ name: currentProject.name }).eq('id', currentProject.id);
+                                                                setHasUnsavedNameChanges(false);
+                                                                setIsEditingProjectName(false);
+                                                                loadProjects();
+                                                            } catch (err) {
+                                                                alert('Error al guardar nombre: ' + err.message);
+                                                            }
+                                                        } else {
+                                                            setIsEditingProjectName(!isEditingProjectName);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        right: '12px',
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: isEditingProjectName ? '#10b981' : '#64748b',
+                                                        cursor: 'pointer',
+                                                        padding: '8px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        transition: '0.3s',
+                                                        borderRadius: '8px'
+                                                    }}
+                                                    title={isEditingProjectName ? 'Guardar cambios' : 'Editar nombre'}
+                                                >
+                                                    {isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Clave de Acceso */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clave de Acceso</label>
+                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <input
+                                                    className="premium-input"
+                                                    type="text"
+                                                    value={currentProject?.access_code || ''}
+                                                    readOnly={!isEditingAccessCode}
+                                                    onChange={(e) => {
+                                                        setCurrentProject({ ...currentProject, access_code: e.target.value });
+                                                        setHasUnsavedCodeChanges(true);
+                                                    }}
+                                                    style={{
+                                                        padding: '12px',
+                                                        paddingRight: '45px',
+                                                        flex: 1,
+                                                        fontSize: '0.85rem',
+                                                        opacity: isEditingAccessCode ? 1 : 0.7,
+                                                        cursor: isEditingAccessCode ? 'text' : 'not-allowed',
+                                                        borderColor: isEditingAccessCode ? 'var(--primary)' : 'var(--border)'
+                                                    }}
+                                                />
+                                                <button
+                                                    onClick={async () => {
+                                                        if (isEditingAccessCode && hasUnsavedCodeChanges && currentProject?.id) {
+                                                            try {
+                                                                await supabase.from('projects').update({ access_code: currentProject.access_code }).eq('id', currentProject.id);
+                                                                setHasUnsavedCodeChanges(false);
+                                                                setIsEditingAccessCode(false);
+                                                                loadProjects();
+                                                            } catch (err) {
+                                                                alert('Error al guardar clave: ' + err.message);
+                                                            }
+                                                        } else {
+                                                            setIsEditingAccessCode(!isEditingAccessCode);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        right: '12px',
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: isEditingAccessCode ? '#10b981' : '#64748b',
+                                                        cursor: 'pointer',
+                                                        padding: '8px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        transition: '0.3s',
+                                                        borderRadius: '8px'
+                                                    }}
+                                                    title={isEditingAccessCode ? 'Guardar cambios' : 'Editar clave'}
+                                                >
+                                                    {isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             <div>
