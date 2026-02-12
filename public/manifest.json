@@ -1,0 +1,25 @@
+{
+    "name": "Central TK",
+    "short_name": "Central TK",
+    "description": "Instituto Tiny Kids - Central de Guías y Quiz Interactivos",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4F46E5",
+    "orientation": "portrait",
+    "scope": "/",
+    "icons": [
+        {
+            "src": "/logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
