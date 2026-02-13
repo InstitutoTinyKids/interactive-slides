@@ -352,7 +352,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             width: type === 'text' ? 300 : (type === 'drag' ? 80 : null),
             height: type === 'text' ? 150 : (type === 'drag' ? 80 : null),
             text: type === 'text' ? 'Escribe aquí...' : '',
-            url: ''
+            url: '',
+            imageSize: type === 'drag' ? 100 : undefined
         };
         newSlides[selectedIdx].elements.push(newEl);
         setLocalSlides(newSlides);
@@ -828,7 +829,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     )}
                                     {el.type === 'drag' && (
                                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            {el.url ? <img src={el.url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} /> : <Move size={24} color="#3b82f6" />}
+                                            {el.url ? <img src={el.url} style={{ maxWidth: `${el.imageSize || 100}%`, maxHeight: `${el.imageSize || 100}%`, objectFit: 'contain' }} /> : <Move size={24} color="#3b82f6" />}
                                         </div>
                                     )}
                                     {el.type === 'stamp' && (
@@ -1081,10 +1082,43 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             </div>
                                         </div>
                                         {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.type === 'drag' && (
-                                            <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
-                                                <Upload size={16} /> Subir Imagen
-                                                <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === selectedElementId))} />
-                                            </label>
+                                            <>
+                                                <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
+                                                    <Upload size={16} /> Subir Imagen
+                                                    <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === selectedElementId))} />
+                                                </label>
+                                                {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.url && (
+                                                    <div style={{ marginBottom: '10px' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                                                            Tamaño de Imagen: {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.imageSize || 100}%
+                                                        </label>
+                                                        <input
+                                                            type="range"
+                                                            min="20"
+                                                            max="200"
+                                                            step="5"
+                                                            value={localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.imageSize || 100}
+                                                            onChange={(e) => {
+                                                                const copy = [...localSlides];
+                                                                const element = copy[selectedIdx].elements.find(item => item.id === selectedElementId);
+                                                                if (element) {
+                                                                    element.imageSize = parseInt(e.target.value);
+                                                                    setLocalSlides(copy);
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '6px',
+                                                                borderRadius: '3px',
+                                                                background: 'linear-gradient(to right, rgba(124, 58, 237, 0.3), rgba(124, 58, 237, 0.8))',
+                                                                outline: 'none',
+                                                                cursor: 'pointer',
+                                                                accentColor: '#7c3aed'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                         <button onClick={async () => {
                                             const elementToDelete = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
