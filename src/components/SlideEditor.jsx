@@ -1095,7 +1095,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                         <input
                                                             type="range"
                                                             min="20"
-                                                            max="200"
+                                                            max="300"
                                                             step="5"
                                                             value={localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.imageSize || 100}
                                                             onChange={(e) => {
