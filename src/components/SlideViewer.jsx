@@ -286,7 +286,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                     onTouchStart={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
                                 >
                                     {item.url ? (
-                                        <img src={item.url} style={{ width: '12cqw', height: '12cqw', objectFit: 'contain', pointerEvents: 'none' }} />
+                                        <img src={item.url} style={{ width: `${(item.imageSize || 100) / 100 * 12}cqw`, height: `${(item.imageSize || 100) / 100 * 12}cqw`, objectFit: 'contain', pointerEvents: 'none' }} />
                                     ) : (
                                         <div style={{ width: '8cqw', height: '8cqw', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Move color="white" size="50%" />
