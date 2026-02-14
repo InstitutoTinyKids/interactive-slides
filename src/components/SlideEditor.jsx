@@ -828,8 +828,26 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         />
                                     )}
                                     {el.type === 'drag' && (
-                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            {el.url ? <img src={el.url} style={{ maxWidth: `${el.imageSize || 100}%`, maxHeight: `${el.imageSize || 100}%`, objectFit: 'contain' }} /> : <Move size={24} color="#3b82f6" />}
+                                        <div style={{
+                                            width: `${(el.imageSize || 100) / 100 * 80}px`,
+                                            height: `${(el.imageSize || 100) / 100 * 80}px`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'width 0.2s, height 0.2s'
+                                        }}>
+                                            {el.url ? (
+                                                <img
+                                                    src={el.url}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'contain'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Move size={24} color="#3b82f6" />
+                                            )}
                                         </div>
                                     )}
                                     {el.type === 'stamp' && (
@@ -1095,7 +1113,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                         <input
                                                             type="range"
                                                             min="20"
-                                                            max="300"
+                                                            max="500"
                                                             step="5"
                                                             value={localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.imageSize || 100}
                                                             onChange={(e) => {

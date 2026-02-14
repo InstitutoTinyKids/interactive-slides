@@ -281,14 +281,35 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                             return (
                                 <div
                                     key={item.id}
-                                    style={{ position: 'absolute', left: `${(item.currentX / canvasWidth) * 100}%`, top: `${(item.currentY / canvasHeight) * 100}%`, transform: 'translate(-50%, -50%)', cursor: tool === 'drag' ? 'grab' : 'default', pointerEvents: 'auto', touchAction: 'none' }}
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${(item.currentX / canvasWidth) * 100}%`,
+                                        top: `${(item.currentY / canvasHeight) * 100}%`,
+                                        transform: 'translate(-50%, -50%)',
+                                        cursor: tool === 'drag' ? 'grab' : 'default',
+                                        pointerEvents: 'auto',
+                                        touchAction: 'none',
+                                        width: `${(item.imageSize || 100) / 100 * 12}cqw`,
+                                        height: `${(item.imageSize || 100) / 100 * 12}cqw`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
                                     onMouseDown={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
                                     onTouchStart={(e) => { if (tool === 'drag') setDraggingIdx(idx); }}
                                 >
                                     {item.url ? (
-                                        <img src={item.url} style={{ width: `${(item.imageSize || 100) / 100 * 12}cqw`, height: `${(item.imageSize || 100) / 100 * 12}cqw`, objectFit: 'contain', pointerEvents: 'none' }} />
+                                        <img
+                                            src={item.url}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'contain',
+                                                pointerEvents: 'none'
+                                            }}
+                                        />
                                     ) : (
-                                        <div style={{ width: '8cqw', height: '8cqw', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div style={{ width: '100%', height: '100%', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Move color="white" size="50%" />
                                         </div>
                                     )}
