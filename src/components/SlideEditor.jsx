@@ -796,8 +796,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         borderRadius: '12px',
                                         background: (el.url || el.type === 'stamp') ? 'transparent' : 'rgba(0,0,0,0.5)',
                                         backdropFilter: (el.url || el.type === 'stamp') ? 'none' : 'blur(10px)',
-                                        width: el.type === 'drag' ? '80px' : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
-                                        height: el.type === 'drag' ? '80px' : (el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto'),
+                                        width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 80}px` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
+                                        height: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 80}px` : (el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto'),
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
@@ -828,14 +828,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         />
                                     )}
                                     {el.type === 'drag' && (
-                                        <div style={{
-                                            width: `${(el.imageSize || 100) / 100 * 80}px`,
-                                            height: `${(el.imageSize || 100) / 100 * 80}px`,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: 'width 0.2s, height 0.2s'
-                                        }}>
+                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             {el.url ? (
                                                 <img
                                                     src={el.url}
