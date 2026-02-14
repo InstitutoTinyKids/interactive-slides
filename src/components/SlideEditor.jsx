@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Plus, Image as ImageIcon, Music, Type, Move, Target, Paintbrush,
     Save, Trash2, X, Play, Pause, Upload, Eye, ChevronLeft, LayoutGrid,
-    Settings as SettingsIcon, ShieldCheck, Key, PanelLeftClose, PanelRightClose, Layers, Copy, HelpCircle, Edit2
+    Settings as SettingsIcon, ShieldCheck, Key, PanelLeftClose, PanelRightClose, Layers, Copy, HelpCircle, Edit2,
+    Folder, FolderPlus, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
@@ -15,8 +16,13 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     // Only show gallery if NOT returning from results and no project selected
     const [showGallery, setShowGallery] = useState(!returnFromResults && !initialProject);
     const [projects, setProjects] = useState([]);
+    const [folders, setFolders] = useState([]);
     const [currentProject, setCurrentProject] = useState(initialProject);
     const [galleryTab, setGalleryTab] = useState('guias'); // 'guias' or 'quiz'
+    const [currentFolderId, setCurrentFolderId] = useState(null);
+    const [isSortMode, setIsSortMode] = useState(false);
+    const [addType, setAddType] = useState('guias'); // 'guias', 'quiz', 'folder'
+    const [editingFolderId, setEditingFolderId] = useState(null);
 
     // For dragging and resizing in editor
     const canvasContainerRef = useRef(null);
@@ -90,34 +96,53 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     }, [slides]);
 
     const loadProjects = async () => {
-        const { data } = await supabase.from('projects').select('*');
-        if (data) {
-            const sorted = data.sort((a, b) => {
-                const idxA = PROGRAM_ORDER.indexOf(a.name);
-                const idxB = PROGRAM_ORDER.indexOf(b.name);
-                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                if (idxA !== -1) return -1;
-                if (idxB !== -1) return 1;
-                return a.name.localeCompare(b.name);
-            });
-            setProjects(sorted);
+        setLoading(true);
+        // Fetch Folders
+        const { data: folderData } = await supabase.from('folders').select('*').order('order_index', { ascending: true });
+        setFolders(folderData || []);
+
+        // Fetch Projects
+        const { data: projectData } = await supabase.from('projects').select('*').order('order_index', { ascending: true });
+        if (projectData) {
+            setProjects(projectData);
         }
         setSelectedProjects([]);
+        setLoading(false);
     };
 
     const handleCreateProject = async () => {
         if (!newProjectName.trim()) return;
 
+        if (addType === 'folder') {
+            if (editingFolderId) {
+                const { error } = await supabase.from('folders').update({ name: newProjectName.trim() }).eq('id', editingFolderId);
+                if (error) alert('Error: ' + error.message);
+            } else {
+                const { error } = await supabase.from('folders').insert({
+                    name: newProjectName.trim(),
+                    order_index: folders.length + projects.filter(p => !p.folder_id).length
+                });
+                if (error) alert('Error: ' + error.message);
+            }
+            setNewProjectName('');
+            setEditingFolderId(null);
+            setShowAddModal(false);
+            loadProjects();
+            return;
+        }
+
         const accessCode = prompt(`Define la Clave de Acceso para ${newProjectName}:`, '123');
         if (!accessCode) return;
 
-        const projectType = galleryTab === 'quiz' ? 'quiz' : 'guias';
+        const projectType = addType;
         const newProject = {
             id: projectType === 'quiz' ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID(),
             name: newProjectName.trim(),
             is_active: false,
             access_code: accessCode,
-            questions: []
+            questions: [],
+            folder_id: currentFolderId,
+            order_index: projects.filter(p => p.folder_id === currentFolderId).length
         };
 
         const { error } = await supabase.from('projects').insert(newProject);
@@ -130,32 +155,120 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         }
     };
 
+    const handleDuplicateFolder = async (folder) => {
+        setLoading(true);
+        try {
+            const newFolderName = `${folder.name} (Copia)`;
+            const { data: newFolder, error: fError } = await supabase
+                .from('folders')
+                .insert({ name: newFolderName, order_index: folders.length + projects.filter(p => !p.folder_id).length })
+                .select()
+                .single();
+
+            if (fError) throw fError;
+
+            // Clone all projects inside
+            const projectsToClone = projects.filter(p => p.folder_id === folder.id);
+            for (const p of projectsToClone) {
+                const newId = p.id.startsWith('quiz-') ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID();
+                const { data: clonedProj } = await supabase.from('projects').insert({
+                    ...p,
+                    id: newId,
+                    folder_id: newFolder.id
+                }).select().single();
+
+                // Clone slides
+                const { data: slidesToClone } = await supabase.from('slides').select('*').eq('project_id', p.id);
+                if (slidesToClone && slidesToClone.length > 0) {
+                    const clonedSlides = slidesToClone.map(s => ({
+                        ...s,
+                        id: crypto.randomUUID(),
+                        project_id: newId
+                    }));
+                    await supabase.from('slides').insert(clonedSlides);
+                }
+            }
+            loadProjects();
+            alert('✅ Carpeta duplicada correctamente');
+        } catch (err) {
+            alert('Error al duplicar carpeta: ' + err.message);
+        }
+        setLoading(false);
+    };
+
+    const handleDeleteFolder = async (folderId) => {
+        if (!confirm('¿Estás seguro de eliminar esta carpeta? Todos los proyectos dentro se borrarán permanentemente.')) return;
+        setLoading(true);
+        try {
+            const projectsToDelete = projects.filter(p => p.folder_id === folderId);
+            for (const p of projectsToDelete) {
+                // Delete slides files
+                const { data: slides } = await supabase.from('slides').select('image_url, audio_url, elements').eq('project_id', p.id);
+                if (slides) {
+                    for (const slide of slides) {
+                        if (slide.image_url) await deleteFileFromStorage(slide.image_url);
+                        if (slide.audio_url) await deleteFileFromStorage(slide.audio_url);
+                        if (slide.elements) {
+                            for (const el of slide.elements) if (el.url) await deleteFileFromStorage(el.url);
+                        }
+                    }
+                }
+                await supabase.from('projects').delete().eq('id', p.id);
+            }
+            await supabase.from('folders').delete().eq('id', folderId);
+            loadProjects();
+        } catch (err) {
+            alert('Error al eliminar carpeta: ' + err.message);
+        }
+        setLoading(false);
+    };
+
+    const handleEditFolder = (folder) => {
+        setNewProjectName(folder.name);
+        setEditingFolderId(folder.id);
+        setAddType('folder');
+        setShowAddModal(true);
+    };
+
+    const handleMoveItem = async (type, item, direction) => {
+        const items = type === 'folder' ? folders : projects.filter(p => p.folder_id === currentFolderId);
+        const index = items.findIndex(i => i.id === item.id);
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+
+        if (newIndex < 0 || newIndex >= items.length) return;
+
+        const otherItem = items[newIndex];
+        const { error: err1 } = await supabase.from(type === 'folder' ? 'folders' : 'projects').update({ order_index: otherItem.order_index }).eq('id', item.id);
+        const { error: err2 } = await supabase.from(type === 'folder' ? 'folders' : 'projects').update({ order_index: item.order_index }).eq('id', otherItem.id);
+
+        if (!err1 && !err2) loadProjects();
+    };
+
+    const toggleSortMode = async () => {
+        setIsSortMode(!isSortMode);
+    };
+
     const handleDuplicateProject = async (project) => {
         setLoading(true);
         try {
-            const newId = `${project.id}-copy-${Date.now()}`;
+            const newId = project.id.startsWith('quiz-') ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID();
             const newName = `${project.name} (Copia)`;
 
-            // 1. Clonar Proyecto
             const { data: newProject, error: pError } = await supabase
                 .from('projects')
                 .insert({
                     ...project,
                     id: newId,
                     name: newName,
-                    is_active: false
+                    is_active: false,
+                    order_index: projects.filter(p => p.folder_id === project.folder_id).length
                 })
                 .select()
                 .single();
 
             if (pError) throw pError;
 
-            // 2. Clonar Diapositivas
-            const { data: slidesToClone } = await supabase
-                .from('slides')
-                .select('*')
-                .eq('project_id', project.id);
-
+            const { data: slidesToClone } = await supabase.from('slides').select('*').eq('project_id', project.id);
             if (slidesToClone && slidesToClone.length > 0) {
                 const clonedSlides = slidesToClone.map(s => ({
                     ...s,
@@ -175,36 +288,24 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     const handleDeleteSelected = async () => {
         if (selectedProjects.length === 0) return;
-        if (!confirm(`¿Estás seguro de eliminar ${selectedProjects.length} programas? Esto borrará todas las láminas y archivos asociados de forma permanente.`)) return;
+        if (!confirm(`¿Estás seguro de eliminar ${selectedProjects.length} programas?`)) return;
 
         setLoading(true);
         try {
-            // 1. Fetch all slides for these projects to get their file URLs
-            const { data: slidesToDelete } = await supabase
-                .from('slides')
-                .select('image_url, audio_url, elements')
-                .in('project_id', selectedProjects);
-
-            if (slidesToDelete) {
-                for (const slide of slidesToDelete) {
-                    if (slide.image_url) await deleteFileFromStorage(slide.image_url);
-                    if (slide.audio_url) await deleteFileFromStorage(slide.audio_url);
-                    if (slide.elements) {
-                        for (const el of slide.elements) {
-                            if (el.url) await deleteFileFromStorage(el.url);
-                        }
+            for (const id of selectedProjects) {
+                const { data: slides } = await supabase.from('slides').select('image_url, audio_url, elements').eq('project_id', id);
+                if (slides) {
+                    for (const slide of slides) {
+                        if (slide.image_url) await deleteFileFromStorage(slide.image_url);
+                        if (slide.audio_url) await deleteFileFromStorage(slide.audio_url);
                     }
                 }
+                await supabase.from('projects').delete().eq('id', id);
             }
-
-            // 2. Delete the projects (cascading will handle slides in DB)
-            const { error } = await supabase.from('projects').delete().in('id', selectedProjects);
-            if (error) throw error;
-
             loadProjects();
-            alert('Programas y archivos eliminados correctamente.');
+            alert('Eliminados correctamente.');
         } catch (err) {
-            alert('Error al eliminar: ' + err.message);
+            alert('Error: ' + err.message);
         }
         setLoading(false);
     };
@@ -425,19 +526,45 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'auto', padding: isMobile ? '20px' : isTablet ? '30px' : '40px' }}>
                 {/* Header Gallery */}
                 <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '20px' : '40px', gap: '15px' }}>
-                    <div>
-                        <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Galería</h1>
-                        <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.85rem' : '1rem' }}>Administra los niveles educativos y sus claves de acceso</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        {currentFolderId && (
+                            <button onClick={() => setCurrentFolderId(null)} className="btn-outline" style={{ padding: '10px' }}>
+                                <ChevronLeft size={24} />
+                            </button>
+                        )}
+                        <div>
+                            <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '4px' }}>
+                                {currentFolderId ? folders.find(f => f.id === currentFolderId)?.name : 'Galería'}
+                            </h1>
+                            <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.85rem' : '1rem' }}>
+                                {currentFolderId ? 'Proyectos dentro de esta carpeta' : 'Administra los niveles educativos y sus claves de acceso'}
+                            </p>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
                         {selectedProjects.length > 0 && (
-                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}>
+                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '12px 25px' }}>
                                 Eliminar ({selectedProjects.length})
                             </button>
                         )}
-                        <button onClick={onExit} className="btn-outline" style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <ChevronLeft size={isMobile ? 16 : 20} style={{ marginRight: '-4px' }} /> Home
+
+                        <button onClick={onExit} className="btn-outline" style={{ padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <ChevronLeft size={20} /> Home
                         </button>
+
+                        <button
+                            onClick={toggleSortMode}
+                            className="btn-outline"
+                            style={{
+                                padding: '12px 25px',
+                                background: isSortMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)',
+                                color: isSortMode ? '#10b981' : 'white',
+                                borderColor: isSortMode ? '#10b981' : 'rgba(255,255,255,0.1)'
+                            }}
+                        >
+                            {isSortMode ? 'ORDENADO' : 'ORDENAR'}
+                        </button>
+
                         <div style={{ position: 'relative' }}>
                             <button
                                 onClick={(e) => {
@@ -446,9 +573,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     setShowTypeDropdown(!showTypeDropdown);
                                 }}
                                 className="btn-premium"
-                                style={{ padding: isMobile ? '10px 15px' : '12px 25px', fontSize: isMobile ? '0.8rem' : '1rem', flex: isMobile ? '1' : 'none' }}
+                                style={{ padding: '12px 25px' }}
                             >
-                                <Plus size={isMobile ? 16 : 20} /> Agregar
+                                <Plus size={20} /> Agregar
                             </button>
 
                             {showTypeDropdown && (
@@ -456,9 +583,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     position: 'absolute',
                                     top: 'calc(100% + 10px)',
                                     right: 0,
-                                    width: '200px',
+                                    width: '220px',
                                     zIndex: 9999,
-                                    overflow: 'hidden',
                                     padding: '10px',
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -467,18 +593,26 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
                                 }}>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); setShowAddModal(true); setGalleryTab('guias'); setShowTypeDropdown(false); }}
+                                        onClick={(e) => { e.stopPropagation(); setAddType('guias'); setShowAddModal(true); setShowTypeDropdown(false); }}
                                         className="btn-outline"
-                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: galleryTab === 'guias' ? 'rgba(124, 58, 237, 0.1)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
+                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
                                     >
-                                        <LayoutGrid size={18} color="#a78bfa" /> <span>Guías</span>
+                                        <LayoutGrid size={18} color="#a78bfa" /> <span>Guía</span>
                                     </button>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); setShowAddModal(true); setGalleryTab('quiz'); setShowTypeDropdown(false); }}
+                                        onClick={(e) => { e.stopPropagation(); setAddType('quiz'); setShowAddModal(true); setShowTypeDropdown(false); }}
                                         className="btn-outline"
-                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: galleryTab === 'quiz' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
+                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
                                     >
                                         <HelpCircle size={18} color="#3b82f6" /> <span>Quiz</span>
+                                    </button>
+                                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }}></div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setAddType('folder'); setShowAddModal(true); setShowTypeDropdown(false); }}
+                                        className="btn-outline"
+                                        style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}
+                                    >
+                                        <FolderPlus size={18} color="#10b981" /> <span>Carpeta</span>
                                     </button>
                                 </div>
                             )}
@@ -488,33 +622,22 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                 {/* Custom Modal for Selection */}
                 {showAddModal && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '20px' : '0' }}>
-                        <div className="glass anim-up" style={{ width: isMobile ? '100%' : '400px', maxWidth: '400px', padding: isMobile ? '20px' : '30px', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: isMobile ? '90vh' : 'auto', overflowY: 'auto' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h2 style={{ fontSize: isMobile ? '1rem' : '1.2rem', color: 'white' }}>Nueva Presentación</h2>
-                                <button onClick={() => { setShowAddModal(false); setNewProjectName(''); }} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}><X size={20} /></button>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase' }}>Nombre de la Presentación</label>
-                                    <input
-                                        className="premium-input"
-                                        type="text"
-                                        placeholder="Ej: Lección de Colores"
-                                        value={newProjectName}
-                                        onChange={(e) => setNewProjectName(e.target.value)}
-                                        style={{ padding: '12px' }}
-                                        autoFocus
-                                    />
-                                </div>
-                                <button
-                                    onClick={handleCreateProject}
-                                    className="btn-premium"
-                                    disabled={!newProjectName.trim()}
-                                    style={{ marginTop: '10px' }}
-                                >
-                                    Crear Presentación
-                                </button>
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div className="glass anim-up" style={{ width: '400px', padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <h2 style={{ fontSize: '1.2rem', color: 'white' }}>
+                                {addType === 'folder' ? 'Nueva Carpeta' : 'Nueva Presentación'}
+                            </h2>
+                            <input
+                                className="premium-input"
+                                type="text"
+                                placeholder={addType === 'folder' ? "Nombre de la carpeta" : "Nombre de la lección"}
+                                value={newProjectName}
+                                onChange={(e) => setNewProjectName(e.target.value)}
+                                autoFocus
+                            />
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button onClick={() => { setShowAddModal(false); setNewProjectName(''); }} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
+                                <button onClick={handleCreateProject} className="btn-premium" style={{ flex: 1 }}>Crear</button>
                             </div>
                         </div>
                     </div>
@@ -534,120 +657,77 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         </div>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: isMobile ? '15px' : '25px' }}>
-                            {projects.map(p => {
+                            {/* Render Folders (only if at root) */}
+                            {!currentFolderId && folders.map(f => {
+                                const projectsInFolder = projects.filter(p => p.folder_id === f.id);
+                                const isActiva = projectsInFolder.length > 0;
+                                return (
+                                    <div key={f.id} className="glass" style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative' }}>
+                                        {isSortMode && (
+                                            <div style={{ position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '5px', zIndex: 100 }}>
+                                                <button onClick={() => handleMoveItem('folder', f, 'up')} className="btn-outline" style={{ padding: '5px' }}><ArrowUp size={16} /></button>
+                                                <button onClick={() => handleMoveItem('folder', f, 'down')} className="btn-outline" style={{ padding: '5px' }}><ArrowDown size={16} /></button>
+                                            </div>
+                                        )}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                            <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', color: '#10b981' }}>
+                                                <Folder size={28} />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                                <div style={{ fontSize: '0.65rem', fontWeight: 900, padding: '4px 12px', borderRadius: '100px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', textTransform: 'uppercase' }}>Carpeta</div>
+                                                <div style={{ fontSize: '0.6rem', fontWeight: 900, padding: '2px 8px', borderRadius: '4px', background: isActiva ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: isActiva ? '#10b981' : '#ef4444' }}>
+                                                    {isActiva ? 'ACTIVA' : 'VACIA'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '4px' }}>{f.name}</h3>
+                                            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{projectsInFolder.length} proyectos</span>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', height: '48px' }}>
+                                            <button onClick={() => setCurrentFolderId(f.id)} className="btn-premium" style={{ flex: 1.5, height: '100%', background: 'linear-gradient(135deg, #10b981, #059669)' }}>Entrar</button>
+                                            <button onClick={() => handleEditFolder(f)} className="btn-outline" style={{ width: '48px', height: '100%' }} title="Editar Nombre"><Edit2 size={18} /></button>
+                                            <button onClick={() => handleDuplicateFolder(f)} className="btn-outline" style={{ width: '48px', height: '100%' }} title="Duplicar"><Copy size={18} /></button>
+                                            <button onClick={() => handleDeleteFolder(f.id)} className="btn-outline" style={{ width: '48px', height: '100%', color: '#ef4444' }} title="Eliminar"><Trash2 size={18} /></button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Render Projects */}
+                            {projects.filter(p => p.folder_id === currentFolderId).map(p => {
                                 const isQuiz = p.id.startsWith('quiz-');
                                 return (
-                                    <div
-                                        key={p.id}
-                                        className="glass"
-                                        style={{
-                                            padding: '25px',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '20px',
-                                            transition: '0.3s',
-                                            border: `1px solid ${selectedProjects.includes(p.id) ? '#ef4444' : 'rgba(255,255,255,0.05)'}`,
-                                            position: 'relative'
-                                        }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedProjects.includes(p.id)}
-                                            onChange={() => toggleProjectSelection(p.id)}
-                                            style={{ position: 'absolute', top: '15px', right: '15px', width: '20px', height: '20px', accentColor: '#ef4444', cursor: 'pointer', zIndex: 10 }}
-                                        />
-
+                                    <div key={p.id} className="glass" style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative' }}>
+                                        {isSortMode && (
+                                            <div style={{ position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '5px', zIndex: 100 }}>
+                                                <button onClick={() => handleMoveItem('project', p, 'up')} className="btn-outline" style={{ padding: '5px' }}><ArrowUp size={16} /></button>
+                                                <button onClick={() => handleMoveItem('project', p, 'down')} className="btn-outline" style={{ padding: '5px' }}><ArrowDown size={16} /></button>
+                                            </div>
+                                        )}
+                                        {!isSortMode && (
+                                            <input type="checkbox" checked={selectedProjects.includes(p.id)} onChange={() => toggleProjectSelection(p.id)} style={{ position: 'absolute', top: '15px', right: '15px', width: '20px', height: '20px', accentColor: '#ef4444', cursor: 'pointer', zIndex: 10 }} />
+                                        )}
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                                             <div style={{ padding: '12px', background: p.is_active ? (isQuiz ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)') : 'rgba(255,255,255,0.03)', borderRadius: '12px', color: p.is_active ? (isQuiz ? '#3b82f6' : '#10b981') : '#64748b' }}>
                                                 {isQuiz ? <HelpCircle size={28} /> : <ShieldCheck size={28} />}
                                             </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', marginRight: '30px' }}>
-                                                <div style={{
-                                                    fontSize: '0.65rem',
-                                                    fontWeight: 900,
-                                                    padding: '4px 12px',
-                                                    borderRadius: '100px',
-                                                    background: isQuiz ? 'rgba(59, 130, 246, 0.15)' : 'rgba(124, 58, 237, 0.15)',
-                                                    color: isQuiz ? '#3b82f6' : '#a78bfa',
-                                                    textTransform: 'uppercase',
-                                                    letterSpacing: '1px',
-                                                    border: `1px solid ${isQuiz ? 'rgba(59, 130, 246, 0.3)' : 'rgba(124, 58, 237, 0.3)'}`
-                                                }}>
-                                                    {isQuiz ? 'QUIZ' : 'GUIA'}
-                                                </div>
-                                                <div style={{
-                                                    fontSize: '0.6rem',
-                                                    fontWeight: 900,
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    background: p.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                                                    color: p.is_active ? '#10b981' : '#64748b',
-                                                    textTransform: 'uppercase'
-                                                }}>
-                                                    {p.is_active ? 'Activo' : 'Pausado'}
-                                                </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                                <div style={{ fontSize: '0.65rem', fontWeight: 900, padding: '4px 12px', borderRadius: '100px', background: isQuiz ? 'rgba(59, 130, 246, 0.15)' : 'rgba(124, 58, 237, 0.15)', color: isQuiz ? '#3b82f6' : '#a78bfa', textTransform: 'uppercase' }}>{isQuiz ? 'QUIZ' : 'GUIA'}</div>
+                                                <div style={{ fontSize: '0.6rem', fontWeight: 900, padding: '2px 8px', borderRadius: '4px', background: p.is_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)', color: p.is_active ? '#10b981' : '#64748b' }}>{p.is_active ? 'Activo' : 'Pausado'}</div>
                                             </div>
                                         </div>
-
                                         <div>
                                             <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '4px' }}>{p.name}</h3>
                                         </div>
-
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: '#94a3b8', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px' }}>
                                             <Key size={16} />
                                             <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
                                         </div>
-
                                         <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', height: '48px' }}>
-                                            <button
-                                                onClick={() => isQuiz ? onOpenQuiz(p) : handleSelectProject(p)}
-                                                className="btn-premium"
-                                                style={{
-                                                    flex: 1,
-                                                    height: '100%',
-                                                    padding: 0,
-                                                    fontSize: '0.9rem',
-                                                    background: isQuiz ? 'linear-gradient(135deg, #2563eb, #3b82f6)' : 'linear-gradient(135deg, #7c3aed, #3b82f6)'
-                                                }}
-                                            >
-                                                Editar
-                                            </button>
-                                            <button
-                                                onClick={() => onPreview(p, true)}
-                                                className="btn-outline"
-                                                style={{
-                                                    flex: 1,
-                                                    height: '100%',
-                                                    padding: 0,
-                                                    background: 'rgba(59, 130, 246, 0.1)',
-                                                    color: '#3b82f6',
-                                                    border: '1px solid rgba(59, 130, 246, 0.2)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '5px',
-                                                    fontSize: '0.9rem'
-                                                }}
-                                            >
-                                                <Eye size={16} /> Preview
-                                            </button>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
-                                                className="btn-outline"
-                                                style={{
-                                                    width: '48px',
-                                                    height: '100%',
-                                                    padding: 0,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    background: 'rgba(255, 255, 255, 0.05)',
-                                                    flexShrink: 0
-                                                }}
-                                                title="Duplicar"
-                                            >
-                                                <Copy size={18} />
-                                            </button>
+                                            <button onClick={() => isQuiz ? onOpenQuiz(p) : handleSelectProject(p)} className="btn-premium" style={{ flex: 1, height: '100%', fontSize: '0.9rem', background: isQuiz ? 'linear-gradient(135deg, #2563eb, #3b82f6)' : 'linear-gradient(135deg, #7c3aed, #3b82f6)' }}>Editar</button>
+                                            <button onClick={() => onPreview(p, true)} className="btn-outline" style={{ flex: 1, height: '100%', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}><Eye size={16} /> Preview</button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }} className="btn-outline" style={{ width: '48px', height: '100%' }} title="Duplicar"><Copy size={18} /></button>
                                         </div>
                                     </div>
                                 );

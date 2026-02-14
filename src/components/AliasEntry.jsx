@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Settings, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key } from 'lucide-react';
+import { User, Settings, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Folder, ChevronLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
@@ -7,6 +7,8 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
     const [alias, setAlias] = useState('');
     const [pass, setPass] = useState('');
     const [projects, setProjects] = useState([]);
+    const [folders, setFolders] = useState([]);
+    const [currentFolderId, setCurrentFolderId] = useState(null);
     const [selectedProject, setSelectedProject] = useState(null);
     const [projectPass, setProjectPass] = useState('');
     const [loading, setLoading] = useState(false);
@@ -16,8 +18,10 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
     }, []);
 
     const loadProjects = async () => {
-        const { data } = await supabase.from('projects').select('*').order('name');
-        setProjects(data || []);
+        const { data: folderData } = await supabase.from('folders').select('*').order('order_index');
+        setFolders(folderData || []);
+        const { data: projectData } = await supabase.from('projects').select('*').order('order_index');
+        setProjects(projectData || []);
     };
 
     const handleAdminSubmit = (e) => {
@@ -122,18 +126,55 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
     );
 
     const renderProjectSelection = () => {
-        const activeProjects = projects.filter(p => p.is_active || !alias); // Teachers see all, students only active
+        const activeProjects = projects.filter(p => (p.is_active || !alias) && p.folder_id === currentFolderId);
+        const currentFolders = !currentFolderId ? folders : []; // No nested folders allowed based on requirements
 
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button onClick={() => setView(alias ? 'student_alias' : 'role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Selecciona Programa</h2>
+                    <button
+                        onClick={() => {
+                            if (currentFolderId) setCurrentFolderId(null);
+                            else setView(alias ? 'student_alias' : 'role_selection');
+                        }}
+                        style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>
+                        {currentFolderId ? folders.find(f => f.id === currentFolderId)?.name : 'Selecciona Programa'}
+                    </h2>
                 </div>
 
                 <div className="project-list-container" style={{ display: 'grid', gap: '10px', maxHeight: '400px', overflowY: 'auto', paddingRight: '5px' }}>
-                    {activeProjects.length === 0 ? (
-                        <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No hay programas activos en este momento.</p>
+                    {currentFolders.map(folder => (
+                        <button
+                            key={folder.id}
+                            onClick={() => setCurrentFolderId(folder.id)}
+                            className="glass"
+                            style={{
+                                padding: '16px',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                transition: '0.2s',
+                                background: 'rgba(16, 185, 129, 0.05)'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <Folder size={20} color="#10b981" />
+                                <span style={{ fontWeight: 700, color: 'white' }}>{folder.name}</span>
+                            </div>
+                            <ArrowRight size={18} color="#10b981" />
+                        </button>
+                    ))}
+
+                    {activeProjects.length === 0 && currentFolders.length === 0 ? (
+                        <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No hay programas disponibles aquí.</p>
                     ) : (
                         activeProjects.map(project => (
                             <button

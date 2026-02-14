@@ -9,6 +9,14 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- TABLES
 -- ============================================
 
+-- Folders table
+CREATE TABLE IF NOT EXISTS folders (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  order_index INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Projects table
 CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
@@ -16,6 +24,8 @@ CREATE TABLE IF NOT EXISTS projects (
   is_active BOOLEAN DEFAULT FALSE,
   access_code TEXT DEFAULT '123',
   questions JSONB DEFAULT '[]',
+  folder_id UUID REFERENCES folders(id) ON DELETE SET NULL,
+  order_index INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -51,6 +61,7 @@ CREATE TABLE IF NOT EXISTS interactions (
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE slides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE interactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE folders ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if any
 DROP POLICY IF EXISTS "Public read access" ON projects;
@@ -59,6 +70,8 @@ DROP POLICY IF EXISTS "Public read access" ON slides;
 DROP POLICY IF EXISTS "Public write access" ON slides;
 DROP POLICY IF EXISTS "Public read access" ON interactions;
 DROP POLICY IF EXISTS "Public write access" ON interactions;
+DROP POLICY IF EXISTS "Public read access" ON folders;
+DROP POLICY IF EXISTS "Public write access" ON folders;
 
 -- Create permissive policies for demo/education use
 CREATE POLICY "Public read access" ON projects FOR SELECT USING (true);
@@ -69,6 +82,9 @@ CREATE POLICY "Public write access" ON slides FOR ALL USING (true) WITH CHECK (t
 
 CREATE POLICY "Public read access" ON interactions FOR SELECT USING (true);
 CREATE POLICY "Public write access" ON interactions FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Public read access" ON folders FOR SELECT USING (true);
+CREATE POLICY "Public write access" ON folders FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================
 -- INITIAL DATA
