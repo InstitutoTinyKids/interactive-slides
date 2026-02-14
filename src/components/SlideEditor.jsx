@@ -183,29 +183,13 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
             if (fError) throw fError;
 
-            // Clone all projects inside
+            // Clone all projects inside using the new duplication logic
             const projectsToClone = projects.filter(p => p.folder_id === folder.id);
             for (const p of projectsToClone) {
-                const newId = p.id.startsWith('quiz-') ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID();
-                const { data: clonedProj } = await supabase.from('projects').insert({
-                    ...p,
-                    id: newId,
-                    folder_id: newFolder.id
-                }).select().single();
-
-                // Clone slides
-                const { data: slidesToClone } = await supabase.from('slides').select('*').eq('project_id', p.id);
-                if (slidesToClone && slidesToClone.length > 0) {
-                    const clonedSlides = slidesToClone.map(s => ({
-                        ...s,
-                        id: crypto.randomUUID(),
-                        project_id: newId
-                    }));
-                    await supabase.from('slides').insert(clonedSlides);
-                }
+                await handleDuplicateProject(p, newFolder.id);
             }
             loadProjects();
-            alert('✅ Carpeta duplicada correctamente');
+            alert('✅ Carpeta completa duplicada');
         } catch (err) {
             alert('Error al duplicar carpeta: ' + err.message);
         }
@@ -264,38 +248,96 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         setIsSortMode(!isSortMode);
     };
 
-    const handleDuplicateProject = async (project) => {
+    const handleDuplicateProject = async (project, targetFolderId = null) => {
         setLoading(true);
         try {
             const newId = project.id.startsWith('quiz-') ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID();
             const newName = `${project.name} (Copia)`;
 
-            const { data: newProject, error: pError } = await supabase
-                .from('projects')
-                .insert({
-                    ...project,
-                    id: newId,
-                    name: newName,
-                    is_active: false,
-                    order_index: projects.filter(p => p.folder_id === project.folder_id).length
-                })
-                .select()
-                .single();
+            const { data: slidesToClone } = await supabase.from('slides').select('*').eq('project_id', project.id);
 
+            const clonedSlides = [];
+            if (slidesToClone) {
+                for (const s of slidesToClone) {
+                    const newSlideId = crypto.randomUUID();
+                    let newBgUrl = s.image_url;
+                    let newAudioUrl = s.audio_url;
+
+                    // Physical copy of background image
+                    if (s.image_url) {
+                        const oldPath = s.image_url.split('/media/')[1];
+                        if (oldPath) {
+                            const newPath = `copy_${Date.now()}_${oldPath}`;
+                            const { error: copyErr } = await supabase.storage.from('media').copy(oldPath, newPath);
+                            if (!copyErr) {
+                                const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(newPath);
+                                newBgUrl = publicUrl;
+                            }
+                        }
+                    }
+
+                    // Physical copy of audio
+                    if (s.audio_url) {
+                        const oldPath = s.audio_url.split('/media/')[1];
+                        if (oldPath) {
+                            const newPath = `copy_${Date.now()}_${oldPath}`;
+                            const { error: copyErr } = await supabase.storage.from('media').copy(oldPath, newPath);
+                            if (!copyErr) {
+                                const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(newPath);
+                                newAudioUrl = publicUrl;
+                            }
+                        }
+                    }
+
+                    // Elements icons
+                    const newElements = [];
+                    if (s.elements) {
+                        for (const el of s.elements) {
+                            let newElUrl = el.url;
+                            if (el.url) {
+                                const oldPath = el.url.split('/media/')[1];
+                                if (oldPath) {
+                                    const newPath = `copy_${Date.now()}_${oldPath}`;
+                                    const { error: copyErr } = await supabase.storage.from('media').copy(oldPath, newPath);
+                                    if (!copyErr) {
+                                        const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(newPath);
+                                        newElUrl = publicUrl;
+                                    }
+                                }
+                            }
+                            newElements.push({ ...el, url: newElUrl });
+                        }
+                    }
+
+                    clonedSlides.push({
+                        id: newSlideId,
+                        project_id: newId,
+                        image_url: newBgUrl,
+                        audio_url: newAudioUrl,
+                        elements: newElements,
+                        order_index: s.order_index
+                    });
+                }
+            }
+
+            // Create project
+            const { error: pError } = await supabase.from('projects').insert({
+                ...project,
+                id: newId,
+                name: newName,
+                is_active: false,
+                folder_id: targetFolderId || project.folder_id,
+                order_index: projects.filter(p => p.folder_id === (targetFolderId || project.folder_id)).length
+            });
             if (pError) throw pError;
 
-            const { data: slidesToClone } = await supabase.from('slides').select('*').eq('project_id', project.id);
-            if (slidesToClone && slidesToClone.length > 0) {
-                const clonedSlides = slidesToClone.map(s => ({
-                    ...s,
-                    id: crypto.randomUUID(),
-                    project_id: newId
-                }));
+            // Insert cloned slides
+            if (clonedSlides.length > 0) {
                 await supabase.from('slides').insert(clonedSlides);
             }
 
             loadProjects();
-            alert('✅ Proyecto duplicado correctamente');
+            alert('✅ Proyecto y archivos duplicados correctamente');
         } catch (err) {
             alert('Error al duplicar: ' + err.message);
         }
@@ -309,17 +351,24 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         setLoading(true);
         try {
             for (const id of selectedProjects) {
+                // Fetch all slides with elements to clean up storage
                 const { data: slides } = await supabase.from('slides').select('image_url, audio_url, elements').eq('project_id', id);
                 if (slides) {
                     for (const slide of slides) {
                         if (slide.image_url) await deleteFileFromStorage(slide.image_url);
                         if (slide.audio_url) await deleteFileFromStorage(slide.audio_url);
+                        if (slide.elements) {
+                            for (const el of slide.elements) {
+                                if (el.url) await deleteFileFromStorage(el.url);
+                            }
+                        }
                     }
                 }
+                // Cascading delete in DB will handle slides records, but we delete project here
                 await supabase.from('projects').delete().eq('id', id);
             }
             loadProjects();
-            alert('Eliminados correctamente.');
+            alert('Eliminados correctamente de la base de datos y almacén de archivos.');
         } catch (err) {
             alert('Error: ' + err.message);
         }
