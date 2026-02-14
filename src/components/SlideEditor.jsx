@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Settings as SettingsIcon, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Plus, LayoutGrid, Eye, HelpCircle, Save, Layers, Image as ImageIcon, Trash2, Edit2, Copy, Move, Target, Pause, ShieldCheck, Folder, FolderPlus, ArrowUp, ArrowDown, ChevronLeft, GripVertical } from 'lucide-react';
+import { User, Settings as SettingsIcon, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Plus, LayoutGrid, Eye, HelpCircle, Save, Layers, Image as ImageIcon, Trash2, Edit2, Copy, Move, Target, Pause, ShieldCheck, Folder, FolderPlus, ArrowUp, ArrowDown, ChevronLeft, GripVertical, Music } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
@@ -581,6 +581,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             url: '',
             imageSize: type === 'drag' ? 100 : undefined
         };
+        if (!localSlides[selectedIdx]) return;
         newSlides[selectedIdx].elements.push(newEl);
         setLocalSlides(newSlides);
     };
@@ -595,6 +596,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
         if (draggingElementId) {
             const newSlides = [...localSlides];
+            if (!newSlides[selectedIdx]) return;
             const element = newSlides[selectedIdx].elements.find(el => el.id === draggingElementId);
             if (element) {
                 element.x = Math.max(0, Math.min(100, x));
@@ -603,6 +605,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             }
         } else if (resizingElementId) {
             const newSlides = [...localSlides];
+            if (!newSlides[selectedIdx]) return;
             const element = newSlides[selectedIdx].elements.find(el => el.id === resizingElementId);
             if (element) {
                 const elementX = (element.x / 100) * rect.width;
@@ -1290,8 +1293,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         borderRadius: '12px',
                                         background: (el.url || el.type === 'stamp') ? 'transparent' : 'rgba(0,0,0,0.5)',
                                         backdropFilter: (el.url || el.type === 'stamp') ? 'none' : 'blur(10px)',
-                                        width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 45} px` : (el.width ? `${(el.width / 900) * 100}% ` : 'auto'),
-                                        height: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 45} px` : (el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}% ` : 'auto'),
+                                        width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 45}px` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
+                                        height: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 45}px` : (el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto'),
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
@@ -1419,8 +1422,10 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                     value={currentProject?.name || ''}
                                                     readOnly={!isEditingProjectName}
                                                     onChange={(e) => {
-                                                        setCurrentProject({ ...currentProject, name: e.target.value });
-                                                        setHasUnsavedNameChanges(true);
+                                                        if (currentProject) {
+                                                            setCurrentProject({ ...currentProject, name: e.target.value });
+                                                            setHasUnsavedNameChanges(true);
+                                                        }
                                                     }}
                                                     style={{
                                                         padding: '12px',
@@ -1478,8 +1483,10 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                     value={currentProject?.access_code || ''}
                                                     readOnly={!isEditingAccessCode}
                                                     onChange={(e) => {
-                                                        setCurrentProject({ ...currentProject, access_code: e.target.value });
-                                                        setHasUnsavedCodeChanges(true);
+                                                        if (currentProject) {
+                                                            setCurrentProject({ ...currentProject, access_code: e.target.value });
+                                                            setHasUnsavedCodeChanges(true);
+                                                        }
                                                     }}
                                                     style={{
                                                         padding: '12px',
@@ -1606,6 +1613,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                             step="5"
                                                             value={localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.imageSize || 100}
                                                             onChange={(e) => {
+                                                                if (!localSlides[selectedIdx]) return;
                                                                 const copy = [...localSlides];
                                                                 const element = copy[selectedIdx].elements.find(item => item.id === selectedElementId);
                                                                 if (element) {
@@ -1628,6 +1636,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             </>
                                         )}
                                         <button onClick={async () => {
+                                            if (!localSlides[selectedIdx]) return;
                                             const elementToDelete = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
                                             if (elementToDelete?.url) await deleteFileFromStorage(elementToDelete.url);
                                             const copy = [...localSlides];
