@@ -994,10 +994,10 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 <button
                                                     onClick={() => !isSortMode && onPreview(p, true)}
                                                     className="btn-outline"
-                                                    style={{ flex: 1, height: '100%', background: 'rgba(59, 130, 246, 0.08)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', fontSize: '1.3rem', fontWeight: 700, borderRadius: '20px' }}
+                                                    style={{ flex: 1, height: '100%', background: 'rgba(59, 130, 246, 0.08)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 700, borderRadius: '20px' }}
                                                     disabled={isSortMode}
                                                 >
-                                                    <Eye size={24} /> Preview
+                                                    Preview
                                                 </button>
                                             </div>
 
