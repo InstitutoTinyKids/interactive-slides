@@ -272,72 +272,107 @@ h3 {
   flex-shrink: 0;
 }
 
-/* Landscape Adaptation */
-@media (max-height: 520px) and (orientation: landscape) {
-  .entry-card {
-    max-width: 850px;
-    padding: 20px 40px;
-    width: auto;
-    min-width: 450px;
+/* Global Landscape/Horizontal Adaptation - Infalible for Tablets & Mobile */
+@media screen and (min-aspect-ratio: 1/1) {
+
+  .entry-card,
+  .responsive-card {
+    max-width: 1200px !important;
+    width: 92vw !important;
+    min-width: 650px !important;
+    padding: 40px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    height: auto !important;
+    min-height: 85vh !important;
   }
 
-  .role-selection-grid {
-    flex-direction: row;
-    align-items: center;
-    gap: 40px;
+  /* Force the side-by-side layout */
+  .role-selection-grid,
+  .responsive-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: clamp(40px, 8vw, 120px) !important;
+    width: 100% !important;
+    flex: 1 !important;
   }
 
-  .role-header {
-    flex: 1;
-    text-align: left;
-    margin-bottom: 0;
+  .role-header,
+  .responsive-header {
+    flex: 1 !important;
+    text-align: left !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    margin: 0 !important;
   }
 
   .logo-container {
-    margin: 0 0 10px 0;
-    width: 60px;
-    height: 60px;
+    width: clamp(80px, 10vw, 150px) !important;
+    height: clamp(80px, 10vw, 150px) !important;
+    margin: 0 0 20px 0 !important;
   }
 
   .role-title {
-    font-size: 1.6rem;
+    font-size: clamp(2rem, 4vw, 4rem) !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
   }
 
   .role-subtitle {
-    font-size: 0.8rem;
+    font-size: clamp(0.9rem, 1.5vw, 1.5rem) !important;
+    color: var(--text-muted) !important;
+    max-width: 380px !important;
   }
 
-  .role-buttons {
-    flex: 1.3;
-    gap: 8px;
-    grid-template-columns: 1fr;
-    max-height: 250px;
-    overflow-y: auto;
-    padding-right: 5px;
+  .role-buttons,
+  .responsive-content {
+    flex: 1.5 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: clamp(10px, 2vh, 25px) !important;
+    width: 100% !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    padding: 10px 20px 10px 0 !important;
   }
 
   .role-btn {
-    padding: 10px 16px;
-    border-radius: 12px;
+    padding: clamp(15px, 2.5vh, 30px) clamp(20px, 3vw, 40px) !important;
+    border-radius: 20px !important;
   }
 
   .role-btn-icon {
-    width: 36px;
-    height: 36px;
-  }
-
-  .role-btn-icon svg {
-    width: 20px;
-    height: 20px;
+    width: clamp(45px, 6vh, 80px) !important;
+    height: clamp(45px, 6vh, 80px) !important;
+    font-size: 1.5rem !important;
   }
 
   .role-btn h3 {
-    font-size: 0.95rem;
+    font-size: clamp(1rem, 1.8vw, 1.6rem) !important;
   }
 
-  /* Adjust other views for landscape */
+  /* Specific fix for inputs in landscape */
+  .responsive-content form {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
   .project-list-container {
-    max-height: 180px !important;
+    max-height: clamp(250px, 50vh, 500px) !important;
+  }
+
+  /* Quiz Specifically */
+  .quiz-container-landscape {
+    flex-direction: row !important;
+    padding: 40px !important;
+    gap: 60px !important;
   }
 }
 

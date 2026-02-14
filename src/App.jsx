@@ -174,7 +174,7 @@ export default function App() {
                     setView('editor');
                     setSelectedProject(null);
                 } else {
-                    window.location.href = 'https://guias.institutotinykids.com/';
+                    window.location.href = 'https://central.institutotinykids.com/';
                 }
                 setReturnFromResults(false);
             }}
@@ -275,7 +275,7 @@ export default function App() {
                         // If already in gallery, go to Tiny Kids Home
                         // SlideEditor manages its own internal 'showGallery' state.
                         // We pass a function that SlideEditor can call.
-                        window.location.href = 'https://guias.institutotinykids.com/';
+                        window.location.href = 'https://central.institutotinykids.com/';
                     } else {
                         setView('entry');
                     }
@@ -343,19 +343,26 @@ export default function App() {
     if (view === 'viewer') {
         if (slides.length === 0) {
             return (
-                <div className="min-h-screen bg-gradient-to-br from-[#050510] via-[#0a0a1a] to-[#050510] flex items-center justify-center text-white p-8">
-                    <div className="text-center glass-panel p-16 max-w-2xl">
-                        <div className="text-8xl mb-6">📋</div>
-                        <h2 className="text-4xl font-black mb-4">Sin Contenido</h2>
-                        <p className="text-slate-400 text-lg mb-8">
-                            El administrador aún no ha creado diapositivas para esta presentación.
-                        </p>
-                        <button
-                            onClick={() => window.location.href = 'https://guias.institutotinykids.com/'}
-                            className="btn-primary px-10 py-4 text-lg"
-                        >
-                            Volver al Inicio
-                        </button>
+                <div className="min-h-screen bg-[#050510] flex items-center justify-center p-8">
+                    <div className="entry-card shadow-2xl glass anim-up" style={{ padding: isMobile ? '20px' : '40px' }}>
+                        <div className="responsive-grid">
+                            <div className="responsive-header" style={{ textAlign: 'center', alignItems: 'center' }}>
+                                <div style={{ fontSize: '5rem', marginBottom: '10px' }}>📋</div>
+                                <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '10px' }}>Sin Contenido</h1>
+                            </div>
+                            <div className="responsive-content" style={{ textAlign: 'center', alignItems: 'center', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <p style={{ color: '#94a3b8', fontSize: '1rem' }}>
+                                    El administrador aún no ha creado diapositivas para esta presentación.
+                                </p>
+                                <button
+                                    onClick={() => window.location.href = 'https://central.institutotinykids.com/'}
+                                    className="btn-premium"
+                                    style={{ width: '100%', padding: '14px' }}
+                                >
+                                    Volver al Inicio
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             );
@@ -396,17 +403,9 @@ export default function App() {
                 <div style={{ position: 'absolute', top: '10%', left: '10%', width: '400px', height: '400px', background: '#4f46e5', filter: 'blur(150px)', opacity: 0.2, pointerEvents: 'none' }}></div>
                 <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: '400px', height: '400px', background: '#10b981', filter: 'blur(150px)', opacity: 0.2, pointerEvents: 'none' }}></div>
 
-                <div className="glass anim-up" style={{
-                    width: '90%',
-                    maxWidth: '450px',
+                <div className="entry-card glass anim-up" style={{
                     maxHeight: '90vh',
                     padding: isMobile ? '25px 20px' : '50px 30px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: isMobile ? '12px' : '25px',
-                    textAlign: 'center',
-                    overflowY: 'auto',
                     position: 'relative',
                     zIndex: 110,
                     background: 'rgba(255, 255, 255, 0.05)',
@@ -414,47 +413,52 @@ export default function App() {
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '24px'
                 }}>
-                    <div style={{ fontSize: isMobile ? '3.5rem' : '5rem' }}>🎉</div>
-                    <div>
-                        <h1 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', marginBottom: '12px', lineHeight: 1.1 }}>
-                            {role === 'teacher' ? 'Lección Finalizada' : '¡Misión Cumplida!'}
-                        </h1>
-                        <p style={{ fontSize: isMobile ? '0.9rem' : '1rem', color: '#a78bfa', fontWeight: 800, marginBottom: '6px' }}>
-                            {role === 'teacher' ? 'Buen trabajo moderando la clase' : `Excelente trabajo, ${alias}`}
-                        </p>
-                        <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
-                            {role === 'teacher'
-                                ? 'Puedes reiniciar esta presentación o volver al inicio para seleccionar otro programa.'
-                                : 'Tus respuestas han sido registradas exitosamente en el sistema.'}
-                        </p>
-                    </div>
-
-                    {role === 'teacher' ? (
-                        <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
-                            <button
-                                onClick={() => { setCurrentSlideIdx(0); setView('viewer'); }}
-                                className="btn-outline"
-                                style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}
-                            >
-                                Reiniciar
-                            </button>
-                            <button
-                                onClick={() => window.location.href = 'https://guias.institutotinykids.com/'}
-                                className="btn-premium"
-                                style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}
-                            >
-                                Home
-                            </button>
+                    <div className="responsive-grid">
+                        <div className="responsive-header" style={{ alignItems: 'center', textAlign: 'center' }}>
+                            <div style={{ fontSize: isMobile ? '3.5rem' : '5rem' }}>🎉</div>
+                            <h1 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', marginBottom: '12px', lineHeight: 1.1 }}>
+                                {role === 'teacher' ? 'Lección Finalizada' : '¡Misión Cumplida!'}
+                            </h1>
+                            <p style={{ fontSize: isMobile ? '0.9rem' : '1rem', color: '#a78bfa', fontWeight: 800 }}>
+                                {role === 'teacher' ? 'Buen trabajo moderando la clase' : `Excelente trabajo, ${alias}`}
+                            </p>
                         </div>
-                    ) : (
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="btn-premium"
-                            style={{ padding: isMobile ? '12px 30px' : '14px 40px', fontSize: isMobile ? '0.9rem' : '1rem', marginTop: '10px' }}
-                        >
-                            Finalizar Sesión
-                        </button>
-                    )}
+
+                        <div className="responsive-content" style={{ alignItems: 'center', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
+                                {role === 'teacher'
+                                    ? 'Puedes reiniciar esta presentación o volver al inicio para seleccionar otro programa.'
+                                    : 'Tus respuestas han sido registradas exitosamente en el sistema.'}
+                            </p>
+
+                            {role === 'teacher' ? (
+                                <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
+                                    <button
+                                        onClick={() => { setCurrentSlideIdx(0); setView('viewer'); }}
+                                        className="btn-outline"
+                                        style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}
+                                    >
+                                        Reiniciar
+                                    </button>
+                                    <button
+                                        onClick={() => window.location.href = 'https://central.institutotinykids.com/'}
+                                        className="btn-premium"
+                                        style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}
+                                    >
+                                        Home
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="btn-premium"
+                                    style={{ padding: isMobile ? '12px 30px' : '14px 40px', fontSize: isMobile ? '0.9rem' : '1rem', width: '100%' }}
+                                >
+                                    Finalizar Sesión
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         );

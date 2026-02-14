@@ -189,101 +189,149 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                 {view === 'role_selection' && renderRoleSelection()}
 
                 {view === 'admin_login' && (
-                    <form onSubmit={handleAdminSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Administrador</h2>
+                    <div className="responsive-grid">
+                        <div className="responsive-header">
+                            <div className="logo-container">
+                                <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
+                                <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Administrador</h2>
+                            </div>
+                            <p className="role-subtitle">Acceso restringido para el control total del sistema</p>
                         </div>
-                        <input
-                            className="premium-input"
-                            type="password"
-                            placeholder="Contraseña Administrador"
-                            value={pass}
-                            onChange={(e) => setPass(e.target.value)}
-                            autoFocus
-                            required
-                            style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
-                        />
-                        <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
-                            Acceder al Panel
-                            <Lock size={20} />
-                        </button>
-                    </form>
-                )}
-
-                {view === 'teacher_login' && (
-                    <form onSubmit={handleTeacherSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Teacher Mode</h2>
-                        </div>
-                        <input
-                            className="premium-input"
-                            type="password"
-                            placeholder="Contraseña Teacher"
-                            value={pass}
-                            onChange={(e) => setPass(e.target.value)}
-                            autoFocus
-                            required
-                            style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
-                        />
-                        <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
-                            Acceder como Teacher
-                            <GraduationCap size={20} />
-                        </button>
-                    </form>
-                )}
-
-                {view === 'student_alias' && (
-                    <form onSubmit={handleStudentStart} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                            <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Bienvenido Student</h2>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>TU NOMBRE / ALIAS</label>
+                        <form onSubmit={handleAdminSubmit} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
                             <input
                                 className="premium-input"
-                                type="text"
-                                placeholder="Ej. Juan Pérez"
-                                value={alias}
-                                onChange={(e) => setAlias(e.target.value)}
+                                type="password"
+                                placeholder="Contraseña Administrador"
+                                value={pass}
+                                onChange={(e) => setPass(e.target.value)}
                                 autoFocus
                                 required
                                 style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
                             />
-                        </div>
-                        <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
-                            Ver Programas
-                            <ArrowRight size={20} />
-                        </button>
-                    </form>
+                            <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
+                                Acceder al Panel
+                                <Lock size={20} />
+                            </button>
+                        </form>
+                    </div>
                 )}
 
-                {view === 'project_selection' && renderProjectSelection()}
+                {view === 'teacher_login' && (
+                    <div className="responsive-grid">
+                        <div className="responsive-header">
+                            <div className="logo-container">
+                                <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
+                                <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Teacher Mode</h2>
+                            </div>
+                            <p className="role-subtitle">Inicia sesión para moderar las lecciones</p>
+                        </div>
+                        <form onSubmit={handleTeacherSubmit} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
+                            <input
+                                className="premium-input"
+                                type="password"
+                                placeholder="Contraseña Teacher"
+                                value={pass}
+                                onChange={(e) => setPass(e.target.value)}
+                                autoFocus
+                                required
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
+                            />
+                            <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
+                                Acceder como Teacher
+                                <GraduationCap size={20} />
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {view === 'student_alias' && (
+                    <div className="responsive-grid">
+                        <div className="responsive-header">
+                            <div className="logo-container">
+                                <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
+                                <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Estudiante</h2>
+                            </div>
+                            <p className="role-subtitle">Ingresa tu apodo para comenzar la aventura</p>
+                        </div>
+                        <form onSubmit={handleStudentStart} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>TU NOMBRE / ALIAS</label>
+                                <input
+                                    className="premium-input"
+                                    type="text"
+                                    placeholder="Ej. Juan Pérez"
+                                    value={alias}
+                                    onChange={(e) => setAlias(e.target.value)}
+                                    autoFocus
+                                    required
+                                    style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
+                                />
+                            </div>
+                            <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
+                                Ver Programas
+                                <ArrowRight size={20} />
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {view === 'project_selection' && (
+                    <div className="responsive-grid">
+                        <div className="responsive-header">
+                            <div className="logo-container">
+                                <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <button onClick={() => setView(alias ? 'student_alias' : 'role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
+                                <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Programas</h2>
+                            </div>
+                            <p className="role-subtitle">Selecciona la lección que vas a realizar hoy</p>
+                        </div>
+                        <div className="responsive-content" style={{ width: '100%' }}>
+                            {renderProjectSelection()}
+                        </div>
+                    </div>
+                )}
 
                 {view === 'project_pass' && (
-                    <form onSubmit={handleProjectPassSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <button type="button" onClick={() => setView('project_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                            <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white' }}>Acceso: {selectedProject.name}</h2>
+                    <div className="responsive-grid">
+                        <div className="responsive-header">
+                            <div className="logo-container">
+                                <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <button type="button" onClick={() => setView('project_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
+                                <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white' }}>Acceso</h2>
+                            </div>
+                            <h3 style={{ fontSize: '0.9rem', color: '#a78bfa', margin: '5px 0' }}>{selectedProject.name}</h3>
+                            <p className="role-subtitle">Ingresa la clave para entrar a esta clase</p>
                         </div>
-                        <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Este programa requiere una clave específica para ingresar.</p>
-                        <input
-                            className="premium-input"
-                            type="password"
-                            placeholder="Ingresa la clave del programa"
-                            value={projectPass}
-                            onChange={(e) => setProjectPass(e.target.value)}
-                            autoFocus
-                            required
-                            style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
-                        />
-                        <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
-                            Entrar a la Clase
-                            <Key size={20} />
-                        </button>
-                    </form>
+                        <form onSubmit={handleProjectPassSubmit} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
+                            <input
+                                className="premium-input"
+                                type="password"
+                                placeholder="Clave del programa"
+                                value={projectPass}
+                                onChange={(e) => setProjectPass(e.target.value)}
+                                autoFocus
+                                required
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
+                            />
+                            <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
+                                Entrar a la Clase
+                                <Key size={20} />
+                            </button>
+                        </form>
+                    </div>
                 )}
             </div>
         </div>

@@ -721,43 +721,35 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                     </div>
                 </div>
 
-                {/* PREGUNTA CENTRAL */}
-                <div style={{
+                {/* AREA DE JUEGO ADAPTABLE */}
+                <div className="quiz-container-landscape" style={{
                     flex: 1,
                     width: '100%',
-                    maxWidth: '1000px',
+                    maxWidth: '1200px',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: (currentQ.type === 'image' || currentQ.type === 'video') ? 'center' : 'flex-start',
-                    textAlign: 'center',
-                    overflow: 'hidden',
-                    minHeight: 0,
-                    paddingTop: (currentQ.type === 'image' || currentQ.type === 'video') ? '0' : '6vh'
+                    alignItems: 'center',
+                    gap: '20px',
+                    overflow: 'hidden'
                 }}>
+                    {/* PREGUNTA Y MEDIA */}
                     <div style={{
-                        marginBottom: (currentQ.type === 'image' || currentQ.type === 'video' || (currentQ.type === 'audio' && !currentQ.question)) ? '2vh' : '6vh',
+                        flex: 1,
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: (currentQ.type === 'image' || currentQ.type === 'video') ? '2vh' : '5vh',
-                        flexShrink: 1,
-                        overflow: 'hidden'
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        gap: '2vh',
+                        minWidth: '40%'
                     }}>
                         {currentQ.question && (
                             <h2 style={{
                                 fontSize: (currentQ.type === 'image' || currentQ.type === 'video')
-                                    ? 'clamp(1.1rem, 2.5vh, 1.6rem)'
-                                    : 'clamp(1.8rem, 5.8vh, 3.5rem)',
+                                    ? 'clamp(1rem, 2.2vh, 1.4rem)'
+                                    : 'clamp(1.5rem, 5vh, 2.5rem)',
                                 fontWeight: 900,
-                                lineHeight: 1.1,
                                 margin: 0,
-                                color: '#fff',
-                                textShadow: '0 4px 10px rgba(0,0,0,0.5)',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 3,
-                                WebkitBoxOrient: 'vertical'
+                                color: '#fff'
                             }}>
                                 {currentQ.question}
                             </h2>
@@ -770,71 +762,49 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                 onClick={() => setFullImage(currentQ.mediaUrl)}
                                 style={{
                                     width: '100%',
-                                    maxWidth: '800px',
-                                    maxHeight: '28vh',
+                                    maxHeight: '30vh',
                                     objectFit: 'contain',
-                                    borderRadius: '15px',
-                                    boxShadow: '0 15px 30px rgba(0,0,0,0.5)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    cursor: 'zoom-in',
-                                    transition: 'transform 0.2s'
+                                    borderRadius: '15px'
                                 }}
-                                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-                                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             />
                         )}
 
                         {currentQ.type === 'audio' && currentQ.mediaUrl && (
-                            <div style={{
-                                marginTop: !currentQ.question ? '15vh' : '0',
-                                width: '100%',
-                                display: 'flex',
-                                justifyContent: 'center'
-                            }}>
-                                <audio controls src={currentQ.mediaUrl} style={{ width: '100%', maxWidth: '550px', height: '54px' }} />
+                            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                <audio controls src={currentQ.mediaUrl} style={{ width: '100%', height: '40px' }} />
                             </div>
                         )}
 
                         {currentQ.type === 'video' && currentQ.mediaUrl && (
-                            <div style={{ width: '100%', maxWidth: '900px', maxHeight: '42vh', aspectRatio: '16/9', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 15px 30px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '35vh', borderRadius: '15px', overflow: 'hidden' }}>
                                 {(() => {
                                     const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
                                     const start = currentQ.videoStart || 0;
                                     const end = currentQ.videoEnd || 0;
                                     const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${start}${end ? `&end=${end}` : ''}&autoplay=1&mute=0&enablejsapi=1`;
                                     return (
-                                        <iframe
-                                            id="quiz-video-player"
-                                            width="100%"
-                                            height="100%"
-                                            src={embedUrl}
-                                            title="YouTube video player"
-                                            frameBorder="0"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                            allowFullScreen
-                                        ></iframe>
+                                        <iframe id="quiz-video-player" width="100%" height="100%" src={embedUrl} title="YouTube" frameBorder="0" allow="autoplay" allowFullScreen></iframe>
                                     );
                                 })()}
                             </div>
                         )}
                     </div>
 
+                    {/* OPCIONES */}
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: (currentQ.type === 'image' || currentQ.type === 'video') && currentQ.options.length > 2 && currentQ.options.some(o => o.length > 30) ? '1fr' : '1fr 1fr',
-                        gap: '1.2vh',
+                        gap: '1vh',
                         width: '100%',
-                        maxWidth: '1000px',
-                        marginBottom: '3vh',
-                        flexShrink: 0
+                        flex: 1.2,
+                        alignContent: 'center'
                     }}>
                         {currentQ.options.map((opt, idx) => {
                             const isHidden = hiddenOptions.includes(idx);
-                            if (isHidden) return <div key={idx} style={{ height: '70px', opacity: 0 }} />;
+                            if (isHidden) return <div key={idx} style={{ padding: '1.2vh', opacity: 0 }} />;
 
                             let bgColor = 'rgba(255, 255, 255, 0.05)';
                             let borderColor = 'rgba(255, 255, 255, 0.1)';
-                            let iconColor = '#64748b';
                             let iconBg = 'rgba(255, 255, 255, 0.05)';
                             let showCheck = false;
                             let showX = false;
@@ -843,19 +813,13 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                 if (idx === currentQ.correctAnswer) {
                                     bgColor = 'rgba(16, 185, 129, 0.15)';
                                     borderColor = '#10b981';
-                                    iconColor = 'white';
                                     iconBg = '#10b981';
                                     showCheck = true;
                                 } else if (idx === selectedOption && feedback === 'incorrect') {
                                     bgColor = 'rgba(239, 68, 68, 0.15)';
                                     borderColor = '#ef4444';
-                                    iconColor = 'white';
                                     iconBg = '#ef4444';
                                     showX = true;
-                                } else {
-                                    bgColor = 'rgba(255, 255, 255, 0.02)';
-                                    borderColor = 'rgba(255, 255, 255, 0.05)';
-                                    iconBg = 'transparent';
                                 }
                             }
 
@@ -866,39 +830,22 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                     disabled={feedback !== null}
                                     style={{
                                         width: '100%',
-                                        padding: '1.2vh 20px',
+                                        padding: '1.2vh 15px',
                                         borderRadius: '12px',
                                         background: bgColor,
                                         border: `1px solid ${borderColor}`,
                                         color: 'white',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '15px',
+                                        gap: '10px',
                                         cursor: feedback ? 'default' : 'pointer',
-                                        transition: '0.3s',
-                                        textAlign: 'left',
-                                        fontSize: 'clamp(0.8rem, 2vh, 1rem)',
-                                        boxShadow: feedback && idx === currentQ.correctAnswer ? '0 0 20px rgba(16, 185, 129, 0.2)' : 'none'
+                                        fontSize: 'clamp(0.7rem, 1.8vh, 0.95rem)'
                                     }}
                                 >
-                                    <div style={{
-                                        width: '36px',
-                                        height: '36px',
-                                        borderRadius: '10px',
-                                        background: iconBg,
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 900,
-                                        color: iconColor
-                                    }}>
-                                        {showCheck ? <Check size={20} /> : (showX ? <X size={20} /> : String.fromCharCode(65 + idx))}
+                                    <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>
+                                        {showCheck ? <Check size={16} /> : (showX ? <X size={16} /> : String.fromCharCode(65 + idx))}
                                     </div>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: 600 }}>{opt}</span>
-                                    {showCheck && <Check size={24} style={{ marginLeft: 'auto', color: '#10b981' }} />}
-                                    {showX && <X size={24} style={{ marginLeft: 'auto', color: '#ef4444' }} />}
+                                    <span style={{ fontWeight: 600 }}>{opt}</span>
                                 </button>
                             );
                         })}
@@ -1027,71 +974,45 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
         const skippedCount = answersLog.filter(a => a.isSkipped).length;
 
         return (
-            <div style={{ minHeight: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <div style={{ fontSize: '5rem', marginBottom: '10px' }}>🏆</div>
-                    <h2 style={{ fontSize: '2.5rem', fontWeight: 900 }}>¡Juego Terminado!</h2>
-                    <p style={{ fontSize: '1.2rem', color: '#94a3b8', marginTop: '10px' }}>Este es tu resumen de desempeño</p>
-                </div>
+            <div style={{ minHeight: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div className="entry-card glass anim-up" style={{ padding: '30px', maxWidth: '1000px' }}>
+                    <div className="responsive-grid">
+                        <div className="responsive-header" style={{ textAlign: 'center', alignItems: 'center' }}>
+                            <div style={{ fontSize: '4rem', marginBottom: '10px' }}>🏆</div>
+                            <h2 style={{ fontSize: '2rem', fontWeight: 900 }}>¡Juego Terminado!</h2>
+                            <p style={{ fontSize: '1rem', color: '#94a3b8' }}>Estadísticas de la partida</p>
+                        </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', width: '100%', maxWidth: '900px', marginBottom: '50px' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
-                        <Clock size={32} style={{ color: '#3b82f6', marginBottom: '15px' }} />
-                        <div style={{ fontSize: '2rem', fontWeight: 900 }}>{formatTime(timer)}</div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '5px' }}>Tiempo Total</div>
-                    </div>
-                    <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
-                        <Check size={32} style={{ color: '#10b981', marginBottom: '15px' }} />
-                        <div style={{ fontSize: '2rem', fontWeight: 900, color: '#10b981' }}>{correctCount}</div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#065f46', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '5px' }}>Correctas</div>
-                    </div>
-                    <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
-                        <X size={32} style={{ color: '#ef4444', marginBottom: '15px' }} />
-                        <div style={{ fontSize: '2rem', fontWeight: 900, color: '#ef4444' }}>{incorrectCount}</div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#991b1b', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '5px' }}>Incorrectas</div>
-                    </div>
-                    <div style={{ background: 'rgba(124, 58, 237, 0.1)', border: '1px solid rgba(124, 58, 237, 0.2)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
-                        <SkipForward size={32} style={{ color: '#a78bfa', marginBottom: '15px' }} />
-                        <div style={{ fontSize: '2rem', fontWeight: 900, color: '#a78bfa' }}>{skippedCount}</div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#5b21b6', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '5px' }}>Saltadas</div>
-                    </div>
-                </div>
+                        <div className="responsive-content" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '15px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 900 }}>{formatTime(timer)}</div>
+                                    <div style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase' }}>Tiempo</div>
+                                </div>
+                                <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '16px', padding: '15px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#10b981' }}>{correctCount}</div>
+                                    <div style={{ fontSize: '0.6rem', color: '#065f46', textTransform: 'uppercase' }}>Correctas</div>
+                                </div>
+                                <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '16px', padding: '15px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#ef4444' }}>{incorrectCount}</div>
+                                    <div style={{ fontSize: '0.6rem', color: '#991b1b', textTransform: 'uppercase' }}>Incorrectas</div>
+                                </div>
+                                <div style={{ background: 'rgba(124, 58, 237, 0.1)', border: '1px solid rgba(124, 58, 237, 0.2)', borderRadius: '16px', padding: '15px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#a78bfa' }}>{skippedCount}</div>
+                                    <div style={{ fontSize: '0.6rem', color: '#5b21b6', textTransform: 'uppercase' }}>Saltadas</div>
+                                </div>
+                            </div>
 
-                <div style={{ display: 'flex', gap: '20px' }}>
-                    <button
-                        onClick={restartApp}
-                        style={{
-                            padding: '18px 40px',
-                            borderRadius: '16px',
-                            background: '#3b82f6',
-                            color: 'white',
-                            fontWeight: 800,
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            boxShadow: '0 10px 20px rgba(59, 130, 246, 0.3)'
-                        }}
-                    >
-                        <RotateCcw size={20} /> Intentar de Nuevo
-                    </button>
-                    <button
-                        onClick={onExit}
-                        style={{
-                            padding: '18px 40px',
-                            borderRadius: '16px',
-                            background: 'rgba(255,255,255,0.05)',
-                            color: 'white',
-                            fontWeight: 800,
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            cursor: 'pointer',
-                            fontSize: '1rem'
-                        }}
-                    >
-                        {isAdmin ? 'Volver a Galería' : 'Home'}
-                    </button>
+                            <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
+                                <button onClick={restartApp} className="btn-premium" style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}>
+                                    Reiniciar
+                                </button>
+                                <button onClick={onExit} className="btn-outline" style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}>
+                                    Home
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
