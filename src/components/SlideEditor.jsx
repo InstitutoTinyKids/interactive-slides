@@ -43,6 +43,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [hasUnsavedNameChanges, setHasUnsavedNameChanges] = useState(false);
     const [hasUnsavedCodeChanges, setHasUnsavedCodeChanges] = useState(false);
     const [showProjectDetails, setShowProjectDetails] = useState(false);
+    const [hoveredFolderId, setHoveredFolderId] = useState(null);
+    const [showMoveModal, setShowMoveModal] = useState(false);
+    const [targetFolderForMove, setTargetFolderForMove] = useState('');
 
     const PROGRAM_ORDER = [
         'Baby Program', 'Mini Program', 'Tiny Program', 'Big Program',
@@ -334,6 +337,29 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         } finally {
             if (!silent) setLoading(false);
         }
+    };
+
+    const handleMoveSelected = async () => {
+        if (selectedProjects.length === 0 || !targetFolderForMove) return;
+        setLoading(true);
+        try {
+            const folderId = targetFolderForMove === 'root' ? null : targetFolderForMove;
+            for (const id of selectedProjects) {
+                const targetProjects = projects.filter(p => p.folder_id === folderId);
+                await supabase.from('projects').update({
+                    folder_id: folderId,
+                    order_index: targetProjects.length
+                }).eq('id', id);
+            }
+            setSelectedProjects([]);
+            setShowMoveModal(false);
+            setTargetFolderForMove('');
+            loadProjects();
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        } catch (err) {
+            alert('Error al mover selección: ' + err.message);
+        }
+        setLoading(false);
     };
 
     const handleDuplicateSelected = async () => {
@@ -638,6 +664,23 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     <Copy size={20} /> Duplicar ({selectedProjects.length})
                                 </button>
                                 <button
+                                    onClick={() => setShowMoveModal(true)}
+                                    className="btn-outline"
+                                    style={{
+                                        background: 'rgba(167, 139, 250, 0.1)',
+                                        color: '#a78bfa',
+                                        borderColor: 'rgba(167, 139, 250, 0.2)',
+                                        padding: '12px 25px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        fontWeight: 800
+                                    }}
+                                >
+                                    <Move size={20} /> Mover ({selectedProjects.length})
+                                </button>
+                                <button
                                     onClick={handleDeleteSelected}
                                     className="btn-outline"
                                     style={{
@@ -791,9 +834,11 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                     gap: '18px',
                                                     position: 'relative',
                                                     cursor: isSortMode ? 'grab' : 'default',
-                                                    border: '1px solid rgba(255,255,255,0.08)',
+                                                    border: `1px solid ${hoveredFolderId === f.id ? '#10b981' : 'rgba(255,255,255,0.08)'}`,
                                                     borderRadius: '32px',
-                                                    background: '#0a0a1a'
+                                                    background: hoveredFolderId === f.id ? 'rgba(16, 185, 129, 0.15)' : '#0a0a1a',
+                                                    transform: hoveredFolderId === f.id ? 'scale(1.02)' : 'scale(1)',
+                                                    transition: 'all 0.2s ease'
                                                 }}
                                             >
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
@@ -866,6 +911,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             }}
                                             drag={isSortMode}
                                             onDragEnd={(e, info) => {
+                                                setHoveredFolderId(null);
                                                 if (isSortMode && !currentFolderId) {
                                                     const point = { x: info.point.x, y: info.point.y };
                                                     const elements = document.elementsFromPoint(point.x, point.y);
@@ -873,6 +919,18 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                     if (folderEl) {
                                                         const folderId = folderEl.getAttribute('data-folder-id');
                                                         handleMoveToFolder(p.id, folderId);
+                                                    }
+                                                }
+                                            }}
+                                            onDrag={(e, info) => {
+                                                if (isSortMode && !currentFolderId) {
+                                                    const point = { x: info.point.x, y: info.point.y };
+                                                    const elements = document.elementsFromPoint(point.x, point.y);
+                                                    const folderEl = elements.find(el => el.getAttribute('data-folder-id'));
+                                                    if (folderEl) {
+                                                        setHoveredFolderId(folderEl.getAttribute('data-folder-id'));
+                                                    } else {
+                                                        setHoveredFolderId(null);
                                                     }
                                                 }
                                             }}
@@ -955,6 +1013,54 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         </div>
                     )}
                 </div>
+                {/* Move Selection Modal */}
+                {showMoveModal && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
+                        <div className="glass anim-up" style={{ width: '450px', padding: '40px', display: 'flex', flexDirection: 'column', gap: '25px', background: '#0a0a1a', border: '1px solid rgba(167, 139, 250, 0.2)' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ width: '60px', height: '60px', background: 'rgba(167, 139, 250, 0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', margin: '0 auto 15px' }}>
+                                    <Move size={30} />
+                                </div>
+                                <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '8px' }}>Mover Proyectos</h2>
+                                <p style={{ color: '#94a3b8' }}>Selecciona el destino para los {selectedProjects.length} proyectos seleccionados.</p>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <label style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Carpeta de Destino</label>
+                                <select
+                                    className="premium-input"
+                                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'pointer' }}
+                                    value={targetFolderForMove}
+                                    onChange={(e) => setTargetFolderForMove(e.target.value)}
+                                >
+                                    <option value="" disabled>Selecciona una carpeta...</option>
+                                    <option value="root">Galería Principal (Raíz)</option>
+                                    {folders.map(f => (
+                                        <option key={f.id} value={f.id}>{f.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                                <button
+                                    onClick={() => { setShowMoveModal(false); setTargetFolderForMove(''); }}
+                                    className="btn-outline"
+                                    style={{ flex: 1, height: '55px', fontSize: '1.1rem' }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleMoveSelected}
+                                    className="btn-premium"
+                                    style={{ flex: 1.5, height: '55px', background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', fontSize: '1.1rem' }}
+                                    disabled={!targetFolderForMove || loading}
+                                >
+                                    {loading ? 'Moviendo...' : 'Mover Ahora'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
