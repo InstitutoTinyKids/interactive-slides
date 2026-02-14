@@ -47,8 +47,15 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
     const [isEditingAccessCode, setIsEditingAccessCode] = useState(false);
     const [hasUnsavedCodeChanges, setHasUnsavedCodeChanges] = useState(false);
     const [showProjectDetails, setShowProjectDetails] = useState(false);
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
 
     const timerRef = useRef(null);
+
+    useEffect(() => {
+        const handleResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Video Range Loop Logic
     useEffect(() => {
@@ -793,8 +800,8 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                     {/* OPCIONES */}
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: (currentQ.type === 'image' || currentQ.type === 'video') && currentQ.options.length > 2 && currentQ.options.some(o => o.length > 30) ? '1fr' : '1fr 1fr',
-                        gap: '1vh',
+                        gridTemplateColumns: isLandscape ? '1fr' : ((currentQ.type === 'image' || currentQ.type === 'video') && currentQ.options.length > 2 && currentQ.options.some(o => o.length > 30) ? '1fr' : '1fr 1fr'),
+                        gap: isLandscape ? '1.5vh' : '1vh',
                         width: '100%',
                         flex: 1.2,
                         alignContent: 'center'
@@ -830,16 +837,16 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                     disabled={feedback !== null}
                                     style={{
                                         width: '100%',
-                                        padding: '1.2vh 15px',
+                                        padding: isLandscape ? '2.5vh 25px' : '1.2vh 15px',
                                         borderRadius: '12px',
                                         background: bgColor,
                                         border: `1px solid ${borderColor}`,
                                         color: 'white',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '10px',
+                                        gap: '15px',
                                         cursor: feedback ? 'default' : 'pointer',
-                                        fontSize: 'clamp(0.7rem, 1.8vh, 0.95rem)'
+                                        fontSize: isLandscape ? 'clamp(0.8rem, 2vh, 1.1rem)' : 'clamp(0.7rem, 1.8vh, 0.95rem)'
                                     }}
                                 >
                                     <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>
