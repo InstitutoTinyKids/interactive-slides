@@ -638,9 +638,53 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '4px' }}>
                                 {currentFolderId ? folders.find(f => f.id === currentFolderId)?.name : 'Galería'}
                             </h1>
-                            <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.85rem' : '1rem' }}>
-                                {currentFolderId ? 'Proyectos dentro de esta carpeta' : 'Administra los niveles educativos y sus claves de acceso'}
-                            </p>
+                            <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                                <button
+                                    onClick={() => setGalleryTab('all')}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: galleryTab === 'all' ? '#7c3aed' : '#475569',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        borderBottom: galleryTab === 'all' ? '2px solid #7c3aed' : '2px solid transparent',
+                                        paddingBottom: '5px'
+                                    }}
+                                >
+                                    TODAS
+                                </button>
+                                <button
+                                    onClick={() => setGalleryTab('guias')}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: galleryTab === 'guias' ? '#a78bfa' : '#475569',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        borderBottom: galleryTab === 'guias' ? '2px solid #a78bfa' : '2px solid transparent',
+                                        paddingBottom: '5px'
+                                    }}
+                                >
+                                    GUIAS
+                                </button>
+                                <button
+                                    onClick={() => setGalleryTab('quiz')}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: galleryTab === 'quiz' ? '#3b82f6' : '#475569',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        borderBottom: galleryTab === 'quiz' ? '2px solid #3b82f6' : '2px solid transparent',
+                                        paddingBottom: '5px'
+                                    }}
+                                >
+                                    QUIZZES
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
@@ -891,124 +935,132 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     marginTop: (!currentFolderId && (isSortMode ? tempFolders : folders).length > 0) ? '25px' : '0'
                                 }}
                             >
-                                {(isSortMode ? tempProjects : projects).filter(p => p.folder_id === currentFolderId).map(p => {
-                                    const isQuiz = p.id.startsWith('quiz-');
-                                    return (
-                                        <Reorder.Item
-                                            key={p.id}
-                                            value={p}
-                                            className="glass"
-                                            style={{
-                                                padding: '32px',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                gap: '24px',
-                                                position: 'relative',
-                                                cursor: isSortMode ? 'grab' : 'default',
-                                                border: '1px solid rgba(255,255,255,0.08)',
-                                                borderRadius: '32px',
-                                                background: '#0a0a1a'
-                                            }}
-                                            drag={isSortMode}
-                                            onDragEnd={(e, info) => {
-                                                setHoveredFolderId(null);
-                                                if (isSortMode && !currentFolderId) {
-                                                    const point = { x: info.point.x, y: info.point.y };
-                                                    const elements = document.elementsFromPoint(point.x, point.y);
-                                                    const folderEl = elements.find(el => el.getAttribute('data-folder-id'));
-                                                    if (folderEl) {
-                                                        const folderId = folderEl.getAttribute('data-folder-id');
-                                                        handleMoveToFolder(p.id, folderId);
+                                {(isSortMode ? tempProjects : projects)
+                                    .filter(p => p.folder_id === currentFolderId)
+                                    .filter(p => {
+                                        if (galleryTab === 'all') return true;
+                                        if (galleryTab === 'quiz') return p.id.startsWith('quiz-');
+                                        if (galleryTab === 'guias') return !p.id.startsWith('quiz-');
+                                        return true;
+                                    })
+                                    .map(p => {
+                                        const isQuiz = p.id.startsWith('quiz-');
+                                        return (
+                                            <Reorder.Item
+                                                key={p.id}
+                                                value={p}
+                                                className="glass"
+                                                style={{
+                                                    padding: '32px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '24px',
+                                                    position: 'relative',
+                                                    cursor: isSortMode ? 'grab' : 'default',
+                                                    border: '1px solid rgba(255,255,255,0.08)',
+                                                    borderRadius: '32px',
+                                                    background: '#0a0a1a'
+                                                }}
+                                                drag={isSortMode}
+                                                onDragEnd={(e, info) => {
+                                                    setHoveredFolderId(null);
+                                                    if (isSortMode && !currentFolderId) {
+                                                        const point = { x: info.point.x, y: info.point.y };
+                                                        const elements = document.elementsFromPoint(point.x, point.y);
+                                                        const folderEl = elements.find(el => el.getAttribute('data-folder-id'));
+                                                        if (folderEl) {
+                                                            const folderId = folderEl.getAttribute('data-folder-id');
+                                                            handleMoveToFolder(p.id, folderId);
+                                                        }
                                                     }
-                                                }
-                                            }}
-                                            onDrag={(e, info) => {
-                                                if (isSortMode && !currentFolderId) {
-                                                    const point = { x: info.point.x, y: info.point.y };
-                                                    const elements = document.elementsFromPoint(point.x, point.y);
-                                                    const folderEl = elements.find(el => el.getAttribute('data-folder-id'));
-                                                    if (folderEl) {
-                                                        setHoveredFolderId(folderEl.getAttribute('data-folder-id'));
-                                                    } else {
-                                                        setHoveredFolderId(null);
+                                                }}
+                                                onDrag={(e, info) => {
+                                                    if (isSortMode && !currentFolderId) {
+                                                        const point = { x: info.point.x, y: info.point.y };
+                                                        const elements = document.elementsFromPoint(point.x, point.y);
+                                                        const folderEl = elements.find(el => el.getAttribute('data-folder-id'));
+                                                        if (folderEl) {
+                                                            setHoveredFolderId(folderEl.getAttribute('data-folder-id'));
+                                                        } else {
+                                                            setHoveredFolderId(null);
+                                                        }
                                                     }
-                                                }
-                                            }}
-                                        >
-                                            {/* Top badges and checkbox */}
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                                <div style={{
-                                                    padding: '16px',
-                                                    background: isQuiz ? 'rgba(59, 130, 246, 0.12)' : 'rgba(124, 58, 237, 0.12)',
-                                                    borderRadius: '18px',
-                                                    color: isQuiz ? '#3b82f6' : '#a78bfa'
-                                                }}>
-                                                    {isQuiz ? <HelpCircle size={36} /> : <ShieldCheck size={36} />}
-                                                </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <div style={{
-                                                            fontSize: '0.75rem',
-                                                            fontWeight: 900,
-                                                            padding: '6px 16px',
-                                                            borderRadius: '100px',
-                                                            background: isQuiz ? '#1e3a8a' : '#3b1e8a',
-                                                            color: 'white',
-                                                            textTransform: 'uppercase',
-                                                            letterSpacing: '1px'
-                                                        }}>
-                                                            {isQuiz ? 'QUIZ' : 'GUIA'}
-                                                        </div>
-                                                        {!isSortMode && (
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedProjects.includes(p.id)}
-                                                                onChange={() => toggleProjectSelection(p.id)}
-                                                                style={{ width: '26px', height: '26px', accentColor: '#3b82f6', cursor: 'pointer', backgroundColor: 'white', border: 'none', borderRadius: '4px' }}
-                                                            />
-                                                        )}
+                                                }}
+                                            >
+                                                {/* Top badges and checkbox */}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                                    <div style={{
+                                                        padding: '16px',
+                                                        background: isQuiz ? 'rgba(59, 130, 246, 0.12)' : 'rgba(124, 58, 237, 0.12)',
+                                                        borderRadius: '18px',
+                                                        color: isQuiz ? '#3b82f6' : '#a78bfa'
+                                                    }}>
+                                                        {isQuiz ? <HelpCircle size={36} /> : <ShieldCheck size={36} />}
                                                     </div>
-                                                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: p.is_active ? '#10b981' : '#64748b' }}>{p.is_active ? 'Activo' : 'Pausado'}</div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                            <div style={{
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: 900,
+                                                                padding: '6px 16px',
+                                                                borderRadius: '100px',
+                                                                background: isQuiz ? '#1e3a8a' : '#3b1e8a',
+                                                                color: 'white',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '1px'
+                                                            }}>
+                                                                {isQuiz ? 'QUIZ' : 'GUIA'}
+                                                            </div>
+                                                            {!isSortMode && (
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedProjects.includes(p.id)}
+                                                                    onChange={() => toggleProjectSelection(p.id)}
+                                                                    style={{ width: '26px', height: '26px', accentColor: '#3b82f6', cursor: 'pointer', backgroundColor: 'white', border: 'none', borderRadius: '4px' }}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: p.is_active ? '#10b981' : '#64748b' }}>{p.is_active ? 'Activo' : 'Pausado'}</div>
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            {/* Middle Section: Title and Key */}
-                                            <div>
-                                                <h3 style={{ fontSize: '1.8rem', color: 'white', marginBottom: '20px', fontWeight: 900, lineHeight: 1.1 }}>{p.name}</h3>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem', color: '#94a3b8', background: 'rgba(0,0,0,0.4)', padding: '14px 22px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)', width: 'fit-content' }}>
-                                                    <Key size={20} />
-                                                    <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
+                                                {/* Middle Section: Title and Key */}
+                                                <div>
+                                                    <h3 style={{ fontSize: '1.8rem', color: 'white', marginBottom: '20px', fontWeight: 900, lineHeight: 1.1 }}>{p.name}</h3>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem', color: '#94a3b8', background: 'rgba(0,0,0,0.4)', padding: '14px 22px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)', width: 'fit-content' }}>
+                                                        <Key size={20} />
+                                                        <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            {/* Bottom Section: Action Buttons */}
-                                            <div style={{ display: 'flex', gap: '12px', marginTop: 'auto', height: '62px' }}>
-                                                <button
-                                                    onClick={() => !isSortMode && (isQuiz ? onOpenQuiz(p) : handleSelectProject(p))}
-                                                    className="btn-premium"
-                                                    style={{ flex: 1, height: '100%', fontSize: '1.4rem', fontWeight: 900, borderRadius: '20px', background: 'linear-gradient(135deg, #4f46e5, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                    disabled={isSortMode}
-                                                >
-                                                    Editar
-                                                </button>
-                                                <button
-                                                    onClick={() => !isSortMode && onPreview(p, true)}
-                                                    className="btn-outline"
-                                                    style={{ flex: 1, height: '100%', background: 'rgba(59, 130, 246, 0.08)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 700, borderRadius: '20px' }}
-                                                    disabled={isSortMode}
-                                                >
-                                                    Preview
-                                                </button>
-                                            </div>
-
-                                            {isSortMode && (
-                                                <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
-                                                    <GripVertical size={24} color="rgba(255,255,255,0.2)" />
+                                                {/* Bottom Section: Action Buttons */}
+                                                <div style={{ display: 'flex', gap: '12px', marginTop: 'auto', height: '62px' }}>
+                                                    <button
+                                                        onClick={() => !isSortMode && (isQuiz ? onOpenQuiz(p) : handleSelectProject(p))}
+                                                        className="btn-premium"
+                                                        style={{ flex: 1, height: '100%', fontSize: '1.4rem', fontWeight: 900, borderRadius: '20px', background: 'linear-gradient(135deg, #4f46e5, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                        disabled={isSortMode}
+                                                    >
+                                                        Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => !isSortMode && onPreview(p, true)}
+                                                        className="btn-outline"
+                                                        style={{ flex: 1, height: '100%', background: 'rgba(59, 130, 246, 0.08)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 700, borderRadius: '20px' }}
+                                                        disabled={isSortMode}
+                                                    >
+                                                        Preview
+                                                    </button>
                                                 </div>
-                                            )}
-                                        </Reorder.Item>
-                                    );
-                                })}
+
+                                                {isSortMode && (
+                                                    <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
+                                                        <GripVertical size={24} color="rgba(255,255,255,0.2)" />
+                                                    </div>
+                                                )}
+                                            </Reorder.Item>
+                                        );
+                                    })}
                             </Reorder.Group>
                         </div>
                     )}
@@ -1068,7 +1120,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const currentSlide = localSlides[selectedIdx] || null;
 
     return (
-        <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden' }} onMouseMove={handleCanvasMouseMove} onMouseUp={() => { setDraggingElementId(null); setResizingElementId(null); }} onTouchEnd={() => { setDraggingElementId(null); setResizingElementId(null); }} onClick={(e) => { if (e.target === e.currentTarget) setSelectedElementId(null); }}>
+        <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: isMobile ? 'column' : 'row', background: '#050510', overflow: 'hidden' }} onMouseMove={handleCanvasMouseMove} onMouseUp={() => { setDraggingElementId(null); setResizingElementId(null); }} onTouchEnd={() => { setDraggingElementId(null); setResizingElementId(null); }} onClick={(e) => { if (e.target === e.currentTarget) setSelectedElementId(null); }}>
             {/* Left Panel: Slides - Collapsible in compact mode */}
             <aside style={{
                 width: showSlidesPanel ? '200px' : '0px',
