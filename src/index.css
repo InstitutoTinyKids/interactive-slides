@@ -272,20 +272,28 @@ h3 {
   flex-shrink: 0;
 }
 
-/* Global Landscape/Horizontal Adaptation - Infalible for Tablets & Mobile */
+/* Global Landscape/Horizontal Adaptation - Premium Mockup Look */
 @media screen and (min-aspect-ratio: 1/1) {
 
   .entry-card,
   .responsive-card {
-    max-width: 1200px !important;
-    width: 92vw !important;
-    min-width: 650px !important;
-    padding: 40px !important;
+    max-width: 900px !important;
+    /* Balanced width */
+    width: 85vw !important;
+    min-width: 600px !important;
+    padding: 60px 80px !important;
+    /* Generous internal padding */
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     height: auto !important;
-    min-height: 85vh !important;
+    min-height: auto !important;
+    background: #0a0a1a !important;
+    /* Darker, more solid background like mockup */
+    border-radius: 40px !important;
+    /* Rounder corners */
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.9) !important;
   }
 
   /* Force the side-by-side layout */
@@ -294,10 +302,11 @@ h3 {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    justify-content: center !important;
-    gap: clamp(40px, 8vw, 120px) !important;
+    justify-content: space-between !important;
+    /* Maximize distribution */
+    gap: 60px !important;
     width: 100% !important;
-    flex: 1 !important;
+    flex: none !important;
   }
 
   .role-header,
@@ -306,66 +315,78 @@ h3 {
     text-align: left !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 20px !important;
+    gap: 15px !important;
     margin: 0 !important;
+    align-items: flex-start !important;
   }
 
   .logo-container {
-    width: clamp(80px, 10vw, 150px) !important;
-    height: clamp(80px, 10vw, 150px) !important;
-    margin: 0 0 20px 0 !important;
+    width: 110px !important;
+    height: 110px !important;
+    margin: 0 0 10px 0 !important;
   }
 
   .role-title {
-    font-size: clamp(2rem, 4vw, 4rem) !important;
+    font-size: 3.2rem !important;
+    /* Impactful but controlled */
+    font-weight: 900 !important;
     line-height: 1 !important;
     margin: 0 !important;
-    white-space: nowrap !important;
+    color: white !important;
   }
 
   .role-subtitle {
-    font-size: clamp(0.9rem, 1.5vw, 1.5rem) !important;
+    font-size: 1.1rem !important;
     color: var(--text-muted) !important;
-    max-width: 380px !important;
+    max-width: 250px !important;
+    line-height: 1.4 !important;
   }
 
   .role-buttons,
   .responsive-content {
-    flex: 1.5 !important;
+    flex: 1.2 !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: clamp(10px, 2vh, 25px) !important;
+    gap: 15px !important;
     width: 100% !important;
-    max-height: 80vh !important;
-    overflow-y: auto !important;
-    padding: 10px 20px 10px 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
 
   .role-btn {
-    padding: clamp(15px, 2.5vh, 30px) clamp(20px, 3vw, 40px) !important;
+    padding: 20px 25px !important;
     border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .role-btn:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    transform: translateX(8px) !important;
   }
 
   .role-btn-icon {
-    width: clamp(45px, 6vh, 80px) !important;
-    height: clamp(45px, 6vh, 80px) !important;
-    font-size: 1.5rem !important;
+    width: 55px !important;
+    height: 55px !important;
+    border-radius: 12px !important;
   }
 
   .role-btn h3 {
-    font-size: clamp(1rem, 1.8vw, 1.6rem) !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
   }
 
-  /* Specific fix for inputs in landscape */
+  /* Specific fix for forms in landscape */
   .responsive-content form {
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 20px !important;
+    gap: 15px !important;
   }
 
   .project-list-container {
-    max-height: clamp(250px, 50vh, 500px) !important;
+    max-height: 350px !important;
   }
 
   /* Quiz Specifically */
