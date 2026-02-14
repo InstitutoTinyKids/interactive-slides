@@ -242,30 +242,30 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'admin_login' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header">
-                            <div className="logo-container">
+                        <div className="responsive-header" style={{ marginBottom: '20px' }}>
+                            <div className="logo-container" style={{ width: '120px', height: '120px', marginBottom: '30px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                                <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Administrador</h2>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '10px', borderRadius: '12px' }}><ChevronLeft size={24} /></button>
+                                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'white', margin: 0 }}>Administrador</h2>
                             </div>
-                            <p className="role-subtitle">Acceso restringido para el control total del sistema</p>
+                            <p className="role-subtitle" style={{ fontSize: '1rem', marginTop: '10px' }}>Control total del sistema</p>
                         </div>
-                        <form onSubmit={handleAdminSubmit} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
+                        <form onSubmit={handleAdminSubmit} className="responsive-content" style={{ gap: '25px', width: '100%' }}>
                             <input
-                                className="premium-input"
+                                className="premium-input text-center"
                                 type="password"
-                                placeholder="Contraseña Administrador"
+                                placeholder="Ingresa Contraseña..."
                                 value={pass}
                                 onChange={(e) => setPass(e.target.value)}
                                 autoFocus
                                 required
-                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '70px', fontSize: '1.2rem', background: 'rgba(255,255,255,0.03)' }}
                             />
-                            <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
+                            <button type="submit" className="btn-premium" style={{ padding: '22px', fontSize: '1.1rem', borderRadius: '20px' }}>
                                 Acceder al Panel
-                                <Lock size={20} />
+                                <Lock size={22} />
                             </button>
                         </form>
                     </div>
@@ -273,30 +273,30 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'teacher_login' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header">
-                            <div className="logo-container">
+                        <div className="responsive-header" style={{ marginBottom: '20px' }}>
+                            <div className="logo-container" style={{ width: '120px', height: '120px', marginBottom: '30px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-                                <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Teacher Mode</h2>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '10px', borderRadius: '12px' }}><ChevronLeft size={24} /></button>
+                                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'white', margin: 0 }}>Teacher Mode</h2>
                             </div>
-                            <p className="role-subtitle">Inicia sesión para moderar las lecciones</p>
+                            <p className="role-subtitle" style={{ fontSize: '1rem', marginTop: '10px' }}>Inicia sesión para moderar las lecciones</p>
                         </div>
-                        <form onSubmit={handleTeacherSubmit} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
+                        <form onSubmit={handleTeacherSubmit} className="responsive-content" style={{ gap: '25px', width: '100%' }}>
                             <input
-                                className="premium-input"
+                                className="premium-input text-center"
                                 type="password"
-                                placeholder="Contraseña Teacher"
+                                placeholder="Ingresa Contraseña..."
                                 value={pass}
                                 onChange={(e) => setPass(e.target.value)}
                                 autoFocus
                                 required
-                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '70px', fontSize: '1.2rem', background: 'rgba(255,255,255,0.03)' }}
                             />
-                            <button type="submit" className="btn-premium" style={{ padding: '18px' }}>
+                            <button type="submit" className="btn-premium" style={{ padding: '22px', fontSize: '1.1rem', borderRadius: '20px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
                                 Acceder como Teacher
-                                <GraduationCap size={20} />
+                                <GraduationCap size={22} />
                             </button>
                         </form>
                     </div>

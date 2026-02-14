@@ -867,13 +867,13 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                 onClick={handleFiftyFifty}
                                 disabled={feedback !== null || hiddenOptions.length > 0}
                                 style={{
-                                    width: 'clamp(44px, 7.5vh, 60px)',
-                                    height: 'clamp(44px, 7.5vh, 60px)',
+                                    width: isLandscape ? '80px' : '65px',
+                                    height: isLandscape ? '80px' : '65px',
                                     borderRadius: '50%',
                                     background: 'rgba(59, 130, 246, 0.2)',
                                     border: '2px solid rgba(59, 130, 246, 0.4)',
                                     color: '#60a5fa',
-                                    fontSize: '0.8rem',
+                                    fontSize: isLandscape ? '1.1rem' : '0.9rem',
                                     fontWeight: 900,
                                     cursor: 'pointer',
                                     transition: '0.3s',
@@ -890,8 +890,8 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                 onClick={handlePass}
                                 disabled={feedback !== null}
                                 style={{
-                                    width: 'clamp(44px, 7.5vh, 60px)',
-                                    height: 'clamp(44px, 7.5vh, 60px)',
+                                    width: isLandscape ? '80px' : '65px',
+                                    height: isLandscape ? '80px' : '65px',
                                     borderRadius: '50%',
                                     background: 'rgba(124, 58, 237, 0.2)',
                                     border: '2px solid rgba(124, 58, 237, 0.4)',
@@ -904,7 +904,7 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                                     opacity: feedback ? 0.3 : 1
                                 }}
                             >
-                                <SkipForward size={22} />
+                                <SkipForward size={isLandscape ? 32 : 26} />
                             </button>
                             <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#7c3aed' }}>Pasar (+30s)</span>
                         </div>
