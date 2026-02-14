@@ -808,14 +808,14 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <h3 style={{ fontSize: '1.8rem', color: 'white', marginBottom: '4px', fontWeight: 900, textTransform: 'uppercase' }}>{f.name}</h3>
+                                                    <h3 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '4px', fontWeight: 900, textTransform: 'uppercase' }}>{f.name}</h3>
                                                     <span style={{ fontSize: '0.9rem', color: '#64748b' }}>{projectsInFolder.length} proyectos</span>
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', height: '52px' }}>
                                                     <button onClick={() => !isSortMode && setCurrentFolderId(f.id)} className="btn-premium" style={{ flex: 1.5, height: '100%', background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '1.1rem', fontWeight: 800, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }} disabled={isSortMode}>Entrar</button>
-                                                    <button onClick={() => handleEditFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }} title="Editar Nombre"><Edit2 size={28} strokeWidth={2.5} /></button>
-                                                    <button onClick={() => handleDuplicateFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }} title="Duplicar"><Copy size={28} strokeWidth={2.5} /></button>
-                                                    <button onClick={() => handleDeleteFolder(f.id)} className="btn-outline" style={{ width: '52px', height: '100%', color: '#ef4444', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }} title="Eliminar"><Trash2 size={28} strokeWidth={2.5} /></button>
+                                                    <button onClick={() => handleEditFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }} title="Editar Nombre"><Edit2 size={24} strokeWidth={2.5} /></button>
+                                                    <button onClick={() => handleDuplicateFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }} title="Duplicar"><Copy size={24} strokeWidth={2.5} /></button>
+                                                    <button onClick={() => handleDeleteFolder(f.id)} className="btn-outline" style={{ width: '52px', height: '100%', color: '#ef4444', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }} title="Eliminar"><Trash2 size={24} strokeWidth={2.5} /></button>
                                                 </div>
                                                 {isSortMode && (
                                                     <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
@@ -916,7 +916,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                                             {/* Middle Section: Title and Key */}
                                             <div>
-                                                <h3 style={{ fontSize: '2.2rem', color: 'white', marginBottom: '22px', fontWeight: 900, lineHeight: 1.1 }}>{p.name}</h3>
+                                                <h3 style={{ fontSize: '1.8rem', color: 'white', marginBottom: '20px', fontWeight: 900, lineHeight: 1.1 }}>{p.name}</h3>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem', color: '#94a3b8', background: 'rgba(0,0,0,0.4)', padding: '14px 22px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)', width: 'fit-content' }}>
                                                     <Key size={20} />
                                                     <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
