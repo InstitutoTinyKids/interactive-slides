@@ -1139,7 +1139,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             setLocalSlides(copy);
                                             setSelectedElementId(null);
                                             setDraggingElementId(null);
-                                        }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
+                                        }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                                             <Trash2 size={16} /> Eliminar
                                         </button>
                                     </div>
