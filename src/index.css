@@ -272,6 +272,24 @@ h3 {
   flex-shrink: 0;
 }
 
+.responsive-grid {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.responsive-header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.responsive-content {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+}
+
 /* Global Landscape/Horizontal Adaptation - Premium Mockup Look */
 @media screen and (min-aspect-ratio: 1/1) {
 
@@ -296,14 +314,21 @@ h3 {
     box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.9) !important;
   }
 
-  /* Force the side-by-side layout */
-  .role-selection-grid,
+  .role-selection-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 60px !important;
+    width: 100% !important;
+    flex: none !important;
+  }
+
   .responsive-grid {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
     justify-content: space-between !important;
-    /* Maximize distribution */
     gap: 60px !important;
     width: 100% !important;
     flex: none !important;
@@ -342,7 +367,17 @@ h3 {
     line-height: 1.4 !important;
   }
 
-  .role-buttons,
+  .role-buttons {
+    flex: 1.2 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    width: 100% !important;
+    max-height: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
   .responsive-content {
     flex: 1.2 !important;
     display: flex !important;
