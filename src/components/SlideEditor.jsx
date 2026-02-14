@@ -823,12 +823,28 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         >
                                             {/* Top badges and checkbox */}
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                                <div style={{ padding: '16px', background: 'rgba(16, 185, 129, 0.12)', borderRadius: '18px', color: '#10b981' }}>
-                                                    <ShieldCheck size={36} />
+                                                <div style={{
+                                                    padding: '16px',
+                                                    background: isQuiz ? 'rgba(59, 130, 246, 0.12)' : 'rgba(124, 58, 237, 0.12)',
+                                                    borderRadius: '18px',
+                                                    color: isQuiz ? '#3b82f6' : '#a78bfa'
+                                                }}>
+                                                    {isQuiz ? <HelpCircle size={36} /> : <ShieldCheck size={36} />}
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <div style={{ fontSize: '0.75rem', fontWeight: 900, padding: '5px 16px', borderRadius: '100px', background: isQuiz ? 'rgba(59, 130, 246, 0.25)' : 'rgba(124, 58, 237, 0.25)', color: isQuiz ? '#a78bfa' : '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{isQuiz ? 'QUIZ' : 'GUIA'}</div>
+                                                        <div style={{
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 900,
+                                                            padding: '6px 16px',
+                                                            borderRadius: '100px',
+                                                            background: isQuiz ? '#1e3a8a' : '#3b1e8a',
+                                                            color: 'white',
+                                                            textTransform: 'uppercase',
+                                                            letterSpacing: '1px'
+                                                        }}>
+                                                            {isQuiz ? 'QUIZ' : 'GUIA'}
+                                                        </div>
                                                         {!isSortMode && (
                                                             <input
                                                                 type="checkbox"
@@ -864,7 +880,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 <button
                                                     onClick={() => !isSortMode && onPreview(p, true)}
                                                     className="btn-outline"
-                                                    style={{ flex: 1.2, height: '100%', background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', fontSize: '1.3rem', fontWeight: 700, borderRadius: '20px' }}
+                                                    style={{ flex: 1.2, height: '100%', background: 'rgba(59, 130, 246, 0.08)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', fontSize: '1.3rem', fontWeight: 700, borderRadius: '20px' }}
                                                     disabled={isSortMode}
                                                 >
                                                     <Eye size={24} /> Preview
@@ -872,7 +888,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
                                                     className="btn-outline"
-                                                    style={{ width: '56px', height: '100%', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', borderColor: 'rgba(255,255,255,0.1)' }}
+                                                    style={{ width: '62px', height: '100%', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
                                                     title="Duplicar"
                                                 >
                                                     <Copy size={24} />
