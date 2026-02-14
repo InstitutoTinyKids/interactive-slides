@@ -1080,7 +1080,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 {selectedElementId && localSlides[selectedIdx]?.elements.find(e => e.id === selectedElementId) && (
                                     <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                            <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', textTransform: 'uppercase', margin: 0 }}>Opciones del Elemento</h4>
+                                            <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', textTransform: 'uppercase', margin: 0 }}>Opciones</h4>
                                             <div style={{ background: 'rgba(124, 58, 237, 0.2)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 {(() => {
                                                     const el = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
@@ -1101,7 +1101,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.url && (
                                                     <div style={{ marginBottom: '10px' }}>
                                                         <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                                                            Tamaño de Imagen: {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.imageSize || 100}%
+                                                            Tamaño: {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.imageSize || 100}%
                                                         </label>
                                                         <input
                                                             type="range"
@@ -1140,7 +1140,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             setSelectedElementId(null);
                                             setDraggingElementId(null);
                                         }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '10px', fontSize: '0.75rem' }}>
-                                            <Trash2 size={16} /> Eliminar Elemento
+                                            <Trash2 size={16} /> Eliminar
                                         </button>
                                     </div>
                                 )}
