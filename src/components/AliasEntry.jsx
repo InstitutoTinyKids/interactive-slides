@@ -252,7 +252,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                             </div>
                             <p className="role-subtitle" style={{ fontSize: '0.9rem', marginTop: '5px' }}>Control total del sistema</p>
                         </div>
-                        <form onSubmit={handleAdminSubmit} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
+                        <form onSubmit={handleAdminSubmit} className="responsive-content" style={{ gap: '35px', width: '100%' }}>
                             <input
                                 className="premium-input text-center"
                                 type="password"
@@ -283,7 +283,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                             </div>
                             <p className="role-subtitle" style={{ fontSize: '0.9rem', marginTop: '5px' }}>Inicia sesión para moderar</p>
                         </div>
-                        <form onSubmit={handleTeacherSubmit} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
+                        <form onSubmit={handleTeacherSubmit} className="responsive-content" style={{ gap: '35px', width: '100%' }}>
                             <input
                                 className="premium-input text-center"
                                 type="password"
@@ -314,7 +314,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                             </div>
                             <p className="role-subtitle" style={{ fontSize: '0.9rem', marginTop: '5px' }}>Comienza tu aventura</p>
                         </div>
-                        <form onSubmit={handleStudentStart} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
+                        <form onSubmit={handleStudentStart} className="responsive-content" style={{ gap: '35px', width: '100%' }}>
                             <input
                                 className="premium-input text-center"
                                 type="text"
@@ -364,7 +364,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                             <h3 style={{ fontSize: '1.1rem', color: '#a78bfa', marginTop: '8px', fontWeight: 800 }}>{selectedProject.name}</h3>
                             <p className="role-subtitle" style={{ fontSize: '0.85rem' }}>Clave para entrar</p>
                         </div>
-                        <form onSubmit={handleProjectPassSubmit} className="responsive-content" style={{ gap: '20px', width: '100%' }}>
+                        <form onSubmit={handleProjectPassSubmit} className="responsive-content" style={{ gap: '35px', width: '100%' }}>
                             <input
                                 className="premium-input text-center"
                                 type="password"
