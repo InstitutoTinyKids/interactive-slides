@@ -69,60 +69,51 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
     };
 
     const renderRoleSelection = () => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-                <div style={{ width: '90px', height: '90px', margin: '0 auto 15px' }}>
+        <div className="role-selection-grid">
+            <div className="role-header">
+                <div className="logo-container">
                     <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                 </div>
-                <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '4px', letterSpacing: '-1px', color: 'white' }}>Central TK</h1>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Selecciona tu rol para continuar</p>
+                <h1 className="role-title">Central TK</h1>
+                <p className="role-subtitle">Selecciona tu rol para continuar</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
+            <div className="role-buttons">
                 <button
                     onClick={() => setView('student_alias')}
-                    className="glass"
-                    style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', textAlign: 'left', transition: '0.2s', width: '100%' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    className="role-btn glass"
                 >
-                    <div style={{ width: '55px', height: '55px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', flexShrink: 0 }}>
+                    <div className="role-btn-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
                         <User size={28} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', margin: 0 }}>Student</h3>
+                        <h3 style={{ fontWeight: 800, color: 'white', margin: 0 }}>Student</h3>
                     </div>
                     <ChevronRight size={22} color="#3b82f6" />
                 </button>
 
                 <button
                     onClick={() => { setView('teacher_login'); setPass(''); }}
-                    className="glass"
-                    style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', textAlign: 'left', transition: '0.2s', width: '100%' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    className="role-btn glass"
                 >
-                    <div style={{ width: '55px', height: '55px', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', flexShrink: 0 }}>
+                    <div className="role-btn-icon" style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#a78bfa' }}>
                         <GraduationCap size={28} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', margin: 0 }}>Teacher</h3>
+                        <h3 style={{ fontWeight: 800, color: 'white', margin: 0 }}>Teacher</h3>
                     </div>
                     <ChevronRight size={22} color="#a78bfa" />
                 </button>
 
                 <button
                     onClick={() => { setView('admin_login'); setPass(''); }}
-                    className="glass"
-                    style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', textAlign: 'left', transition: '0.2s', width: '100%' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    className="role-btn glass"
                 >
-                    <div style={{ width: '55px', height: '55px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', flexShrink: 0 }}>
+                    <div className="role-btn-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
                         <Settings size={28} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', margin: 0 }}>Admin</h3>
+                        <h3 style={{ fontWeight: 800, color: 'white', margin: 0 }}>Admin</h3>
                     </div>
                     <ChevronRight size={22} color="#10b981" />
                 </button>
@@ -140,7 +131,7 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                     <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>Selecciona Programa</h2>
                 </div>
 
-                <div style={{ display: 'grid', gap: '10px', maxHeight: '400px', overflowY: 'auto', paddingRight: '5px' }}>
+                <div className="project-list-container" style={{ display: 'grid', gap: '10px', maxHeight: '400px', overflowY: 'auto', paddingRight: '5px' }}>
                     {activeProjects.length === 0 ? (
                         <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No hay programas activos en este momento.</p>
                     ) : (
@@ -158,7 +149,8 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                                     display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
-                                    transition: '0.2s'
+                                    transition: '0.2s',
+                                    background: 'transparent'
                                 }}
                                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -186,20 +178,14 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
             background: 'radial-gradient(circle at center, #1e1b4b, #050510)',
             position: 'fixed',
             top: 0,
-            left: 0
+            left: 0,
+            overflow: 'hidden'
         }}>
             {/* Background blur effects */}
             <div style={{ position: 'absolute', top: '10%', left: '10%', width: '300px', height: '300px', background: '#4f46e5', filter: 'blur(150px)', opacity: 0.2, pointerEvents: 'none' }}></div>
             <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: '300px', height: '300px', background: '#7c3aed', filter: 'blur(150px)', opacity: 0.2, pointerEvents: 'none' }}></div>
 
-            <div className="glass anim-up" style={{
-                width: '90%',
-                maxWidth: '450px',
-                padding: '40px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '20px'
-            }}>
+            <div className="entry-card glass anim-up">
                 {view === 'role_selection' && renderRoleSelection()}
 
                 {view === 'admin_login' && (
