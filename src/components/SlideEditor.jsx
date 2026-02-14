@@ -97,14 +97,30 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     const loadProjects = async () => {
         setLoading(true);
-        // Fetch Folders
-        const { data: folderData } = await supabase.from('folders').select('*').order('order_index', { ascending: true });
-        setFolders(folderData || []);
+        try {
+            // Fetch Folders (silently fail if table doesn't exist yet)
+            const { data: folderData, error: fError } = await supabase.from('folders').select('*').order('order_index', { ascending: true });
+            if (!fError) setFolders(folderData || []);
 
-        // Fetch Projects
-        const { data: projectData } = await supabase.from('projects').select('*').order('order_index', { ascending: true });
-        if (projectData) {
-            setProjects(projectData);
+            // Fetch Projects
+            // We first try to fetch with order_index, if it fails (because the column doesn't exist), we fallback to name
+            let { data: projectData, error: pError } = await supabase.from('projects')
+                .select('*')
+                .order('order_index', { ascending: true });
+
+            if (pError) {
+                // Fallback to name-based sorting if order_index is missing
+                const { data: fallbackData } = await supabase.from('projects')
+                    .select('*')
+                    .order('name');
+                projectData = fallbackData;
+            }
+
+            if (projectData) {
+                setProjects(projectData);
+            }
+        } catch (err) {
+            console.error('Error loading projects:', err);
         }
         setSelectedProjects([]);
         setLoading(false);

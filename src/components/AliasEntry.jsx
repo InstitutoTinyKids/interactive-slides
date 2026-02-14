@@ -18,10 +18,21 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
     }, []);
 
     const loadProjects = async () => {
-        const { data: folderData } = await supabase.from('folders').select('*').order('order_index');
-        setFolders(folderData || []);
-        const { data: projectData } = await supabase.from('projects').select('*').order('order_index');
-        setProjects(projectData || []);
+        try {
+            const { data: folderData, error: fError } = await supabase.from('folders').select('*').order('order_index');
+            if (!fError) setFolders(folderData || []);
+
+            let { data: projectData, error: pError } = await supabase.from('projects').select('*').order('order_index');
+
+            if (pError) {
+                const { data: fallbackData } = await supabase.from('projects').select('*').order('name');
+                projectData = fallbackData;
+            }
+
+            setProjects(projectData || []);
+        } catch (err) {
+            console.error('Error loading selection projects:', err);
+        }
     };
 
     const handleAdminSubmit = (e) => {
