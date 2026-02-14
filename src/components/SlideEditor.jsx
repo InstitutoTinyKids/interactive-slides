@@ -729,41 +729,41 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 className="glass"
                                                 data-folder-id={f.id}
                                                 style={{
-                                                    padding: '25px',
+                                                    padding: '24px',
                                                     display: 'flex',
                                                     flexDirection: 'column',
-                                                    gap: '20px',
+                                                    gap: '18px',
                                                     position: 'relative',
                                                     cursor: isSortMode ? 'grab' : 'default',
-                                                    border: '1px solid rgba(255,255,255,0.1)',
-                                                    borderRadius: '24px'
+                                                    border: '1px solid rgba(255,255,255,0.08)',
+                                                    borderRadius: '32px',
+                                                    background: '#0a0a1a'
                                                 }}
-                                                onViewportEnter={() => { }} // dummy to trigger reorder detection
                                             >
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                                    <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', color: '#10b981' }}>
-                                                        <Folder size={28} />
+                                                    <div style={{ padding: '14px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '16px', color: '#10b981' }}>
+                                                        <Folder size={32} />
                                                     </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                                                        <div style={{ fontSize: '0.65rem', fontWeight: 900, padding: '4px 12px', borderRadius: '100px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', textTransform: 'uppercase' }}>Carpeta</div>
-                                                        <div style={{ fontSize: '0.6rem', fontWeight: 900, padding: '2px 8px', borderRadius: '4px', background: isActiva ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: isActiva ? '#10b981' : '#ef4444' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                                                        <div style={{ fontSize: '0.65rem', fontWeight: 900, padding: '4px 12px', borderRadius: '100px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Carpeta</div>
+                                                        <div style={{ fontSize: '0.6rem', fontWeight: 900, padding: '3px 8px', borderRadius: '6px', background: isActiva ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: isActiva ? '#10b981' : '#ef4444' }}>
                                                             {isActiva ? 'ACTIVA' : 'VACIA'}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '4px', fontWeight: 900 }}>{f.name}</h3>
-                                                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{projectsInFolder.length} proyectos</span>
+                                                    <h3 style={{ fontSize: '1.8rem', color: 'white', marginBottom: '4px', fontWeight: 900, textTransform: 'uppercase' }}>{f.name}</h3>
+                                                    <span style={{ fontSize: '0.9rem', color: '#64748b' }}>{projectsInFolder.length} proyectos</span>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', height: '48px' }}>
-                                                    <button onClick={() => !isSortMode && setCurrentFolderId(f.id)} className="btn-premium" style={{ flex: 1.5, height: '100%', background: 'linear-gradient(135deg, #10b981, #059669)' }} disabled={isSortMode}>Entrar</button>
-                                                    <button onClick={() => handleEditFolder(f)} className="btn-outline" style={{ width: '48px', height: '100%' }} title="Editar Nombre"><Edit2 size={18} /></button>
-                                                    <button onClick={() => handleDuplicateFolder(f)} className="btn-outline" style={{ width: '48px', height: '100%' }} title="Duplicar"><Copy size={18} /></button>
-                                                    <button onClick={() => handleDeleteFolder(f.id)} className="btn-outline" style={{ width: '48px', height: '100%', color: '#ef4444' }} title="Eliminar"><Trash2 size={18} /></button>
+                                                <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', height: '52px' }}>
+                                                    <button onClick={() => !isSortMode && setCurrentFolderId(f.id)} className="btn-premium" style={{ flex: 1.5, height: '100%', background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '1.1rem', fontWeight: 800, borderRadius: '16px' }} disabled={isSortMode}>Entrar</button>
+                                                    <button onClick={() => handleEditFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px' }} title="Editar Nombre"><Edit2 size={20} /></button>
+                                                    <button onClick={() => handleDuplicateFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px' }} title="Duplicar"><Copy size={20} /></button>
+                                                    <button onClick={() => handleDeleteFolder(f.id)} className="btn-outline" style={{ width: '52px', height: '100%', color: '#ef4444', borderRadius: '14px' }} title="Eliminar"><Trash2 size={20} /></button>
                                                 </div>
                                                 {isSortMode && (
                                                     <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
-                                                        <GripVertical size={16} color="rgba(255,255,255,0.3)" />
+                                                        <GripVertical size={20} color="rgba(255,255,255,0.2)" />
                                                     </div>
                                                 )}
                                             </Reorder.Item>
@@ -798,14 +798,14 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             value={p}
                                             className="glass"
                                             style={{
-                                                padding: '30px',
+                                                padding: '32px',
                                                 display: 'flex',
                                                 flexDirection: 'column',
-                                                gap: '25px',
+                                                gap: '24px',
                                                 position: 'relative',
                                                 cursor: isSortMode ? 'grab' : 'default',
-                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                borderRadius: '28px',
+                                                border: '1px solid rgba(255,255,255,0.08)',
+                                                borderRadius: '32px',
                                                 background: '#0a0a1a'
                                             }}
                                             drag={isSortMode}
@@ -821,42 +821,42 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 }
                                             }}
                                         >
-                                            {/* Top Section: Icon, Badges and Checkbox */}
+                                            {/* Top badges and checkbox */}
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                                <div style={{ padding: '15px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '14px', color: '#10b981' }}>
-                                                    <ShieldCheck size={32} />
+                                                <div style={{ padding: '16px', background: 'rgba(16, 185, 129, 0.12)', borderRadius: '18px', color: '#10b981' }}>
+                                                    <ShieldCheck size={36} />
                                                 </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <div style={{ fontSize: '0.7rem', fontWeight: 800, padding: '4px 14px', borderRadius: '100px', background: isQuiz ? 'rgba(59, 130, 246, 0.2)' : 'rgba(124, 58, 237, 0.2)', color: isQuiz ? '#a78bfa' : '#a78bfa', textTransform: 'uppercase' }}>{isQuiz ? 'QUIZ' : 'GUIA'}</div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{ fontSize: '0.75rem', fontWeight: 900, padding: '5px 16px', borderRadius: '100px', background: isQuiz ? 'rgba(59, 130, 246, 0.25)' : 'rgba(124, 58, 237, 0.25)', color: isQuiz ? '#a78bfa' : '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{isQuiz ? 'QUIZ' : 'GUIA'}</div>
                                                         {!isSortMode && (
                                                             <input
                                                                 type="checkbox"
                                                                 checked={selectedProjects.includes(p.id)}
                                                                 onChange={() => toggleProjectSelection(p.id)}
-                                                                style={{ width: '24px', height: '24px', accentColor: '#3b82f6', cursor: 'pointer', backgroundColor: 'white', border: 'none' }}
+                                                                style={{ width: '26px', height: '26px', accentColor: '#3b82f6', cursor: 'pointer', backgroundColor: 'white', border: 'none', borderRadius: '4px' }}
                                                             />
                                                         )}
                                                     </div>
-                                                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: p.is_active ? '#10b981' : '#64748b' }}>{p.is_active ? 'Activo' : 'Pausado'}</div>
+                                                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: p.is_active ? '#10b981' : '#64748b' }}>{p.is_active ? 'Activo' : 'Pausado'}</div>
                                                 </div>
                                             </div>
 
                                             {/* Middle Section: Title and Key */}
                                             <div>
-                                                <h3 style={{ fontSize: '1.8rem', color: 'white', marginBottom: '20px', fontWeight: 900 }}>{p.name}</h3>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', color: '#94a3b8', background: 'rgba(0,0,0,0.3)', padding: '14px 18px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.03)', width: 'fit-content' }}>
-                                                    <Key size={18} />
+                                                <h3 style={{ fontSize: '2.2rem', color: 'white', marginBottom: '22px', fontWeight: 900, lineHeight: 1.1 }}>{p.name}</h3>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1rem', color: '#94a3b8', background: 'rgba(0,0,0,0.4)', padding: '14px 22px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)', width: 'fit-content' }}>
+                                                    <Key size={20} />
                                                     <span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span>
                                                 </div>
                                             </div>
 
                                             {/* Bottom Section: Action Buttons */}
-                                            <div style={{ display: 'flex', gap: '12px', marginTop: 'auto', height: '56px' }}>
+                                            <div style={{ display: 'flex', gap: '12px', marginTop: 'auto', height: '62px' }}>
                                                 <button
                                                     onClick={() => !isSortMode && (isQuiz ? onOpenQuiz(p) : handleSelectProject(p))}
                                                     className="btn-premium"
-                                                    style={{ flex: 1.5, height: '100%', fontSize: '1.2rem', fontWeight: 900, borderRadius: '18px', background: 'linear-gradient(135deg, #3b82f6, #4f46e5)' }}
+                                                    style={{ flex: 1.5, height: '100%', fontSize: '1.4rem', fontWeight: 900, borderRadius: '20px', background: 'linear-gradient(135deg, #4f46e5, #3b82f6)' }}
                                                     disabled={isSortMode}
                                                 >
                                                     Editar
@@ -864,15 +864,15 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 <button
                                                     onClick={() => !isSortMode && onPreview(p, true)}
                                                     className="btn-outline"
-                                                    style={{ flex: 1.2, height: '100%', background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '1.2rem', fontWeight: 700, borderRadius: '18px' }}
+                                                    style={{ flex: 1.2, height: '100%', background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', fontSize: '1.3rem', fontWeight: 700, borderRadius: '20px' }}
                                                     disabled={isSortMode}
                                                 >
-                                                    <Eye size={22} /> Preview
+                                                    <Eye size={24} /> Preview
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
                                                     className="btn-outline"
-                                                    style={{ width: '56px', height: '100%', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', borderColor: 'rgba(255,255,255,0.1)' }}
+                                                    style={{ width: '56px', height: '100%', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', borderColor: 'rgba(255,255,255,0.1)' }}
                                                     title="Duplicar"
                                                 >
                                                     <Copy size={24} />
@@ -881,7 +881,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                                             {isSortMode && (
                                                 <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
-                                                    <GripVertical size={20} color="rgba(255,255,255,0.2)" />
+                                                    <GripVertical size={24} color="rgba(255,255,255,0.2)" />
                                                 </div>
                                             )}
                                         </Reorder.Item>
