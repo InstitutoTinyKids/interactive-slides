@@ -1123,63 +1123,68 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: isMobile ? 'column' : 'row', background: '#050510', overflow: 'hidden' }} onMouseMove={handleCanvasMouseMove} onMouseUp={() => { setDraggingElementId(null); setResizingElementId(null); }} onTouchEnd={() => { setDraggingElementId(null); setResizingElementId(null); }} onClick={(e) => { if (e.target === e.currentTarget) setSelectedElementId(null); }}>
             {/* Left Panel: Slides - Collapsible in compact mode */}
             <aside style={{
-                width: showSlidesPanel ? '200px' : '0px',
-                minWidth: showSlidesPanel ? '200px' : '0px',
-                borderRight: showSlidesPanel ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                width: showSlidesPanel ? (isMobile ? '100%' : '200px') : '0px',
+                minWidth: showSlidesPanel ? (isMobile ? '100%' : '200px') : '0px',
+                height: (isMobile && showSlidesPanel) ? '150px' : 'auto',
+                borderRight: (showSlidesPanel && !isMobile) ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                borderBottom: (showSlidesPanel && isMobile) ? '1px solid rgba(255,255,255,0.05)' : 'none',
                 background: '#0a0a1a',
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: isMobile ? 'row' : 'column',
                 transition: 'all 0.3s ease',
                 overflow: 'hidden'
             }}>
-                <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#475569' }}>Diapositivas</span>
-                    <button onClick={addSlide} style={{ background: 'rgba(124, 58, 237, 0.1)', border: 'none', color: '#a78bfa', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}><Plus size={16} /></button>
+                <div style={{ padding: isMobile ? '10px' : '20px', borderBottom: isMobile ? 'none' : '1px solid rgba(255,255,255,0.05)', borderRight: isMobile ? '1px solid rgba(255,255,255,0.05)' : 'none', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: '#475569' }}>{isMobile ? 'Lám.' : 'Diapositivas'}</span>
+                    <button onClick={addSlide} style={{ background: 'rgba(124, 58, 237, 0.1)', border: 'none', color: '#a78bfa', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}><Plus size={14} /></button>
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ flex: 1, overflowX: isMobile ? 'auto' : 'hidden', overflowY: isMobile ? 'hidden' : 'auto', padding: '10px', display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: '10px' }}>
                     {localSlides.map((slide, idx) => (
-                        <div key={slide.id} onClick={() => setSelectedIdx(idx)} style={{ position: 'relative', borderRadius: '12px', border: `2px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'} `, background: '#000', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s', boxShadow: selectedIdx === idx ? '0 0 15px rgba(124, 58, 237, 0.3)' : 'none' }}>
-                            <span style={{ position: 'absolute', top: '5px', left: '5px', zIndex: 10, fontSize: '10px', fontWeight: 900, background: 'rgba(0,0,0,0.7)', width: '20px', height: '20px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>{idx + 1}</span>
-                            {slide.image_url ? <img src={slide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}><ImageIcon size={24} color="white" /></div>}
-                            <button onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx); }} style={{ position: 'absolute', top: '5px', right: '5px', zIndex: 10, background: 'rgba(239, 68, 68, 0.9)', border: 'none', color: 'white', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                        <div key={slide.id} onClick={() => setSelectedIdx(idx)} style={{ position: 'relative', borderRadius: '10px', border: `2px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'} `, background: '#000', width: isMobile ? '100px' : 'auto', minWidth: isMobile ? '100px' : 'auto', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s', boxShadow: selectedIdx === idx ? '0 0 10px rgba(124, 58, 237, 0.3)' : 'none' }}>
+                            <span style={{ position: 'absolute', top: '3px', left: '3px', zIndex: 10, fontSize: '9px', fontWeight: 900, background: 'rgba(0,0,0,0.7)', width: '16px', height: '16px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>{idx + 1}</span>
+                            {slide.image_url ? <img src={slide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}><ImageIcon size={18} color="white" /></div>}
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx); }} style={{ position: 'absolute', top: '3px', right: '3px', zIndex: 10, background: 'rgba(239, 68, 68, 0.9)', border: 'none', color: 'white', padding: '4px', borderRadius: '4px', cursor: 'pointer' }}><Trash2 size={10} /></button>
                         </div>
                     ))}
                 </div>
             </aside>
 
             <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #111, #050510)' }}>
-                <header style={{ height: '70px', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(10,10,20,0.8)', backdropFilter: 'blur(15px)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        {/* Toggle Slides Panel - Only in compact mode */}
-                        {isCompact && (
+                <header style={{ height: isMobile ? 'auto' : '70px', padding: isMobile ? '10px' : '0 20px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(10,10,20,0.8)', backdropFilter: 'blur(15px)', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'space-between' : 'flex-start' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            {/* Toggle Slides Panel - Only in compact mode */}
+                            {isCompact && (
+                                <button
+                                    onClick={() => setShowSlidesPanel(!showSlidesPanel)}
+                                    style={{ background: showSlidesPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '8px', borderRadius: '10px', color: showSlidesPanel ? '#a78bfa' : '#94a3b8', cursor: 'pointer' }}
+                                    title="Mostrar/Ocultar Diapositivas"
+                                >
+                                    <Layers size={18} />
+                                </button>
+                            )}
                             <button
-                                onClick={() => setShowSlidesPanel(!showSlidesPanel)}
-                                style={{ background: showSlidesPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: showSlidesPanel ? '#a78bfa' : '#94a3b8', cursor: 'pointer' }}
-                                title="Mostrar/Ocultar Diapositivas"
+                                onClick={() => setShowGallery(true)}
+                                title="IR A GALERIA"
+                                style={{
+                                    padding: '10px',
+                                    background: 'rgba(59, 130, 246, 0.1)',
+                                    borderRadius: '12px',
+                                    color: '#3b82f6',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: '0.3s'
+                                }}
                             >
-                                <Layers size={20} />
+                                <LayoutGrid size={20} />
                             </button>
+                        </div>
+                        {isMobile && (
+                            <h2 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'white', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '150px' }}>{currentProject?.name}</h2>
                         )}
-                        <button
-                            onClick={() => setShowGallery(true)}
-                            title="IR A GALERIA"
-                            style={{
-                                padding: '12px',
-                                background: 'rgba(59, 130, 246, 0.1)',
-                                borderRadius: '15px',
-                                color: '#3b82f6',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: '0.3s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
-                        >
-                            <LayoutGrid size={24} />
-                        </button>
                         {!isMobile && (
                             <div>
                                 <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{currentProject?.name}</h2>
@@ -1187,31 +1192,31 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             </div>
                         )}
                     </div>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem' }}><Eye size={16} /> {!isCompact && 'Resultados'}</button>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-end', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                        <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', fontSize: '0.75rem' }}><Eye size={14} /> Resultados</button>
                         <button
                             onClick={async () => {
                                 const saved = await handleSaveAll(false);
                                 if (saved) onPreview(currentProject, false);
                             }}
                             className="btn-outline"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', fontSize: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}
                             disabled={loading}
                         >
-                            <Play size={16} /> {!isCompact && (loading ? 'Guardando...' : 'Preview')}
+                            <Play size={14} /> Preview
                         </button>
-                        <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
-                            {isActive ? <Pause size={16} /> : <Play size={16} />} {!isCompact && (isActive ? 'Suspender' : 'Activar')}
+                        <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', fontSize: '0.75rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
+                            {isActive ? <Pause size={14} /> : <Play size={14} />} {!isMobile && (isActive ? 'Suspender' : 'Activar')}
                         </button>
-                        <button onClick={handleSaveAll} className="btn-premium" style={{ padding: '10px 15px', fontSize: '0.8rem' }}><Save size={16} /> {!isCompact && 'Guardar'}</button>
+                        <button onClick={handleSaveAll} className="btn-premium" style={{ padding: '8px 12px', fontSize: '0.75rem' }}><Save size={14} /> Guardar</button>
                         {/* Toggle Settings Panel - Only in compact mode */}
                         {isCompact && (
                             <button
                                 onClick={() => setShowSettingsPanel(!showSettingsPanel)}
-                                style={{ background: showSettingsPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: showSettingsPanel ? '#a78bfa' : '#94a3b8', cursor: 'pointer' }}
+                                style={{ background: showSettingsPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '8px', borderRadius: '10px', color: showSettingsPanel ? '#a78bfa' : '#94a3b8', cursor: 'pointer' }}
                                 title="Mostrar/Ocultar Ajustes"
                             >
-                                <SettingsIcon size={20} />
+                                <SettingsIcon size={18} />
                             </button>
                         )}
                     </div>
@@ -1369,10 +1374,12 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                     {/* Right Panel: Settings - Collapsible in compact mode */}
                     <div style={{
-                        width: showSettingsPanel ? '320px' : '0px',
-                        minWidth: showSettingsPanel ? '320px' : '0px',
+                        width: showSettingsPanel ? (isMobile ? '100%' : '320px') : '0px',
+                        minWidth: showSettingsPanel ? (isMobile ? '100%' : '320px') : '0px',
+                        height: (isMobile && showSettingsPanel) ? 'auto' : '100%',
                         background: 'rgba(10, 10, 20, 0.95)',
-                        borderLeft: showSettingsPanel ? '1px solid var(--border)' : 'none',
+                        borderLeft: (showSettingsPanel && !isMobile) ? '1px solid var(--border)' : 'none',
+                        borderTop: (showSettingsPanel && isMobile) ? '1px solid var(--border)' : 'none',
                         display: 'flex',
                         flexDirection: 'column',
                         overflow: 'hidden',
