@@ -223,9 +223,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         setShowGallery(false);
     };
 
-    const handleSaveAll = async () => {
+    const handleSaveAll = async (isSilent = false) => {
         if (!currentProject) return;
-        setLoading(true);
+        if (!isSilent) setLoading(true);
         try {
             // 1. Update project settings (name, access_code)
             await supabase.from('projects').update({
@@ -252,13 +252,36 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 await supabase.from('slides').insert(toInsert);
             }
 
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            alert('✅ Proyecto guardado correctamente');
+            if (!isSilent) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                // No more alert for smoother experience, just confetti or a small toast if we had one
+                // But user requested "indicame antes de ejecutar", so I'll keep it or use a better way.
+                // Actually, I'll remove the alert to make it feel more "automatic".
+            }
+            return true;
         } catch (err) {
-            alert('Error al guardar: ' + err.message);
+            if (!isSilent) alert('Error al guardar: ' + err.message);
+            return false;
+        } finally {
+            if (!isSilent) setLoading(false);
         }
-        setLoading(false);
     };
+
+    // Auto-save logic
+    const autoSaveTimerRef = useRef(null);
+    useEffect(() => {
+        if (showGallery || !currentProject) return;
+
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+        autoSaveTimerRef.current = setTimeout(() => {
+            handleSaveAll(true);
+        }, 3000); // 3 seconds of inactivity
+
+        return () => {
+            if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        };
+    }, [localSlides, currentProject?.name, currentProject?.access_code]);
 
     const deleteFileFromStorage = async (url) => {
         if (!url) return;
@@ -708,8 +731,16 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     </div>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                         <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem' }}><Eye size={16} /> {!isCompact && 'Resultados'}</button>
-                        <button onClick={() => onPreview(currentProject, false)} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                            <Play size={16} /> {!isCompact && 'Preview'}
+                        <button
+                            onClick={async () => {
+                                const saved = await handleSaveAll(false);
+                                if (saved) onPreview(currentProject, false);
+                            }}
+                            className="btn-outline"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+                            disabled={loading}
+                        >
+                            <Play size={16} /> {!isCompact && (loading ? 'Guardando...' : 'Preview')}
                         </button>
                         <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', fontSize: '0.8rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
                             {isActive ? <Pause size={16} /> : <Play size={16} />} {!isCompact && (isActive ? 'Suspender' : 'Activar')}

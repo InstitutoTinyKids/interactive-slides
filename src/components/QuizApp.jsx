@@ -136,23 +136,48 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
         setLoading(false);
     };
 
-    const handleSaveQuiz = async (updatedQuestions) => {
+    const handleSaveQuiz = async (updatedQuestions, isSilent = false) => {
         if (!project || !project.id) return;
-        setLoading(true);
+        if (!isSilent) setLoading(true);
         try {
             const { error } = await supabase
                 .from('projects')
-                .update({ questions: updatedQuestions })
+                .update({
+                    questions: updatedQuestions,
+                    name: projectLocal?.name,
+                    access_code: localAccessCode
+                })
                 .eq('id', project.id);
 
             if (error) throw error;
             setQuestions(updatedQuestions);
-            alert('✅ Quiz guardado correctamente');
+            if (!isSilent) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+            return true;
         } catch (err) {
-            alert('Error al guardar: ' + err.message);
+            if (!isSilent) alert('Error al guardar: ' + err.message);
+            return false;
+        } finally {
+            if (!isSilent) setLoading(false);
         }
-        setLoading(false);
     };
+
+    // Auto-save logic
+    const autoSaveTimerRef = useRef(null);
+    useEffect(() => {
+        if (view !== 'admin' || !project?.id) return;
+
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+        autoSaveTimerRef.current = setTimeout(() => {
+            handleSaveQuiz(questions, true);
+        }, 3000);
+
+        return () => {
+            if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        };
+    }, [questions, projectLocal?.name, localAccessCode, view]);
 
     // --- LOGICA DEL CRONOMETRO ---
     useEffect(() => {
@@ -326,11 +351,18 @@ export default function QuizApp({ onExit, isAdmin = false, role = 'student', pro
                             <Eye size={18} /> Resultados
                         </button>
                         <button
-                            onClick={() => onPreview ? onPreview(projectLocal) : window.dispatchEvent(new CustomEvent('previewProject', { detail: projectLocal }))}
+                            onClick={async () => {
+                                const saved = await handleSaveQuiz(questions, false);
+                                if (saved) {
+                                    if (onPreview) onPreview(projectLocal);
+                                    else window.dispatchEvent(new CustomEvent('previewProject', { detail: projectLocal }));
+                                }
+                            }}
                             className="btn-outline"
                             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+                            disabled={loading}
                         >
-                            <Play size={18} /> Preview
+                            <Play size={18} /> {loading ? 'Prep. Preview...' : 'Preview'}
                         </button>
                         <button
                             onClick={onToggleActive}
