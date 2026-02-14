@@ -289,8 +289,8 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         cursor: tool === 'drag' ? 'grab' : 'default',
                                         pointerEvents: 'auto',
                                         touchAction: 'none',
-                                        width: `${(item.imageSize || 100) / 100 * 12}cqw`,
-                                        height: `${(item.imageSize || 100) / 100 * 12}cqw`,
+                                        width: `${(item.imageSize || 100) / 100 * 7}cqw`,
+                                        height: `${(item.imageSize || 100) / 100 * 7}cqw`,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
