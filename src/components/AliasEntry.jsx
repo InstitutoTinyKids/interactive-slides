@@ -242,17 +242,17 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'admin_login' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header" style={{ marginBottom: '20px' }}>
-                            <div className="logo-container" style={{ width: '120px', height: '120px', marginBottom: '30px' }}>
+                        <div className="responsive-header" style={{ marginBottom: '15px' }}>
+                            <div className="logo-container" style={{ width: '100px', height: '100px', marginBottom: '20px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '10px', borderRadius: '12px' }}><ChevronLeft size={24} /></button>
-                                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'white', margin: 0 }}>Administrador</h2>
+                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '8px', borderRadius: '10px' }}><ChevronLeft size={20} /></button>
+                                <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'white', margin: 0 }}>Administrador</h2>
                             </div>
-                            <p className="role-subtitle" style={{ fontSize: '1rem', marginTop: '10px' }}>Control total del sistema</p>
+                            <p className="role-subtitle" style={{ fontSize: '0.9rem', marginTop: '5px' }}>Control total del sistema</p>
                         </div>
-                        <form onSubmit={handleAdminSubmit} className="responsive-content" style={{ gap: '25px', width: '100%' }}>
+                        <form onSubmit={handleAdminSubmit} className="responsive-content" style={{ gap: '15px', width: '100%' }}>
                             <input
                                 className="premium-input text-center"
                                 type="password"
@@ -261,11 +261,11 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                                 onChange={(e) => setPass(e.target.value)}
                                 autoFocus
                                 required
-                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '70px', fontSize: '1.2rem', background: 'rgba(255,255,255,0.03)' }}
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '65px', fontSize: '1.1rem', background: 'rgba(255,255,255,0.03)' }}
                             />
-                            <button type="submit" className="btn-premium" style={{ padding: '22px', fontSize: '1.1rem', borderRadius: '20px' }}>
+                            <button type="submit" className="btn-premium" style={{ padding: '20px', fontSize: '1rem', borderRadius: '16px', width: '100%' }}>
                                 Acceder al Panel
-                                <Lock size={22} />
+                                <Lock size={20} />
                             </button>
                         </form>
                     </div>
@@ -273,17 +273,17 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'teacher_login' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header" style={{ marginBottom: '20px' }}>
-                            <div className="logo-container" style={{ width: '120px', height: '120px', marginBottom: '30px' }}>
+                        <div className="responsive-header" style={{ marginBottom: '15px' }}>
+                            <div className="logo-container" style={{ width: '100px', height: '100px', marginBottom: '20px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '10px', borderRadius: '12px' }}><ChevronLeft size={24} /></button>
-                                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'white', margin: 0 }}>Teacher Mode</h2>
+                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '8px', borderRadius: '10px' }}><ChevronLeft size={20} /></button>
+                                <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'white', margin: 0 }}>Teacher Mode</h2>
                             </div>
-                            <p className="role-subtitle" style={{ fontSize: '1rem', marginTop: '10px' }}>Inicia sesión para moderar las lecciones</p>
+                            <p className="role-subtitle" style={{ fontSize: '0.9rem', marginTop: '5px' }}>Inicia sesión para moderar</p>
                         </div>
-                        <form onSubmit={handleTeacherSubmit} className="responsive-content" style={{ gap: '25px', width: '100%' }}>
+                        <form onSubmit={handleTeacherSubmit} className="responsive-content" style={{ gap: '15px', width: '100%' }}>
                             <input
                                 className="premium-input text-center"
                                 type="password"
@@ -292,11 +292,11 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                                 onChange={(e) => setPass(e.target.value)}
                                 autoFocus
                                 required
-                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '70px', fontSize: '1.2rem', background: 'rgba(255,255,255,0.03)' }}
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '65px', fontSize: '1.1rem', background: 'rgba(255,255,255,0.03)' }}
                             />
-                            <button type="submit" className="btn-premium" style={{ padding: '22px', fontSize: '1.1rem', borderRadius: '20px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+                            <button type="submit" className="btn-premium" style={{ padding: '20px', fontSize: '1rem', borderRadius: '16px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', width: '100%' }}>
                                 Acceder como Teacher
-                                <GraduationCap size={22} />
+                                <GraduationCap size={20} />
                             </button>
                         </form>
                     </div>
@@ -304,32 +304,30 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'student_alias' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header" style={{ marginBottom: '20px' }}>
-                            <div className="logo-container" style={{ width: '120px', height: '120px', marginBottom: '30px' }}>
+                        <div className="responsive-header" style={{ marginBottom: '15px' }}>
+                            <div className="logo-container" style={{ width: '100px', height: '100px', marginBottom: '20px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '10px', borderRadius: '12px' }}><ChevronLeft size={24} /></button>
-                                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'white', margin: 0 }}>Estudiante</h2>
+                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '8px', borderRadius: '10px' }}><ChevronLeft size={20} /></button>
+                                <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'white', margin: 0 }}>Estudiante</h2>
                             </div>
-                            <p className="role-subtitle" style={{ fontSize: '1rem', marginTop: '10px' }}>Ingresa tu apodo para comenzar</p>
+                            <p className="role-subtitle" style={{ fontSize: '0.9rem', marginTop: '5px' }}>Comienza tu aventura</p>
                         </div>
-                        <form onSubmit={handleStudentStart} className="responsive-content" style={{ gap: '25px', width: '100%' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                <input
-                                    className="premium-input text-center"
-                                    type="text"
-                                    placeholder="Tu nombre o apodo..."
-                                    value={alias}
-                                    onChange={(e) => setAlias(e.target.value)}
-                                    autoFocus
-                                    required
-                                    style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '70px', fontSize: '1.2rem', background: 'rgba(255,255,255,0.03)' }}
-                                />
-                            </div>
-                            <button type="submit" className="btn-premium" style={{ padding: '22px', fontSize: '1.1rem', borderRadius: '20px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+                        <form onSubmit={handleStudentStart} className="responsive-content" style={{ gap: '15px', width: '100%' }}>
+                            <input
+                                className="premium-input text-center"
+                                type="text"
+                                placeholder="Tu nombre o apodo..."
+                                value={alias}
+                                onChange={(e) => setAlias(e.target.value)}
+                                autoFocus
+                                required
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '65px', fontSize: '1.1rem', background: 'rgba(255,255,255,0.03)' }}
+                            />
+                            <button type="submit" className="btn-premium" style={{ padding: '20px', fontSize: '1rem', borderRadius: '16px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', width: '100%' }}>
                                 Ver Programas
-                                <ArrowRight size={22} />
+                                <ArrowRight size={20} />
                             </button>
                         </form>
                     </div>
@@ -355,18 +353,18 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'project_pass' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header" style={{ marginBottom: '20px' }}>
-                            <div className="logo-container" style={{ width: '120px', height: '120px', marginBottom: '30px' }}>
+                        <div className="responsive-header" style={{ marginBottom: '15px' }}>
+                            <div className="logo-container" style={{ width: '100px', height: '100px', marginBottom: '20px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <button type="button" onClick={() => setView('project_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '10px', borderRadius: '12px' }}><ChevronLeft size={24} /></button>
-                                <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white', margin: 0 }}>Acceso</h2>
+                                <button type="button" onClick={() => setView('project_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '8px', borderRadius: '10px' }}><ChevronLeft size={20} /></button>
+                                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'white', margin: 0 }}>Acceso</h2>
                             </div>
-                            <h3 style={{ fontSize: '1.2rem', color: '#a78bfa', marginTop: '10px', fontWeight: 800 }}>{selectedProject.name}</h3>
-                            <p className="role-subtitle" style={{ fontSize: '0.9rem' }}>Ingresa la clave para entrar</p>
+                            <h3 style={{ fontSize: '1.1rem', color: '#a78bfa', marginTop: '8px', fontWeight: 800 }}>{selectedProject.name}</h3>
+                            <p className="role-subtitle" style={{ fontSize: '0.85rem' }}>Clave para entrar</p>
                         </div>
-                        <form onSubmit={handleProjectPassSubmit} className="responsive-content" style={{ gap: '25px', width: '100%' }}>
+                        <form onSubmit={handleProjectPassSubmit} className="responsive-content" style={{ gap: '15px', width: '100%' }}>
                             <input
                                 className="premium-input text-center"
                                 type="password"
@@ -375,11 +373,11 @@ export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
                                 onChange={(e) => setProjectPass(e.target.value)}
                                 autoFocus
                                 required
-                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '70px', fontSize: '1.2rem', background: 'rgba(255,255,255,0.03)' }}
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '65px', fontSize: '1.1rem', background: 'rgba(255,255,255,0.03)' }}
                             />
-                            <button type="submit" className="btn-premium" style={{ padding: '22px', fontSize: '1.1rem', borderRadius: '20px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+                            <button type="submit" className="btn-premium" style={{ padding: '20px', fontSize: '1rem', borderRadius: '16px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', width: '100%' }}>
                                 Entrar a la Clase
-                                <Key size={22} />
+                                <Key size={20} />
                             </button>
                         </form>
                     </div>
