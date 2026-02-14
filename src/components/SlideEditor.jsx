@@ -236,8 +236,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         setTempProjects(prev => prev.map(p => p.id === projectId ? { ...p, folder_id: folderId } : p));
     };
 
-    const handleDuplicateProject = async (project, targetFolderId = null) => {
-        setLoading(true);
+    const handleDuplicateProject = async (project, targetFolderId = null, silent = false) => {
+        if (!silent) setLoading(true);
         try {
             const newId = project.id.startsWith('quiz-') ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID();
             const newName = `${project.name} (Copia)`;
@@ -324,10 +324,33 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 await supabase.from('slides').insert(clonedSlides);
             }
 
-            loadProjects();
-            alert('✅ Proyecto y archivos duplicados correctamente');
+            if (!silent) {
+                loadProjects();
+                alert('✅ Proyecto y archivos duplicados correctamente');
+            }
         } catch (err) {
-            alert('Error al duplicar: ' + err.message);
+            if (!silent) alert('Error al duplicar: ' + err.message);
+            else throw err;
+        } finally {
+            if (!silent) setLoading(false);
+        }
+    };
+
+    const handleDuplicateSelected = async () => {
+        if (selectedProjects.length === 0) return;
+        setLoading(true);
+        try {
+            for (const id of selectedProjects) {
+                const project = projects.find(p => p.id === id);
+                if (project) {
+                    await handleDuplicateProject(project, project.folder_id, true);
+                }
+            }
+            setSelectedProjects([]);
+            loadProjects();
+            alert(`✅ ${selectedProjects.length} proyectos duplicados correctamente`);
+        } catch (err) {
+            alert('Error al duplicar selección: ' + err.message);
         }
         setLoading(false);
     };
@@ -596,9 +619,42 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     </div>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
                         {selectedProjects.length > 0 && (
-                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '12px 25px' }}>
-                                Eliminar ({selectedProjects.length})
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    onClick={handleDuplicateSelected}
+                                    className="btn-outline"
+                                    style={{
+                                        background: 'rgba(59, 130, 246, 0.1)',
+                                        color: '#3b82f6',
+                                        borderColor: 'rgba(59, 130, 246, 0.2)',
+                                        padding: '12px 25px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        fontWeight: 800
+                                    }}
+                                >
+                                    <Copy size={20} /> Duplicar ({selectedProjects.length})
+                                </button>
+                                <button
+                                    onClick={handleDeleteSelected}
+                                    className="btn-outline"
+                                    style={{
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        color: '#ef4444',
+                                        borderColor: 'rgba(239, 68, 68, 0.2)',
+                                        padding: '12px 25px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        fontWeight: 800
+                                    }}
+                                >
+                                    <Trash2 size={20} /> Eliminar ({selectedProjects.length})
+                                </button>
+                            </div>
                         )}
 
                         <button onClick={onExit} className="btn-outline" style={{ padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -756,10 +812,10 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                     <span style={{ fontSize: '0.9rem', color: '#64748b' }}>{projectsInFolder.length} proyectos</span>
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', height: '52px' }}>
-                                                    <button onClick={() => !isSortMode && setCurrentFolderId(f.id)} className="btn-premium" style={{ flex: 1.5, height: '100%', background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '1.1rem', fontWeight: 800, borderRadius: '16px' }} disabled={isSortMode}>Entrar</button>
-                                                    <button onClick={() => handleEditFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px' }} title="Editar Nombre"><Edit2 size={20} /></button>
-                                                    <button onClick={() => handleDuplicateFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px' }} title="Duplicar"><Copy size={20} /></button>
-                                                    <button onClick={() => handleDeleteFolder(f.id)} className="btn-outline" style={{ width: '52px', height: '100%', color: '#ef4444', borderRadius: '14px' }} title="Eliminar"><Trash2 size={20} /></button>
+                                                    <button onClick={() => !isSortMode && setCurrentFolderId(f.id)} className="btn-premium" style={{ flex: 1.5, height: '100%', background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '1.1rem', fontWeight: 800, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} disabled={isSortMode}>Entrar</button>
+                                                    <button onClick={() => handleEditFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Editar Nombre"><Edit2 size={20} /></button>
+                                                    <button onClick={() => handleDuplicateFolder(f)} className="btn-outline" style={{ width: '52px', height: '100%', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Duplicar"><Copy size={20} /></button>
+                                                    <button onClick={() => handleDeleteFolder(f.id)} className="btn-outline" style={{ width: '52px', height: '100%', color: '#ef4444', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Eliminar"><Trash2 size={20} /></button>
                                                 </div>
                                                 {isSortMode && (
                                                     <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
@@ -872,7 +928,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 <button
                                                     onClick={() => !isSortMode && (isQuiz ? onOpenQuiz(p) : handleSelectProject(p))}
                                                     className="btn-premium"
-                                                    style={{ flex: 1.5, height: '100%', fontSize: '1.4rem', fontWeight: 900, borderRadius: '20px', background: 'linear-gradient(135deg, #4f46e5, #3b82f6)' }}
+                                                    style={{ flex: 1, height: '100%', fontSize: '1.4rem', fontWeight: 900, borderRadius: '20px', background: 'linear-gradient(135deg, #4f46e5, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                                     disabled={isSortMode}
                                                 >
                                                     Editar
@@ -880,18 +936,10 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 <button
                                                     onClick={() => !isSortMode && onPreview(p, true)}
                                                     className="btn-outline"
-                                                    style={{ flex: 1.2, height: '100%', background: 'rgba(59, 130, 246, 0.08)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', fontSize: '1.3rem', fontWeight: 700, borderRadius: '20px' }}
+                                                    style={{ flex: 1, height: '100%', background: 'rgba(59, 130, 246, 0.08)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', fontSize: '1.3rem', fontWeight: 700, borderRadius: '20px' }}
                                                     disabled={isSortMode}
                                                 >
                                                     <Eye size={24} /> Preview
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDuplicateProject(p); }}
-                                                    className="btn-outline"
-                                                    style={{ width: '62px', height: '100%', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                                                    title="Duplicar"
-                                                >
-                                                    <Copy size={24} />
                                                 </button>
                                             </div>
 
