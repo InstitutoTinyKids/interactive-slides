@@ -1029,14 +1029,14 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 <label style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Carpeta de Destino</label>
                                 <select
                                     className="premium-input"
-                                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'pointer' }}
+                                    style={{ background: 'rgba(255,255,255,0.05)', color: 'white', cursor: 'pointer' }}
                                     value={targetFolderForMove}
                                     onChange={(e) => setTargetFolderForMove(e.target.value)}
                                 >
-                                    <option value="" disabled>Selecciona una carpeta...</option>
-                                    <option value="root">Galería Principal (Raíz)</option>
+                                    <option value="" disabled style={{ background: '#0a0a1a', color: 'white' }}>Selecciona una carpeta...</option>
+                                    <option value="root" style={{ background: '#0a0a1a', color: 'white' }}>Galería Principal (Raíz)</option>
                                     {folders.map(f => (
-                                        <option key={f.id} value={f.id}>{f.name}</option>
+                                        <option key={f.id} value={f.id} style={{ background: '#0a0a1a', color: 'white' }}>{f.name}</option>
                                     ))}
                                 </select>
                             </div>
