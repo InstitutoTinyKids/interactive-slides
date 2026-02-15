@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Settings as SettingsIcon, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Plus, LayoutGrid, Eye, HelpCircle, Save, Layers, Image as ImageIcon, Trash2, Edit2, Copy, Move, Target, Pause, ShieldCheck, Folder, FolderPlus, ArrowUp, ArrowDown, ChevronLeft, GripVertical, Music } from 'lucide-react';
+import { User, Settings as SettingsIcon, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Plus, LayoutGrid, Eye, HelpCircle, Save, Layers, Image as ImageIcon, Trash2, Edit2, Copy, Move, Target, Pause, ShieldCheck, Folder, FolderPlus, ArrowUp, ArrowDown, ChevronLeft, GripVertical, Music, Paintbrush, Type, Upload } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
@@ -1067,55 +1067,54 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             </Reorder.Group>
                         </div>
                     )}
-                </div>
-                {/* Move Selection Modal */}
-                {showMoveModal && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
-                        <div className="glass anim-up" style={{ width: '450px', padding: '40px', display: 'flex', flexDirection: 'column', gap: '25px', background: '#0a0a1a', border: '1px solid rgba(167, 139, 250, 0.2)' }}>
-                            <div style={{ textAlign: 'center' }}>
-                                <div style={{ width: '60px', height: '60px', background: 'rgba(167, 139, 250, 0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', margin: '0 auto 15px' }}>
-                                    <Move size={30} />
+                    {showMoveModal && (
+                        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
+                            <div className="glass anim-up" style={{ width: '450px', padding: '40px', display: 'flex', flexDirection: 'column', gap: '25px', background: '#0a0a1a', border: '1px solid rgba(167, 139, 250, 0.2)' }}>
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{ width: '60px', height: '60px', background: 'rgba(167, 139, 250, 0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', margin: '0 auto 15px' }}>
+                                        <Move size={30} />
+                                    </div>
+                                    <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '8px' }}>Mover Proyectos</h2>
+                                    <p style={{ color: '#94a3b8' }}>Selecciona el destino para los {selectedProjects.length} proyectos seleccionados.</p>
                                 </div>
-                                <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '8px' }}>Mover Proyectos</h2>
-                                <p style={{ color: '#94a3b8' }}>Selecciona el destino para los {selectedProjects.length} proyectos seleccionados.</p>
-                            </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <label style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Carpeta de Destino</label>
-                                <select
-                                    className="premium-input"
-                                    style={{ background: 'rgba(255,255,255,0.05)', color: 'white', cursor: 'pointer' }}
-                                    value={targetFolderForMove}
-                                    onChange={(e) => setTargetFolderForMove(e.target.value)}
-                                >
-                                    <option value="" disabled style={{ background: '#0a0a1a', color: 'white' }}>Selecciona una carpeta...</option>
-                                    <option value="root" style={{ background: '#0a0a1a', color: 'white' }}>Galería Principal (Raíz)</option>
-                                    {folders.map(f => (
-                                        <option key={f.id} value={f.id} style={{ background: '#0a0a1a', color: 'white' }}>{f.name}</option>
-                                    ))}
-                                </select>
-                            </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <label style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Carpeta de Destino</label>
+                                    <select
+                                        className="premium-input"
+                                        style={{ background: 'rgba(255,255,255,0.05)', color: 'white', cursor: 'pointer' }}
+                                        value={targetFolderForMove}
+                                        onChange={(e) => setTargetFolderForMove(e.target.value)}
+                                    >
+                                        <option value="" disabled style={{ background: '#0a0a1a', color: 'white' }}>Selecciona una carpeta...</option>
+                                        <option value="root" style={{ background: '#0a0a1a', color: 'white' }}>Galería Principal (Raíz)</option>
+                                        {folders.map(f => (
+                                            <option key={f.id} value={f.id} style={{ background: '#0a0a1a', color: 'white' }}>{f.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                            <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                                <button
-                                    onClick={() => { setShowMoveModal(false); setTargetFolderForMove(''); }}
-                                    className="btn-outline"
-                                    style={{ flex: 1, height: '55px', fontSize: '1.1rem' }}
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleMoveSelected}
-                                    className="btn-premium"
-                                    style={{ flex: 1.5, height: '55px', background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', fontSize: '1.1rem' }}
-                                    disabled={!targetFolderForMove || loading}
-                                >
-                                    {loading ? 'Moviendo...' : 'Mover Ahora'}
-                                </button>
+                                <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                                    <button
+                                        onClick={() => { setShowMoveModal(false); setTargetFolderForMove(''); }}
+                                        className="btn-outline"
+                                        style={{ flex: 1, height: '55px', fontSize: '1.1rem' }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleMoveSelected}
+                                        className="btn-premium"
+                                        style={{ flex: 1.5, height: '55px', background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', fontSize: '1.1rem' }}
+                                        disabled={!targetFolderForMove || loading}
+                                    >
+                                        {loading ? 'Moviendo...' : 'Mover Ahora'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         );
     }
@@ -1226,438 +1225,452 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 </header>
 
                 <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                    <div style={{ flex: 1, padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'auto' }} onClick={() => setSelectedElementId(null)}>
-                        <div ref={canvasContainerRef} style={{ width: '100%', maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 50px 100px -20px black', border: '1px solid rgba(255,255,255,0.1)' }} onClick={(e) => e.stopPropagation()}>
-                            {currentSlide?.image_url ? (
-                                <img src={currentSlide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
-                            ) : (
-                                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px', color: '#475569' }}>
-                                    <ImageIcon size={60} />
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <label className="btn-premium" style={{ padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer' }}>
-                                            Subir Fondo HD
-                                            <input type="file" style={{ display: 'none' }} onChange={(e) => {
-                                                const copy = [...localSlides];
-                                                copy[selectedIdx].format = '16/9';
-                                                setLocalSlides(copy);
-                                                handleFileUpload(e, 'bg', selectedIdx);
-                                            }} />
-                                        </label>
-                                        <label className="btn-outline" style={{ padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer' }}>
-                                            Subir Fondo Square
-                                            <input type="file" style={{ display: 'none' }} onChange={(e) => {
-                                                const copy = [...localSlides];
-                                                copy[selectedIdx].format = '1/1';
-                                                setLocalSlides(copy);
-                                                handleFileUpload(e, 'bg', selectedIdx);
-                                            }} />
-                                        </label>
+                    <div style={{ flex: 1, padding: isMobile ? '20px' : '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'auto' }} onClick={() => setSelectedElementId(null)}>
+                        {!currentSlide && !loading && (
+                            <div style={{ color: '#475569', textAlign: 'center', background: 'rgba(255,255,255,0.02)', padding: '40px', borderRadius: '24px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                                <ImageIcon size={48} style={{ marginBottom: '15px', opacity: 0.5 }} />
+                                <h3 style={{ fontSize: '1.2rem', color: 'white', marginBottom: '10px' }}>Proyecto Vacío</h3>
+                                <p style={{ fontSize: '0.9rem' }}>Pulsa el botón <b>+</b> en el panel de la izquierda para añadir tu primera lámina.</p>
+                            </div>
+                        )}
+                        {loading && (
+                            <div style={{ color: '#a78bfa', textAlign: 'center' }}>
+                                <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                                <p>Cargando láminas del programa...</p>
+                            </div>
+                        )}
+                        {currentSlide && (
+                            <div ref={canvasContainerRef} style={{ width: '100%', maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 50px 100px -20px black', border: '1px solid rgba(255,255,255,0.1)' }} onClick={(e) => e.stopPropagation()}>
+                                {currentSlide?.image_url ? (
+                                    <img src={currentSlide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                                ) : (
+                                    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px', color: '#475569' }}>
+                                        <ImageIcon size={60} />
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <label className="btn-premium" style={{ padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                                Subir Fondo HD
+                                                <input type="file" style={{ display: 'none' }} onChange={(e) => {
+                                                    const copy = [...localSlides];
+                                                    copy[selectedIdx].format = '16/9';
+                                                    setLocalSlides(copy);
+                                                    handleFileUpload(e, 'bg', selectedIdx);
+                                                }} />
+                                            </label>
+                                            <label className="btn-outline" style={{ padding: '10px 20px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                                Subir Fondo Square
+                                                <input type="file" style={{ display: 'none' }} onChange={(e) => {
+                                                    const copy = [...localSlides];
+                                                    copy[selectedIdx].format = '1/1';
+                                                    setLocalSlides(copy);
+                                                    handleFileUpload(e, 'bg', selectedIdx);
+                                                }} />
+                                            </label>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {currentSlide?.audio_url && (
-                                <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 110, background: 'rgba(16, 185, 129, 0.2)', padding: '10px 15px', borderRadius: '12px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '10px', backdropFilter: 'blur(10px)' }}>
-                                    <button onClick={() => { const a = new Audio(currentSlide.audio_url); a.play(); }} style={{ background: '#10b981', border: 'none', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Play size={12} fill="white" /></button>
-                                    <span style={{ fontSize: '10px', fontWeight: 900 }}>AUDIO CARGADO</span>
-                                    <button onClick={async () => {
-                                        if (currentSlide.audio_url) await deleteFileFromStorage(currentSlide.audio_url);
-                                        const copy = [...localSlides];
-                                        copy[selectedIdx].audio_url = '';
-                                        setLocalSlides(copy);
-                                    }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
-                                </div>
-                            )}
+                                {currentSlide?.audio_url && (
+                                    <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 110, background: 'rgba(16, 185, 129, 0.2)', padding: '10px 15px', borderRadius: '12px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '10px', backdropFilter: 'blur(10px)' }}>
+                                        <button onClick={() => { const a = new Audio(currentSlide.audio_url); a.play(); }} style={{ background: '#10b981', border: 'none', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Play size={12} fill="white" /></button>
+                                        <span style={{ fontSize: '10px', fontWeight: 900 }}>AUDIO CARGADO</span>
+                                        <button onClick={async () => {
+                                            if (currentSlide.audio_url) await deleteFileFromStorage(currentSlide.audio_url);
+                                            const copy = [...localSlides];
+                                            copy[selectedIdx].audio_url = '';
+                                            setLocalSlides(copy);
+                                        }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
+                                    </div>
+                                )}
 
-                            {currentSlide?.elements.map(el => (
-                                <div
-                                    key={el.id}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedElementId(el.id);
-                                    }}
-                                    onMouseDown={(e) => {
-                                        e.stopPropagation();
-                                        setDraggingElementId(el.id);
-                                        setSelectedElementId(el.id);
-                                    }}
-                                    style={{
-                                        position: 'absolute',
-                                        left: `${el.x}% `,
-                                        top: `${el.y}% `,
-                                        transform: 'translate(-50%, -50%)',
-                                        zIndex: 100,
-                                        cursor: 'move',
-                                        padding: el.type === 'drag' ? '0' : '10px',
-                                        border: (draggingElementId === el.id || selectedElementId === el.id) ? '2px solid var(--primary)' : '1px dashed rgba(255,255,255,0.3)',
-                                        borderRadius: '12px',
-                                        background: (el.url || el.type === 'stamp') ? 'transparent' : 'rgba(0,0,0,0.5)',
-                                        backdropFilter: (el.url || el.type === 'stamp') ? 'none' : 'blur(10px)',
-                                        width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 45}px` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
-                                        height: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 45}px` : (el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto'),
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                >
-                                    {el.type === 'text' && (
-                                        <textarea
-                                            value={el.text}
-                                            onChange={(e) => {
-                                                const copy = [...localSlides];
-                                                copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value;
-                                                setLocalSlides(copy);
-                                            }}
-                                            onClick={(e) => e.stopPropagation()}
-                                            style={{
-                                                background: 'transparent',
-                                                border: 'none',
-                                                color: 'white',
-                                                textAlign: 'center',
-                                                width: '100%',
-                                                height: '100%',
-                                                outline: 'none',
-                                                fontWeight: 800,
-                                                resize: 'none',
-                                                fontFamily: 'Outfit',
-                                                fontSize: '1.2rem'
-                                            }}
-                                        />
-                                    )}
-                                    {el.type === 'drag' && (
-                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            {el.url ? (
-                                                <img
-                                                    src={el.url}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'contain'
-                                                    }}
-                                                />
-                                            ) : (
-                                                <Move size={24} color="#3b82f6" />
-                                            )}
-                                        </div>
-                                    )}
-                                    {el.type === 'stamp' && (
-                                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '2px dashed rgba(255,255,255,0.8)', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Target size={24} color="rgba(255,255,255,0.5)" />
-                                        </div>
-                                    )}
-                                    {/* Handle for resizing - Only for Text and Stamp */}
-                                    {(el.type === 'text' || el.type === 'stamp') && (
-                                        <div
-                                            onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }}
-                                            style={{
-                                                position: 'absolute',
-                                                bottom: '-10px',
-                                                right: '-10px',
-                                                width: '24px',
-                                                height: '24px',
-                                                cursor: 'nwse-resize',
-                                                background: 'var(--primary)',
-                                                borderRadius: '50%',
-                                                border: '3px solid white',
-                                                boxShadow: '0 4px 10px rgba(124, 58, 237, 0.5)',
-                                                zIndex: 110,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                transition: 'transform 0.2s'
-                                            }}
-                                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
-                                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                                        />
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Right Panel: Settings - Collapsible in compact mode */}
-                    <div style={{
-                        width: showSettingsPanel ? (isMobile ? '100%' : '320px') : '0px',
-                        minWidth: showSettingsPanel ? (isMobile ? '100%' : '320px') : '0px',
-                        height: (isMobile && showSettingsPanel) ? 'auto' : '100%',
-                        background: 'rgba(10, 10, 20, 0.95)',
-                        borderLeft: (showSettingsPanel && !isMobile) ? '1px solid var(--border)' : 'none',
-                        borderTop: (showSettingsPanel && isMobile) ? '1px solid var(--border)' : 'none',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                        transition: 'all 0.3s ease'
-                    }}>
-                        <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
-                            <div>
-                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '25px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><SettingsIcon size={18} /> Ajustes</div>
-                                    <button
-                                        onClick={() => setShowProjectDetails(!showProjectDetails)}
+                                {(currentSlide?.elements || []).map(el => (
+                                    <div
+                                        key={el.id}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedElementId(el.id);
+                                        }}
+                                        onMouseDown={(e) => {
+                                            e.stopPropagation();
+                                            setDraggingElementId(el.id);
+                                            setSelectedElementId(el.id);
+                                        }}
                                         style={{
-                                            border: 'none',
-                                            color: 'var(--primary-light)',
-                                            fontSize: '0.65rem',
-                                            fontWeight: 900,
-                                            cursor: 'pointer',
-                                            textTransform: 'uppercase',
-                                            padding: '4px 8px',
-                                            borderRadius: '6px',
-                                            background: 'rgba(124, 58, 237, 0.1)'
+                                            position: 'absolute',
+                                            left: `${el.x}%`,
+                                            top: `${el.y}%`,
+                                            transform: 'translate(-50%, -50%)',
+                                            zIndex: 100,
+                                            cursor: 'move',
+                                            padding: el.type === 'drag' ? '0' : '10px',
+                                            border: (draggingElementId === el.id || selectedElementId === el.id) ? '2px solid var(--primary)' : '1px dashed rgba(255,255,255,0.3)',
+                                            borderRadius: '12px',
+                                            background: (el.url || el.type === 'stamp') ? 'transparent' : 'rgba(0,0,0,0.5)',
+                                            backdropFilter: (el.url || el.type === 'stamp') ? 'none' : 'blur(10px)',
+                                            width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 45}px` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
+                                            height: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 45}px` : (el.height ? `${(el.height / (currentSlide?.format === '1/1' ? 700 : 506)) * 100}%` : 'auto'),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
                                         }}
                                     >
-                                        {showProjectDetails ? 'Ocultar' : 'Ver más'}
-                                    </button>
-                                </h3>
-
-                                {showProjectDetails && (
-                                    <div className="anim-up" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '25px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                                        {/* Nombre del Proyecto */}
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre del Proyecto</label>
-                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <input
-                                                    className="premium-input"
-                                                    type="text"
-                                                    value={currentProject?.name || ''}
-                                                    readOnly={!isEditingProjectName}
-                                                    onChange={(e) => {
-                                                        if (currentProject) {
-                                                            setCurrentProject({ ...currentProject, name: e.target.value });
-                                                            setHasUnsavedNameChanges(true);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        padding: '12px',
-                                                        paddingRight: '45px',
-                                                        flex: 1,
-                                                        fontSize: '0.85rem',
-                                                        opacity: isEditingProjectName ? 1 : 0.7,
-                                                        cursor: isEditingProjectName ? 'text' : 'not-allowed',
-                                                        borderColor: isEditingProjectName ? 'var(--primary)' : 'var(--border)'
-                                                    }}
-                                                />
-                                                <button
-                                                    onClick={async () => {
-                                                        if (isEditingProjectName && hasUnsavedNameChanges && currentProject?.id) {
-                                                            try {
-                                                                await supabase.from('projects').update({ name: currentProject.name }).eq('id', currentProject.id);
-                                                                setHasUnsavedNameChanges(false);
-                                                                setIsEditingProjectName(false);
-                                                                loadProjects();
-                                                            } catch (err) {
-                                                                alert('Error al guardar nombre: ' + err.message);
-                                                            }
-                                                        } else {
-                                                            setIsEditingProjectName(!isEditingProjectName);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        right: '12px',
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        color: isEditingProjectName ? '#10b981' : '#64748b',
-                                                        cursor: 'pointer',
-                                                        padding: '8px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        transition: '0.3s',
-                                                        borderRadius: '8px'
-                                                    }}
-                                                    title={isEditingProjectName ? 'Guardar cambios' : 'Editar nombre'}
-                                                >
-                                                    {isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}
-                                                </button>
+                                        {el.type === 'text' && (
+                                            <textarea
+                                                value={el.text}
+                                                onChange={(e) => {
+                                                    const copy = [...localSlides];
+                                                    (copy[selectedIdx].elements || []).find(item => item.id === el.id).text = e.target.value;
+                                                    setLocalSlides(copy);
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'white',
+                                                    textAlign: 'center',
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    outline: 'none',
+                                                    fontWeight: 800,
+                                                    resize: 'none',
+                                                    fontFamily: 'Outfit',
+                                                    fontSize: '1.2rem'
+                                                }}
+                                            />
+                                        )}
+                                        {el.type === 'drag' && (
+                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                {el.url ? (
+                                                    <img
+                                                        src={el.url}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'contain'
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Move size={24} color="#3b82f6" />
+                                                )}
                                             </div>
-                                        </div>
-
-                                        {/* Clave de Acceso */}
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clave de Acceso</label>
-                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <input
-                                                    className="premium-input"
-                                                    type="text"
-                                                    value={currentProject?.access_code || ''}
-                                                    readOnly={!isEditingAccessCode}
-                                                    onChange={(e) => {
-                                                        if (currentProject) {
-                                                            setCurrentProject({ ...currentProject, access_code: e.target.value });
-                                                            setHasUnsavedCodeChanges(true);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        padding: '12px',
-                                                        paddingRight: '45px',
-                                                        flex: 1,
-                                                        fontSize: '0.85rem',
-                                                        opacity: isEditingAccessCode ? 1 : 0.7,
-                                                        cursor: isEditingAccessCode ? 'text' : 'not-allowed',
-                                                        borderColor: isEditingAccessCode ? 'var(--primary)' : 'var(--border)'
-                                                    }}
-                                                />
-                                                <button
-                                                    onClick={async () => {
-                                                        if (isEditingAccessCode && hasUnsavedCodeChanges && currentProject?.id) {
-                                                            try {
-                                                                await supabase.from('projects').update({ access_code: currentProject.access_code }).eq('id', currentProject.id);
-                                                                setHasUnsavedCodeChanges(false);
-                                                                setIsEditingAccessCode(false);
-                                                                loadProjects();
-                                                            } catch (err) {
-                                                                alert('Error al guardar clave: ' + err.message);
-                                                            }
-                                                        } else {
-                                                            setIsEditingAccessCode(!isEditingAccessCode);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        right: '12px',
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        color: isEditingAccessCode ? '#10b981' : '#64748b',
-                                                        cursor: 'pointer',
-                                                        padding: '8px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        transition: '0.3s',
-                                                        borderRadius: '8px'
-                                                    }}
-                                                    title={isEditingAccessCode ? 'Guardar cambios' : 'Editar clave'}
-                                                >
-                                                    {isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}
-                                                </button>
+                                        )}
+                                        {el.type === 'stamp' && (
+                                            <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '2px dashed rgba(255,255,255,0.8)', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Target size={24} color="rgba(255,255,255,0.5)" />
                                             </div>
+                                        )}
+                                        {/* Handle for resizing - Only for Text and Stamp */}
+                                        {(el.type === 'text' || el.type === 'stamp') && (
+                                            <div
+                                                onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    bottom: '-10px',
+                                                    right: '-10px',
+                                                    width: '24px',
+                                                    height: '24px',
+                                                    cursor: 'nwse-resize',
+                                                    background: 'var(--primary)',
+                                                    borderRadius: '50%',
+                                                    border: '3px solid white',
+                                                    boxShadow: '0 4px 10px rgba(124, 58, 237, 0.5)',
+                                                    zIndex: 110,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: 'transform 0.2s'
+                                                }}
+                                                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+                                                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Right Panel: Settings - Collapsible in compact mode */}
+                <div style={{
+                    width: showSettingsPanel ? (isMobile ? '100%' : '320px') : '0px',
+                    minWidth: showSettingsPanel ? (isMobile ? '100%' : '320px') : '0px',
+                    height: (isMobile && showSettingsPanel) ? 'auto' : '100%',
+                    background: 'rgba(10, 10, 20, 0.95)',
+                    borderLeft: (showSettingsPanel && !isMobile) ? '1px solid var(--border)' : 'none',
+                    borderTop: (showSettingsPanel && isMobile) ? '1px solid var(--border)' : 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease'
+                }}>
+                    <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+                        <div>
+                            <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '25px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><SettingsIcon size={18} /> Ajustes</div>
+                                <button
+                                    onClick={() => setShowProjectDetails(!showProjectDetails)}
+                                    style={{
+                                        border: 'none',
+                                        color: 'var(--primary-light)',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 900,
+                                        cursor: 'pointer',
+                                        textTransform: 'uppercase',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
+                                        background: 'rgba(124, 58, 237, 0.1)'
+                                    }}
+                                >
+                                    {showProjectDetails ? 'Ocultar' : 'Ver más'}
+                                </button>
+                            </h3>
+
+                            {showProjectDetails && (
+                                <div className="anim-up" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '25px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                    {/* Nombre del Proyecto */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre del Proyecto</label>
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <input
+                                                className="premium-input"
+                                                type="text"
+                                                value={currentProject?.name || ''}
+                                                readOnly={!isEditingProjectName}
+                                                onChange={(e) => {
+                                                    if (currentProject) {
+                                                        setCurrentProject({ ...currentProject, name: e.target.value });
+                                                        setHasUnsavedNameChanges(true);
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '12px',
+                                                    paddingRight: '45px',
+                                                    flex: 1,
+                                                    fontSize: '0.85rem',
+                                                    opacity: isEditingProjectName ? 1 : 0.7,
+                                                    cursor: isEditingProjectName ? 'text' : 'not-allowed',
+                                                    borderColor: isEditingProjectName ? 'var(--primary)' : 'var(--border)'
+                                                }}
+                                            />
+                                            <button
+                                                onClick={async () => {
+                                                    if (isEditingProjectName && hasUnsavedNameChanges && currentProject?.id) {
+                                                        try {
+                                                            await supabase.from('projects').update({ name: currentProject.name }).eq('id', currentProject.id);
+                                                            setHasUnsavedNameChanges(false);
+                                                            setIsEditingProjectName(false);
+                                                            loadProjects();
+                                                        } catch (err) {
+                                                            alert('Error al guardar nombre: ' + err.message);
+                                                        }
+                                                    } else {
+                                                        setIsEditingProjectName(!isEditingProjectName);
+                                                    }
+                                                }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '12px',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: isEditingProjectName ? '#10b981' : '#64748b',
+                                                    cursor: 'pointer',
+                                                    padding: '8px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: '0.3s',
+                                                    borderRadius: '8px'
+                                                }}
+                                                title={isEditingProjectName ? 'Guardar cambios' : 'Editar nombre'}
+                                            >
+                                                {isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}
+                                            </button>
                                         </div>
                                     </div>
-                                )}
+
+                                    {/* Clave de Acceso */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clave de Acceso</label>
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <input
+                                                className="premium-input"
+                                                type="text"
+                                                value={currentProject?.access_code || ''}
+                                                readOnly={!isEditingAccessCode}
+                                                onChange={(e) => {
+                                                    if (currentProject) {
+                                                        setCurrentProject({ ...currentProject, access_code: e.target.value });
+                                                        setHasUnsavedCodeChanges(true);
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '12px',
+                                                    paddingRight: '45px',
+                                                    flex: 1,
+                                                    fontSize: '0.85rem',
+                                                    opacity: isEditingAccessCode ? 1 : 0.7,
+                                                    cursor: isEditingAccessCode ? 'text' : 'not-allowed',
+                                                    borderColor: isEditingAccessCode ? 'var(--primary)' : 'var(--border)'
+                                                }}
+                                            />
+                                            <button
+                                                onClick={async () => {
+                                                    if (isEditingAccessCode && hasUnsavedCodeChanges && currentProject?.id) {
+                                                        try {
+                                                            await supabase.from('projects').update({ access_code: currentProject.access_code }).eq('id', currentProject.id);
+                                                            setHasUnsavedCodeChanges(false);
+                                                            setIsEditingAccessCode(false);
+                                                            loadProjects();
+                                                        } catch (err) {
+                                                            alert('Error al guardar clave: ' + err.message);
+                                                        }
+                                                    } else {
+                                                        setIsEditingAccessCode(!isEditingAccessCode);
+                                                    }
+                                                }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '12px',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: isEditingAccessCode ? '#10b981' : '#64748b',
+                                                    cursor: 'pointer',
+                                                    padding: '8px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: '0.3s',
+                                                    borderRadius: '8px'
+                                                }}
+                                                title={isEditingAccessCode ? 'Guardar cambios' : 'Editar clave'}
+                                            >
+                                                {isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '25px' }}>Herramientas</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                {(() => {
+                                    const selectedEl = (localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId);
+                                    return [
+                                        { type: 'draw', icon: Paintbrush, color: '#7c3aed', label: 'Draw' },
+                                        { type: 'drag', icon: Move, color: '#3b82f6', label: 'Drag' },
+                                        { type: 'stamp', icon: Target, color: '#ef4444', label: 'Stamp' },
+                                        { type: 'text', icon: Type, color: '#10b981', label: 'Text' }
+                                    ].map(t => {
+                                        const isSelected = selectedEl?.type === t.type;
+                                        return (
+                                            <button
+                                                key={t.type}
+                                                onClick={() => addElement(t.type)}
+                                                className="glass"
+                                                style={{
+                                                    padding: '20px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                    transition: '0.2s',
+                                                    border: `2px solid ${isSelected ? t.color : 'var(--border)'} `,
+                                                    borderRadius: '16px',
+                                                    background: isSelected ? `${t.color} 15` : 'transparent',
+                                                    boxShadow: isSelected ? `0 0 15px ${t.color} 30` : 'none'
+                                                }}
+                                                onMouseEnter={e => !isSelected && (e.currentTarget.style.borderColor = t.color)}
+                                                onMouseLeave={e => !isSelected && (e.currentTarget.style.borderColor = 'var(--border)')}
+                                            >
+                                                <div style={{ color: t.color, transform: isSelected ? 'scale(1.2)' : 'scale(1)', transition: '0.2s' }}><t.icon size={22} /></div>
+                                                <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: isSelected ? 'white' : 'var(--text-muted)' }}>{t.label}</span>
+                                            </button>
+                                        );
+                                    });
+                                })()}
                             </div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {/* Element Specific Tools - Always visible when selected */}
+                            {selectedElementId && (localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId) && (
+                                <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                        <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', textTransform: 'uppercase', margin: 0 }}>Opciones</h4>
+                                        <div style={{ background: 'rgba(124, 58, 237, 0.2)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            {(() => {
+                                                const el = (localSlides[selectedIdx].elements || []).find(e => e.id === selectedElementId);
+                                                if (el?.type === 'text') return <><Type size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>TEXT</span></>;
+                                                if (el?.type === 'drag') return <><Move size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAG</span></>;
+                                                if (el?.type === 'draw') return <><Paintbrush size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAW</span></>;
+                                                if (el?.type === 'stamp') return <><Target size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>STAMP</span></>;
+                                                return null;
+                                            })()}
+                                        </div>
+                                    </div>
+                                    {(localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId)?.type === 'drag' && (
+                                        <>
+                                            <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
+                                                <Upload size={16} /> Subir Imagen
+                                                <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, (localSlides[selectedIdx].elements || []).findIndex(item => item.id === selectedElementId))} />
+                                            </label>
+                                            {(localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId)?.url && (
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                                                        Tamaño: {(localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId)?.imageSize || 100}%
+                                                    </label>
+                                                    <input
+                                                        type="range"
+                                                        min="20"
+                                                        max="500"
+                                                        step="5"
+                                                        value={((currentSlide?.elements || []).find(e => e.id === selectedElementId)?.imageSize || 100)}
+                                                        onChange={(e) => {
+                                                            if (!localSlides[selectedIdx]) return;
+                                                            const copy = [...localSlides];
+                                                            const element = (copy[selectedIdx].elements || []).find(item => item.id === selectedElementId);
+                                                            if (element) {
+                                                                element.imageSize = parseInt(e.target.value);
+                                                                setLocalSlides(copy);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '6px',
+                                                            borderRadius: '3px',
+                                                            background: 'linear-gradient(to right, rgba(124, 58, 237, 0.3), rgba(124, 58, 237, 0.8))',
+                                                            outline: 'none',
+                                                            cursor: 'pointer',
+                                                            accentColor: '#7c3aed'
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                    <button onClick={async () => {
+                                        if (!localSlides[selectedIdx]) return;
+                                        const elementToDelete = (currentSlide?.elements || []).find(e => e.id === selectedElementId);
+                                        if (elementToDelete?.url) await deleteFileFromStorage(elementToDelete.url);
+                                        const copy = [...localSlides];
+                                        copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== selectedElementId);
+                                        setLocalSlides(copy);
+                                        setSelectedElementId(null);
+                                        setDraggingElementId(null);
+                                    }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        <Trash2 size={16} /> Eliminar
+                                    </button>
+                                </div>
+                            )}
 
                             <div>
-                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '25px' }}>Herramientas</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                    {(() => {
-                                        const selectedEl = localSlides[selectedIdx]?.elements.find(e => e.id === selectedElementId);
-                                        return [
-                                            { type: 'draw', icon: Paintbrush, color: '#7c3aed', label: 'Draw' },
-                                            { type: 'drag', icon: Move, color: '#3b82f6', label: 'Drag' },
-                                            { type: 'stamp', icon: Target, color: '#ef4444', label: 'Stamp' },
-                                            { type: 'text', icon: Type, color: '#10b981', label: 'Text' }
-                                        ].map(t => {
-                                            const isSelected = selectedEl?.type === t.type;
-                                            return (
-                                                <button
-                                                    key={t.type}
-                                                    onClick={() => addElement(t.type)}
-                                                    className="glass"
-                                                    style={{
-                                                        padding: '20px',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        gap: '10px',
-                                                        transition: '0.2s',
-                                                        border: `2px solid ${isSelected ? t.color : 'var(--border)'} `,
-                                                        borderRadius: '16px',
-                                                        background: isSelected ? `${t.color} 15` : 'transparent',
-                                                        boxShadow: isSelected ? `0 0 15px ${t.color} 30` : 'none'
-                                                    }}
-                                                    onMouseEnter={e => !isSelected && (e.currentTarget.style.borderColor = t.color)}
-                                                    onMouseLeave={e => !isSelected && (e.currentTarget.style.borderColor = 'var(--border)')}
-                                                >
-                                                    <div style={{ color: t.color, transform: isSelected ? 'scale(1.2)' : 'scale(1)', transition: '0.2s' }}><t.icon size={22} /></div>
-                                                    <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: isSelected ? 'white' : 'var(--text-muted)' }}>{t.label}</span>
-                                                </button>
-                                            );
-                                        });
-                                    })()}
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                {/* Element Specific Tools - Always visible when selected */}
-                                {selectedElementId && localSlides[selectedIdx]?.elements.find(e => e.id === selectedElementId) && (
-                                    <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                            <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', textTransform: 'uppercase', margin: 0 }}>Opciones</h4>
-                                            <div style={{ background: 'rgba(124, 58, 237, 0.2)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                {(() => {
-                                                    const el = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
-                                                    if (el?.type === 'text') return <><Type size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>TEXT</span></>;
-                                                    if (el?.type === 'drag') return <><Move size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAG</span></>;
-                                                    if (el?.type === 'draw') return <><Paintbrush size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAW</span></>;
-                                                    if (el?.type === 'stamp') return <><Target size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>STAMP</span></>;
-                                                    return null;
-                                                })()}
-                                            </div>
-                                        </div>
-                                        {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.type === 'drag' && (
-                                            <>
-                                                <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
-                                                    <Upload size={16} /> Subir Imagen
-                                                    <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, localSlides[selectedIdx].elements.findIndex(item => item.id === selectedElementId))} />
-                                                </label>
-                                                {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.url && (
-                                                    <div style={{ marginBottom: '10px' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                                                            Tamaño: {localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.imageSize || 100}%
-                                                        </label>
-                                                        <input
-                                                            type="range"
-                                                            min="20"
-                                                            max="500"
-                                                            step="5"
-                                                            value={localSlides[selectedIdx].elements.find(e => e.id === selectedElementId)?.imageSize || 100}
-                                                            onChange={(e) => {
-                                                                if (!localSlides[selectedIdx]) return;
-                                                                const copy = [...localSlides];
-                                                                const element = copy[selectedIdx].elements.find(item => item.id === selectedElementId);
-                                                                if (element) {
-                                                                    element.imageSize = parseInt(e.target.value);
-                                                                    setLocalSlides(copy);
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '6px',
-                                                                borderRadius: '3px',
-                                                                background: 'linear-gradient(to right, rgba(124, 58, 237, 0.3), rgba(124, 58, 237, 0.8))',
-                                                                outline: 'none',
-                                                                cursor: 'pointer',
-                                                                accentColor: '#7c3aed'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-                                        <button onClick={async () => {
-                                            if (!localSlides[selectedIdx]) return;
-                                            const elementToDelete = localSlides[selectedIdx].elements.find(e => e.id === selectedElementId);
-                                            if (elementToDelete?.url) await deleteFileFromStorage(elementToDelete.url);
-                                            const copy = [...localSlides];
-                                            copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== selectedElementId);
-                                            setLocalSlides(copy);
-                                            setSelectedElementId(null);
-                                            setDraggingElementId(null);
-                                        }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                            <Trash2 size={16} /> Eliminar
-                                        </button>
-                                    </div>
-                                )}
-
-                                <div>
-                                    <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio</h3>
-                                    <label className="btn-outline" style={{ width: '100%', padding: '15px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                                        <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
-                                        <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
-                                    </label>
-                                </div>
-
+                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio</h3>
+                                <label className="btn-outline" style={{ width: '100%', padding: '15px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                                    <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
+                                    <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
+                                </label>
                             </div>
                         </div>
                     </div>
