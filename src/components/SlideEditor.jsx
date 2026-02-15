@@ -1244,8 +1244,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             <div
                                 ref={canvasContainerRef}
                                 style={{
-                                    width: `${(currentSlide?.format === '1/1' ? 700 : 900) * canvasZoom}px`,
-                                    maxWidth: canvasZoom > 1 ? 'none' : '100%',
+                                    zoom: canvasZoom,
+                                    width: currentSlide?.format === '1/1' ? '700px' : '900px',
                                     aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9',
                                     background: '#000',
                                     borderRadius: '24px',
@@ -1253,9 +1253,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     overflow: 'hidden',
                                     boxShadow: '0 50px 100px -20px black',
                                     border: '1px solid rgba(255,255,255,0.1)',
-                                    transition: 'width 0.2s ease-out',
                                     flexShrink: 0,
-                                    margin: 'auto'
+                                    margin: 'auto',
+                                    transition: 'zoom 0.2s ease-out'
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                             >
@@ -1421,38 +1421,33 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         transition: 'all 0.3s ease'
                     }}>
                         <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#475569', textTransform: 'uppercase', letterSpacing: '1px' }}>Vistazo</span>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '4px' }}>
-                                            <button onClick={() => setCanvasZoom(Math.max(0.1, canvasZoom - 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Alejar"><ZoomOut size={16} /></button>
-                                            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', margin: '0 4px' }}></div>
-                                            <button onClick={() => setCanvasZoom(Math.min(3, canvasZoom + 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Acercar"><ZoomIn size={16} /></button>
-                                        </div>
-                                        <div style={{ fontSize: '0.75rem', color: '#a78bfa', fontWeight: 900, minWidth: '45px', textAlign: 'center' }}>{Math.round(canvasZoom * 100)}%</div>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><SettingsIcon size={18} color="#a78bfa" /> <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', margin: 0 }}>Ajustes</h3></div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '5px 10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <button onClick={() => setCanvasZoom(Math.max(0.1, canvasZoom - 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex' }}><ZoomOut size={14} /></button>
+                                        <span style={{ fontSize: '0.65rem', color: 'white', fontWeight: 900, minWidth: '35px', textAlign: 'center' }}>{Math.round(canvasZoom * 100)}%</span>
+                                        <button onClick={() => setCanvasZoom(Math.min(2, canvasZoom + 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex' }}><ZoomIn size={14} /></button>
                                     </div>
                                 </div>
-
-                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><SettingsIcon size={18} /> Ajustes</div>
-                                    <button
-                                        onClick={() => setShowProjectDetails(!showProjectDetails)}
-                                        style={{
-                                            border: 'none',
-                                            color: 'var(--primary-light)',
-                                            fontSize: '0.65rem',
-                                            fontWeight: 900,
-                                            cursor: 'pointer',
-                                            textTransform: 'uppercase',
-                                            padding: '4px 8px',
-                                            borderRadius: '6px',
-                                            background: 'rgba(124, 58, 237, 0.1)'
-                                        }}
-                                    >
-                                        {showProjectDetails ? 'Ocultar' : 'Ver más'}
-                                    </button>
-                                </h3>
+                                <button
+                                    onClick={() => setShowProjectDetails(!showProjectDetails)}
+                                    style={{
+                                        width: '100%',
+                                        border: 'none',
+                                        color: 'var(--primary-light)',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 900,
+                                        cursor: 'pointer',
+                                        textTransform: 'uppercase',
+                                        padding: '8px',
+                                        borderRadius: '8px',
+                                        background: 'rgba(124, 58, 237, 0.1)',
+                                        marginBottom: '10px'
+                                    }}
+                                >
+                                    {showProjectDetails ? 'Ocultar Detalles' : 'Ver Detalles del Proyecto'}
+                                </button>
                             </div>
 
                             {showProjectDetails && (
