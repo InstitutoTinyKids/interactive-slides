@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import AliasEntry from './components/AliasEntry';
 import SlideViewer from './components/SlideViewer';
 import SlideEditor from './components/SlideEditor';

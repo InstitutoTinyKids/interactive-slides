@@ -458,13 +458,18 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
             if (!isSilent) {
                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                // No more alert for smoother experience, just confetti or a small toast if we had one
-                // But user requested "indicame antes de ejecutar", so I'll keep it or use a better way.
-                // Actually, I'll remove the alert to make it feel more "automatic".
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: '✅ ¡Proyecto guardado con éxito!', type: 'success' }
+                }));
             }
             return true;
         } catch (err) {
-            if (!isSilent) alert('Error al guardar: ' + err.message);
+            console.error('Error saving:', err);
+            if (!isSilent) {
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: '❌ Error al guardar: ' + err.message, type: 'error' }
+                }));
+            }
             return false;
         } finally {
             if (!isSilent) setLoading(false);
