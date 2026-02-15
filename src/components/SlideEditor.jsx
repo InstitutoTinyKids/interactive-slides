@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Settings as SettingsIcon, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Plus, LayoutGrid, Eye, HelpCircle, Save, Layers, Image as ImageIcon, Trash2, Edit2, Copy, Move, Target, Pause, ShieldCheck, Folder, FolderPlus, ArrowUp, ArrowDown, ChevronLeft, GripVertical, Music, Paintbrush, Type, Upload } from 'lucide-react';
+import { User, Settings as SettingsIcon, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Plus, LayoutGrid, Eye, HelpCircle, Save, Layers, Image as ImageIcon, Trash2, Edit2, Copy, Move, Target, Pause, ShieldCheck, Folder, FolderPlus, ArrowUp, ArrowDown, ChevronLeft, GripVertical, Music, Paintbrush, Type, Upload, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { optimizeImage } from '../lib/imageOptimizer';
@@ -46,6 +46,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [hoveredFolderId, setHoveredFolderId] = useState(null);
     const [showMoveModal, setShowMoveModal] = useState(false);
     const [targetFolderForMove, setTargetFolderForMove] = useState('');
+    const [canvasZoom, setCanvasZoom] = useState(1);
 
     const PROGRAM_ORDER = [
         'Baby Program', 'Mini Program', 'Tiny Program', 'Big Program',
@@ -1240,7 +1241,24 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             </div>
                         )}
                         {currentSlide && (
-                            <div ref={canvasContainerRef} style={{ width: '100%', maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 50px 100px -20px black', border: '1px solid rgba(255,255,255,0.1)' }} onClick={(e) => e.stopPropagation()}>
+                            <div
+                                ref={canvasContainerRef}
+                                style={{
+                                    width: '100%',
+                                    maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px',
+                                    aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9',
+                                    background: '#000',
+                                    borderRadius: '24px',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 50px 100px -20px black',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    transform: `scale(${canvasZoom})`,
+                                    transformOrigin: 'center center',
+                                    transition: 'transform 0.2s ease-out'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 {currentSlide?.image_url ? (
                                     <img src={currentSlide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                                 ) : (
@@ -1405,6 +1423,14 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
                             <div>
                                 <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '25px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '4px' }}>
+                                            <button onClick={() => setCanvasZoom(Math.max(0.2, canvasZoom - 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Alejar"><ZoomOut size={16} /></button>
+                                            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', margin: '0 4px' }}></div>
+                                            <button onClick={() => setCanvasZoom(Math.min(2, canvasZoom + 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Acercar"><ZoomIn size={16} /></button>
+                                        </div>
+                                        <div style={{ fontSize: '0.6rem', color: '#64748b' }}>{Math.round(canvasZoom * 100)}%</div>
+                                    </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><SettingsIcon size={18} /> Ajustes</div>
                                     <button
                                         onClick={() => setShowProjectDetails(!showProjectDetails)}
