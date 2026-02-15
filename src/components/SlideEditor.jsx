@@ -1244,8 +1244,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             <div
                                 ref={canvasContainerRef}
                                 style={{
-                                    width: '100%',
-                                    maxWidth: currentSlide?.format === '1/1' ? '700px' : '900px',
+                                    width: `${(currentSlide?.format === '1/1' ? 700 : 900) * canvasZoom}px`,
+                                    maxWidth: canvasZoom > 1 ? 'none' : '100%',
                                     aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9',
                                     background: '#000',
                                     borderRadius: '24px',
@@ -1253,9 +1253,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     overflow: 'hidden',
                                     boxShadow: '0 50px 100px -20px black',
                                     border: '1px solid rgba(255,255,255,0.1)',
-                                    transform: `scale(${canvasZoom})`,
-                                    transformOrigin: 'center center',
-                                    transition: 'transform 0.2s ease-out'
+                                    transition: 'width 0.2s ease-out',
+                                    flexShrink: 0,
+                                    margin: 'auto'
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                             >
@@ -1421,16 +1421,20 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         transition: 'all 0.3s ease'
                     }}>
                         <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
-                            <div>
-                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '25px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#475569', textTransform: 'uppercase', letterSpacing: '1px' }}>Vistazo</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '4px' }}>
-                                            <button onClick={() => setCanvasZoom(Math.max(0.2, canvasZoom - 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Alejar"><ZoomOut size={16} /></button>
+                                            <button onClick={() => setCanvasZoom(Math.max(0.1, canvasZoom - 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Alejar"><ZoomOut size={16} /></button>
                                             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', margin: '0 4px' }}></div>
-                                            <button onClick={() => setCanvasZoom(Math.min(2, canvasZoom + 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Acercar"><ZoomIn size={16} /></button>
+                                            <button onClick={() => setCanvasZoom(Math.min(3, canvasZoom + 0.1))} style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Acercar"><ZoomIn size={16} /></button>
                                         </div>
-                                        <div style={{ fontSize: '0.6rem', color: '#64748b' }}>{Math.round(canvasZoom * 100)}%</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#a78bfa', fontWeight: 900, minWidth: '45px', textAlign: 'center' }}>{Math.round(canvasZoom * 100)}%</div>
                                     </div>
+                                </div>
+
+                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><SettingsIcon size={18} /> Ajustes</div>
                                     <button
                                         onClick={() => setShowProjectDetails(!showProjectDetails)}
@@ -1449,254 +1453,254 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         {showProjectDetails ? 'Ocultar' : 'Ver más'}
                                     </button>
                                 </h3>
+                            </div>
 
-                                {showProjectDetails && (
-                                    <div className="anim-up" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '25px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                                        {/* Nombre del Proyecto */}
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre del Proyecto</label>
-                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <input
-                                                    className="premium-input"
-                                                    type="text"
-                                                    value={currentProject?.name || ''}
-                                                    readOnly={!isEditingProjectName}
-                                                    onChange={(e) => {
-                                                        if (currentProject) {
-                                                            setCurrentProject({ ...currentProject, name: e.target.value });
-                                                            setHasUnsavedNameChanges(true);
+                            {showProjectDetails && (
+                                <div className="anim-up" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '25px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                    {/* Nombre del Proyecto */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre del Proyecto</label>
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <input
+                                                className="premium-input"
+                                                type="text"
+                                                value={currentProject?.name || ''}
+                                                readOnly={!isEditingProjectName}
+                                                onChange={(e) => {
+                                                    if (currentProject) {
+                                                        setCurrentProject({ ...currentProject, name: e.target.value });
+                                                        setHasUnsavedNameChanges(true);
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '12px',
+                                                    paddingRight: '45px',
+                                                    flex: 1,
+                                                    fontSize: '0.85rem',
+                                                    opacity: isEditingProjectName ? 1 : 0.7,
+                                                    cursor: isEditingProjectName ? 'text' : 'not-allowed',
+                                                    borderColor: isEditingProjectName ? 'var(--primary)' : 'var(--border)'
+                                                }}
+                                            />
+                                            <button
+                                                onClick={async () => {
+                                                    if (isEditingProjectName && hasUnsavedNameChanges && currentProject?.id) {
+                                                        try {
+                                                            await supabase.from('projects').update({ name: currentProject.name }).eq('id', currentProject.id);
+                                                            setHasUnsavedNameChanges(false);
+                                                            setIsEditingProjectName(false);
+                                                            loadProjects();
+                                                        } catch (err) {
+                                                            alert('Error al guardar nombre: ' + err.message);
                                                         }
-                                                    }}
-                                                    style={{
-                                                        padding: '12px',
-                                                        paddingRight: '45px',
-                                                        flex: 1,
-                                                        fontSize: '0.85rem',
-                                                        opacity: isEditingProjectName ? 1 : 0.7,
-                                                        cursor: isEditingProjectName ? 'text' : 'not-allowed',
-                                                        borderColor: isEditingProjectName ? 'var(--primary)' : 'var(--border)'
-                                                    }}
-                                                />
-                                                <button
-                                                    onClick={async () => {
-                                                        if (isEditingProjectName && hasUnsavedNameChanges && currentProject?.id) {
-                                                            try {
-                                                                await supabase.from('projects').update({ name: currentProject.name }).eq('id', currentProject.id);
-                                                                setHasUnsavedNameChanges(false);
-                                                                setIsEditingProjectName(false);
-                                                                loadProjects();
-                                                            } catch (err) {
-                                                                alert('Error al guardar nombre: ' + err.message);
-                                                            }
-                                                        } else {
-                                                            setIsEditingProjectName(!isEditingProjectName);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        right: '12px',
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        color: isEditingProjectName ? '#10b981' : '#64748b',
-                                                        cursor: 'pointer',
-                                                        padding: '8px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        transition: '0.3s',
-                                                        borderRadius: '8px'
-                                                    }}
-                                                    title={isEditingProjectName ? 'Guardar cambios' : 'Editar nombre'}
-                                                >
-                                                    {isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* Clave de Acceso */}
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clave de Acceso</label>
-                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <input
-                                                    className="premium-input"
-                                                    type="text"
-                                                    value={currentProject?.access_code || ''}
-                                                    readOnly={!isEditingAccessCode}
-                                                    onChange={(e) => {
-                                                        if (currentProject) {
-                                                            setCurrentProject({ ...currentProject, access_code: e.target.value });
-                                                            setHasUnsavedCodeChanges(true);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        padding: '12px',
-                                                        paddingRight: '45px',
-                                                        flex: 1,
-                                                        fontSize: '0.85rem',
-                                                        opacity: isEditingAccessCode ? 1 : 0.7,
-                                                        cursor: isEditingAccessCode ? 'text' : 'not-allowed',
-                                                        borderColor: isEditingAccessCode ? 'var(--primary)' : 'var(--border)'
-                                                    }}
-                                                />
-                                                <button
-                                                    onClick={async () => {
-                                                        if (isEditingAccessCode && hasUnsavedCodeChanges && currentProject?.id) {
-                                                            try {
-                                                                await supabase.from('projects').update({ access_code: currentProject.access_code }).eq('id', currentProject.id);
-                                                                setHasUnsavedCodeChanges(false);
-                                                                setIsEditingAccessCode(false);
-                                                                loadProjects();
-                                                            } catch (err) {
-                                                                alert('Error al guardar clave: ' + err.message);
-                                                            }
-                                                        } else {
-                                                            setIsEditingAccessCode(!isEditingAccessCode);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        right: '12px',
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        color: isEditingAccessCode ? '#10b981' : '#64748b',
-                                                        cursor: 'pointer',
-                                                        padding: '8px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        transition: '0.3s',
-                                                        borderRadius: '8px'
-                                                    }}
-                                                    title={isEditingAccessCode ? 'Guardar cambios' : 'Editar clave'}
-                                                >
-                                                    {isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}
-                                                </button>
-                                            </div>
+                                                    } else {
+                                                        setIsEditingProjectName(!isEditingProjectName);
+                                                    }
+                                                }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '12px',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: isEditingProjectName ? '#10b981' : '#64748b',
+                                                    cursor: 'pointer',
+                                                    padding: '8px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: '0.3s',
+                                                    borderRadius: '8px'
+                                                }}
+                                                title={isEditingProjectName ? 'Guardar cambios' : 'Editar nombre'}
+                                            >
+                                                {isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}
+                                            </button>
                                         </div>
                                     </div>
-                                )}
+
+                                    {/* Clave de Acceso */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Clave de Acceso</label>
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <input
+                                                className="premium-input"
+                                                type="text"
+                                                value={currentProject?.access_code || ''}
+                                                readOnly={!isEditingAccessCode}
+                                                onChange={(e) => {
+                                                    if (currentProject) {
+                                                        setCurrentProject({ ...currentProject, access_code: e.target.value });
+                                                        setHasUnsavedCodeChanges(true);
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '12px',
+                                                    paddingRight: '45px',
+                                                    flex: 1,
+                                                    fontSize: '0.85rem',
+                                                    opacity: isEditingAccessCode ? 1 : 0.7,
+                                                    cursor: isEditingAccessCode ? 'text' : 'not-allowed',
+                                                    borderColor: isEditingAccessCode ? 'var(--primary)' : 'var(--border)'
+                                                }}
+                                            />
+                                            <button
+                                                onClick={async () => {
+                                                    if (isEditingAccessCode && hasUnsavedCodeChanges && currentProject?.id) {
+                                                        try {
+                                                            await supabase.from('projects').update({ access_code: currentProject.access_code }).eq('id', currentProject.id);
+                                                            setHasUnsavedCodeChanges(false);
+                                                            setIsEditingAccessCode(false);
+                                                            loadProjects();
+                                                        } catch (err) {
+                                                            alert('Error al guardar clave: ' + err.message);
+                                                        }
+                                                    } else {
+                                                        setIsEditingAccessCode(!isEditingAccessCode);
+                                                    }
+                                                }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '12px',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: isEditingAccessCode ? '#10b981' : '#64748b',
+                                                    cursor: 'pointer',
+                                                    padding: '8px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: '0.3s',
+                                                    borderRadius: '8px'
+                                                }}
+                                                title={isEditingAccessCode ? 'Guardar cambios' : 'Editar clave'}
+                                            >
+                                                {isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '25px' }}>Herramientas</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                {(() => {
+                                    const selectedEl = (localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId);
+                                    return [
+                                        { type: 'draw', icon: Paintbrush, color: '#7c3aed', label: 'Draw' },
+                                        { type: 'drag', icon: Move, color: '#3b82f6', label: 'Drag' },
+                                        { type: 'stamp', icon: Target, color: '#ef4444', label: 'Stamp' },
+                                        { type: 'text', icon: Type, color: '#10b981', label: 'Text' }
+                                    ].map(t => {
+                                        const isSelected = selectedEl?.type === t.type;
+                                        return (
+                                            <button
+                                                key={t.type}
+                                                onClick={() => addElement(t.type)}
+                                                className="glass"
+                                                style={{
+                                                    padding: '20px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                    transition: '0.2s',
+                                                    border: `2px solid ${isSelected ? t.color : 'var(--border)'} `,
+                                                    borderRadius: '16px',
+                                                    background: isSelected ? `${t.color} 15` : 'transparent',
+                                                    boxShadow: isSelected ? `0 0 15px ${t.color} 30` : 'none'
+                                                }}
+                                                onMouseEnter={e => !isSelected && (e.currentTarget.style.borderColor = t.color)}
+                                                onMouseLeave={e => !isSelected && (e.currentTarget.style.borderColor = 'var(--border)')}
+                                            >
+                                                <div style={{ color: t.color, transform: isSelected ? 'scale(1.2)' : 'scale(1)', transition: '0.2s' }}><t.icon size={22} /></div>
+                                                <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: isSelected ? 'white' : 'var(--text-muted)' }}>{t.label}</span>
+                                            </button>
+                                        );
+                                    });
+                                })()}
                             </div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {/* Element Specific Tools - Always visible when selected */}
+                            {selectedElementId && (localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId) && (
+                                <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                        <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', textTransform: 'uppercase', margin: 0 }}>Opciones</h4>
+                                        <div style={{ background: 'rgba(124, 58, 237, 0.2)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            {(() => {
+                                                const el = (localSlides[selectedIdx].elements || []).find(e => e.id === selectedElementId);
+                                                if (el?.type === 'text') return <><Type size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>TEXT</span></>;
+                                                if (el?.type === 'drag') return <><Move size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAG</span></>;
+                                                if (el?.type === 'draw') return <><Paintbrush size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAW</span></>;
+                                                if (el?.type === 'stamp') return <><Target size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>STAMP</span></>;
+                                                return null;
+                                            })()}
+                                        </div>
+                                    </div>
+                                    {(localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId)?.type === 'drag' && (
+                                        <>
+                                            <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
+                                                <Upload size={16} /> Subir Imagen
+                                                <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, (localSlides[selectedIdx].elements || []).findIndex(item => item.id === selectedElementId))} />
+                                            </label>
+                                            {(localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId)?.url && (
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                                                        Tamaño: {(localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId)?.imageSize || 100}%
+                                                    </label>
+                                                    <input
+                                                        type="range"
+                                                        min="20"
+                                                        max="500"
+                                                        step="5"
+                                                        value={((currentSlide?.elements || []).find(e => e.id === selectedElementId)?.imageSize || 100)}
+                                                        onChange={(e) => {
+                                                            if (!localSlides[selectedIdx]) return;
+                                                            const copy = [...localSlides];
+                                                            const element = (copy[selectedIdx].elements || []).find(item => item.id === selectedElementId);
+                                                            if (element) {
+                                                                element.imageSize = parseInt(e.target.value);
+                                                                setLocalSlides(copy);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '6px',
+                                                            borderRadius: '3px',
+                                                            background: 'linear-gradient(to right, rgba(124, 58, 237, 0.3), rgba(124, 58, 237, 0.8))',
+                                                            outline: 'none',
+                                                            cursor: 'pointer',
+                                                            accentColor: '#7c3aed'
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                    <button onClick={async () => {
+                                        if (!localSlides[selectedIdx]) return;
+                                        const elementToDelete = (currentSlide?.elements || []).find(e => e.id === selectedElementId);
+                                        if (elementToDelete?.url) await deleteFileFromStorage(elementToDelete.url);
+                                        const copy = [...localSlides];
+                                        copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== selectedElementId);
+                                        setLocalSlides(copy);
+                                        setSelectedElementId(null);
+                                        setDraggingElementId(null);
+                                    }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        <Trash2 size={16} /> Eliminar
+                                    </button>
+                                </div>
+                            )}
 
                             <div>
-                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '25px' }}>Herramientas</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                    {(() => {
-                                        const selectedEl = (localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId);
-                                        return [
-                                            { type: 'draw', icon: Paintbrush, color: '#7c3aed', label: 'Draw' },
-                                            { type: 'drag', icon: Move, color: '#3b82f6', label: 'Drag' },
-                                            { type: 'stamp', icon: Target, color: '#ef4444', label: 'Stamp' },
-                                            { type: 'text', icon: Type, color: '#10b981', label: 'Text' }
-                                        ].map(t => {
-                                            const isSelected = selectedEl?.type === t.type;
-                                            return (
-                                                <button
-                                                    key={t.type}
-                                                    onClick={() => addElement(t.type)}
-                                                    className="glass"
-                                                    style={{
-                                                        padding: '20px',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        gap: '10px',
-                                                        transition: '0.2s',
-                                                        border: `2px solid ${isSelected ? t.color : 'var(--border)'} `,
-                                                        borderRadius: '16px',
-                                                        background: isSelected ? `${t.color} 15` : 'transparent',
-                                                        boxShadow: isSelected ? `0 0 15px ${t.color} 30` : 'none'
-                                                    }}
-                                                    onMouseEnter={e => !isSelected && (e.currentTarget.style.borderColor = t.color)}
-                                                    onMouseLeave={e => !isSelected && (e.currentTarget.style.borderColor = 'var(--border)')}
-                                                >
-                                                    <div style={{ color: t.color, transform: isSelected ? 'scale(1.2)' : 'scale(1)', transition: '0.2s' }}><t.icon size={22} /></div>
-                                                    <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: isSelected ? 'white' : 'var(--text-muted)' }}>{t.label}</span>
-                                                </button>
-                                            );
-                                        });
-                                    })()}
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                {/* Element Specific Tools - Always visible when selected */}
-                                {selectedElementId && (localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId) && (
-                                    <div className="anim-up" style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                            <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary-light)', textTransform: 'uppercase', margin: 0 }}>Opciones</h4>
-                                            <div style={{ background: 'rgba(124, 58, 237, 0.2)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                {(() => {
-                                                    const el = (localSlides[selectedIdx].elements || []).find(e => e.id === selectedElementId);
-                                                    if (el?.type === 'text') return <><Type size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>TEXT</span></>;
-                                                    if (el?.type === 'drag') return <><Move size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAG</span></>;
-                                                    if (el?.type === 'draw') return <><Paintbrush size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>DRAW</span></>;
-                                                    if (el?.type === 'stamp') return <><Target size={12} /> <span style={{ fontSize: '0.6rem', fontWeight: 900 }}>STAMP</span></>;
-                                                    return null;
-                                                })()}
-                                            </div>
-                                        </div>
-                                        {(localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId)?.type === 'drag' && (
-                                            <>
-                                                <label className="btn-premium" style={{ width: '100%', padding: '10px', fontSize: '0.75rem', cursor: 'pointer', marginBottom: '10px' }}>
-                                                    <Upload size={16} /> Subir Imagen
-                                                    <input type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, (localSlides[selectedIdx].elements || []).findIndex(item => item.id === selectedElementId))} />
-                                                </label>
-                                                {(localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId)?.url && (
-                                                    <div style={{ marginBottom: '10px' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                                                            Tamaño: {(localSlides[selectedIdx]?.elements || []).find(e => e.id === selectedElementId)?.imageSize || 100}%
-                                                        </label>
-                                                        <input
-                                                            type="range"
-                                                            min="20"
-                                                            max="500"
-                                                            step="5"
-                                                            value={((currentSlide?.elements || []).find(e => e.id === selectedElementId)?.imageSize || 100)}
-                                                            onChange={(e) => {
-                                                                if (!localSlides[selectedIdx]) return;
-                                                                const copy = [...localSlides];
-                                                                const element = (copy[selectedIdx].elements || []).find(item => item.id === selectedElementId);
-                                                                if (element) {
-                                                                    element.imageSize = parseInt(e.target.value);
-                                                                    setLocalSlides(copy);
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '6px',
-                                                                borderRadius: '3px',
-                                                                background: 'linear-gradient(to right, rgba(124, 58, 237, 0.3), rgba(124, 58, 237, 0.8))',
-                                                                outline: 'none',
-                                                                cursor: 'pointer',
-                                                                accentColor: '#7c3aed'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-                                        <button onClick={async () => {
-                                            if (!localSlides[selectedIdx]) return;
-                                            const elementToDelete = (currentSlide?.elements || []).find(e => e.id === selectedElementId);
-                                            if (elementToDelete?.url) await deleteFileFromStorage(elementToDelete.url);
-                                            const copy = [...localSlides];
-                                            copy[selectedIdx].elements = copy[selectedIdx].elements.filter(e => e.id !== selectedElementId);
-                                            setLocalSlides(copy);
-                                            setSelectedElementId(null);
-                                            setDraggingElementId(null);
-                                        }} className="btn-outline" style={{ width: '100%', color: '#ef4444', padding: '12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                            <Trash2 size={16} /> Eliminar
-                                        </button>
-                                    </div>
-                                )}
-
-                                <div>
-                                    <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio</h3>
-                                    <label className="btn-outline" style={{ width: '100%', padding: '15px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                                        <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
-                                        <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
-                                    </label>
-                                </div>
+                                <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px' }}>Audio</h3>
+                                <label className="btn-outline" style={{ width: '100%', padding: '15px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                                    <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
+                                    <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
+                                </label>
                             </div>
                         </div>
                     </div>
