@@ -1216,7 +1216,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', fontSize: '0.75rem', color: isActive ? '#ef4444' : '#10b981', borderColor: isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)' }}>
                             {isActive ? <Pause size={14} /> : <Play size={14} />} {!isMobile && (isActive ? 'Suspender' : 'Activar')}
                         </button>
-                        <button onClick={handleSaveAll} className="btn-premium" style={{ padding: '8px 12px', fontSize: '0.75rem' }}><Save size={14} /> Guardar</button>
+                        <button onClick={() => handleSaveAll(false)} className="btn-premium" style={{ padding: '8px 12px', fontSize: '0.75rem' }}><Save size={14} /> Guardar</button>
                         {/* Toggle Settings Panel - Only in compact mode */}
                         {isCompact && (
                             <button
