@@ -24,10 +24,22 @@ export default function App() {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
     const [returnFromResults, setReturnFromResults] = useState(false);
 
+    const [toast, setToast] = useState(null);
+
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 1024);
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+
+        const handleToast = (e) => {
+            setToast(e.detail);
+            setTimeout(() => setToast(null), 3000);
+        };
+        window.addEventListener('show-toast', handleToast);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('show-toast', handleToast);
+        };
     }, []);
 
     // Preload Slide Assets
@@ -157,312 +169,279 @@ export default function App() {
         );
     }
 
-    if (view === 'entry') {
-        return (
-            <AliasEntry
-                onEnter={handleEnterAsStudent}
-                onAdmin={handleEnterAsAdmin}
-                onTeacher={handleEnterAsTeacher}
-            />
-        );
-    }
+    return (
+        <div className="app-container">
+            {view === 'entry' && (
+                <AliasEntry
+                    onEnter={handleEnterAsStudent}
+                    onAdmin={handleEnterAsAdmin}
+                    onTeacher={handleEnterAsTeacher}
+                />
+            )}
 
-    if (view === 'quiz') {
-        return <QuizApp
-            onExit={() => {
-                if (role === 'admin') {
-                    setView('editor');
-                    setSelectedProject(null);
-                } else {
-                    window.location.href = 'https://central.institutotinykids.com/';
-                }
-                setReturnFromResults(false);
-            }}
-            isAdmin={role === 'admin'}
-            role={role}
-            project={selectedProject}
-            isActive={isActive}
-            onToggleActive={toggleActive}
-            onViewResults={() => setView('results')}
-            previewMode={previewMode}
-            onPreview={(p) => {
-                setLastView('quiz');
-                setCameFromGallery(false);
-                setSelectedProject(p);
-                setView('preview_quiz');
-                setPreviewMode(true);
-            }}
-        />;
-    }
+            {view === 'quiz' && (
+                <QuizApp
+                    onExit={() => {
+                        if (role === 'admin') {
+                            setView('editor');
+                            setSelectedProject(null);
+                        } else {
+                            window.location.href = 'https://central.institutotinykids.com/';
+                        }
+                        setReturnFromResults(false);
+                    }}
+                    isAdmin={role === 'admin'}
+                    role={role}
+                    project={selectedProject}
+                    isActive={isActive}
+                    onToggleActive={toggleActive}
+                    onViewResults={() => setView('results')}
+                    previewMode={previewMode}
+                    onPreview={(p) => {
+                        setLastView('quiz');
+                        setCameFromGallery(false);
+                        setSelectedProject(p);
+                        setView('preview_quiz');
+                        setPreviewMode(true);
+                    }}
+                />
+            )}
 
-    if (view === 'preview_quiz' || view === 'preview_viewer') {
-        const isQuiz = view === 'preview_quiz';
-        return (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 9999, overflowY: 'auto', background: '#000' }}>
-                {isQuiz ? (
-                    <QuizApp
-                        onExit={() => {
-                            setView(lastView);
-                            setPreviewMode(false);
-                            if (lastView === 'editor' && cameFromGallery) {
-                                setSelectedProject(null); // Force gallery in SlideEditor
-                            }
-                        }}
-                        isAdmin={false}
-                        role="student"
-                        project={selectedProject}
-                        isActive={true}
-                        previewMode={true}
-                        onToggleActive={() => { }}
-                        onViewResults={() => { }}
-                    />
-                ) : (
-                    <SlideViewer
-                        slide={slides[currentSlideIdx]}
-                        alias="Preview User"
-                        currentIndex={currentSlideIdx}
-                        totalSlides={slides.length}
-                        onComplete={() => {
-                            if (currentSlideIdx < slides.length - 1) setCurrentSlideIdx(prev => prev + 1);
-                            else {
+            {(view === 'preview_quiz' || view === 'preview_viewer') && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, overflowY: 'auto', background: '#000' }}>
+                    {view === 'preview_quiz' ? (
+                        <QuizApp
+                            onExit={() => {
+                                setView(lastView);
+                                setPreviewMode(false);
+                                if (lastView === 'editor' && cameFromGallery) {
+                                    setSelectedProject(null);
+                                }
+                            }}
+                            isAdmin={false}
+                            role="student"
+                            project={selectedProject}
+                            isActive={true}
+                            previewMode={true}
+                            onToggleActive={() => { }}
+                            onViewResults={() => { }}
+                        />
+                    ) : (
+                        <SlideViewer
+                            slide={slides[currentSlideIdx]}
+                            alias="Preview User"
+                            currentIndex={currentSlideIdx}
+                            totalSlides={slides.length}
+                            onComplete={() => {
+                                if (currentSlideIdx < slides.length - 1) setCurrentSlideIdx(prev => prev + 1);
+                                else {
+                                    setView(lastView);
+                                    setPreviewMode(false);
+                                    if (lastView === 'editor' && cameFromGallery) setSelectedProject(null);
+                                }
+                            }}
+                            onNext={() => { if (currentSlideIdx < slides.length - 1) setCurrentSlideIdx(prev => prev + 1); }}
+                            onPrev={() => { if (currentSlideIdx > 0) setCurrentSlideIdx(prev => prev - 1); }}
+                            isFirst={currentSlideIdx === 0}
+                            isLast={currentSlideIdx === slides.length - 1}
+                            role="student"
+                            onHome={() => {
                                 setView(lastView);
                                 setPreviewMode(false);
                                 if (lastView === 'editor' && cameFromGallery) setSelectedProject(null);
-                            }
-                        }}
-                        onNext={() => { if (currentSlideIdx < slides.length - 1) setCurrentSlideIdx(prev => prev + 1); }}
-                        onPrev={() => { if (currentSlideIdx > 0) setCurrentSlideIdx(prev => prev - 1); }}
-                        isFirst={currentSlideIdx === 0}
-                        isLast={currentSlideIdx === slides.length - 1}
-                        role="student"
-                        onHome={() => {
+                            }}
+                        />
+                    )}
+                    <button
+                        onClick={() => {
                             setView(lastView);
                             setPreviewMode(false);
                             if (lastView === 'editor' && cameFromGallery) setSelectedProject(null);
                         }}
-                    />
-                )}
-                <button
-                    onClick={() => {
-                        setView(lastView);
-                        setPreviewMode(false);
-                        if (lastView === 'editor' && cameFromGallery) setSelectedProject(null);
-                    }}
-                    style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10000, background: 'rgba(239, 68, 68, 0.8)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer' }}
-                >
-                    Salir Preview
-                </button>
-            </div>
-        );
-    }
+                        style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10000, background: 'rgba(239, 68, 68, 0.8)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                        Salir Preview
+                    </button>
+                </div>
+            )}
 
-    if (view === 'editor') {
-        return (
-            <SlideEditor
-                slides={slides}
-                isActive={isActive}
-                onSave={async (newSlides) => {
-                    // This now needs to support multiple projects
-                    // For now, it will use selectedProject.id or stay empty if not selected
-                    if (!selectedProject) {
-                        alert("Selecciona un proyecto primero en la Gallery");
-                        return;
-                    }
-                    // Implementation below will be updated in SlideEditor to handle project selection
-                }}
-                onExit={() => {
-                    if (role === 'admin') {
-                        // If already in gallery, go to Tiny Kids Home
-                        // SlideEditor manages its own internal 'showGallery' state.
-                        // We pass a function that SlideEditor can call.
-                        window.location.href = 'https://central.institutotinykids.com/';
-                    } else {
-                        setView('entry');
-                    }
-                }}
-                onToggleActive={toggleActive}
-                onViewResults={() => {
-                    setReturnFromResults(true);
-                    setView('results');
-                }}
-                selectedProject={selectedProject}
-                returnFromResults={returnFromResults}
-                onSelectProject={(p) => {
-                    setSelectedProject(p);
-                    setIsActive(p.is_active);
-                    loadProjectSlides(p.id);
-                    setReturnFromResults(false);
-                }}
-                onOpenQuiz={(p) => {
-                    if (p) {
-                        setSelectedProject(p);
-                        setIsActive(p.is_active);
-                    }
-                    setView('quiz');
-                }}
-                onPreview={(p, fromGallery = false) => {
-                    setLastView(view);
-                    setCameFromGallery(fromGallery);
-                    if (p) {
-                        setSelectedProject(p);
-                        setIsActive(p.is_active);
-                        if (p.id.startsWith('quiz-')) {
-                            setView('preview_quiz');
+            {view === 'editor' && (
+                <SlideEditor
+                    slides={slides}
+                    isActive={isActive}
+                    onSave={async () => {
+                        if (!selectedProject) {
+                            alert("Selecciona un proyecto primero en la Gallery");
+                            return;
+                        }
+                    }}
+                    onExit={() => {
+                        if (role === 'admin') {
+                            window.location.href = 'https://central.institutotinykids.com/';
                         } else {
-                            loadProjectSlides(p.id).then(() => {
+                            setView('entry');
+                        }
+                    }}
+                    onToggleActive={toggleActive}
+                    onViewResults={() => {
+                        setReturnFromResults(true);
+                        setView('results');
+                    }}
+                    selectedProject={selectedProject}
+                    returnFromResults={returnFromResults}
+                    onSelectProject={(p) => {
+                        setSelectedProject(p);
+                        setIsActive(p.is_active);
+                        loadProjectSlides(p.id);
+                        setReturnFromResults(false);
+                    }}
+                    onOpenQuiz={(p) => {
+                        if (p) {
+                            setSelectedProject(p);
+                            setIsActive(p.is_active);
+                        }
+                        setView('quiz');
+                    }}
+                    onPreview={(p, fromGallery = false) => {
+                        setLastView(view);
+                        setCameFromGallery(fromGallery);
+                        if (p) {
+                            setSelectedProject(p);
+                            setIsActive(p.is_active);
+                            if (p.id.startsWith('quiz-')) {
+                                setView('preview_quiz');
+                            } else {
+                                loadProjectSlides(p.id).then(() => {
+                                    setView('preview_viewer');
+                                    setCurrentSlideIdx(0);
+                                });
+                            }
+                        } else if (selectedProject) {
+                            if (selectedProject.id.startsWith('quiz-')) {
+                                setView('preview_quiz');
+                            } else {
                                 setView('preview_viewer');
                                 setCurrentSlideIdx(0);
-                            });
+                            }
                         }
-                    } else if (selectedProject) {
-                        if (selectedProject.id.startsWith('quiz-')) {
-                            setView('preview_quiz');
-                        } else {
-                            setView('preview_viewer');
-                            setCurrentSlideIdx(0);
-                        }
-                    }
-                    setPreviewMode(true);
-                }}
-            />
-        );
-    }
+                        setPreviewMode(true);
+                    }}
+                />
+            )}
 
-    if (view === 'results') {
-        return (
-            <ResultsViewer
-                slides={slides}
-                onExit={() => {
-                    const nextView = (selectedProject && selectedProject.id.startsWith('quiz-')) ? 'quiz' : 'editor';
-                    setView(nextView);
-                }}
-            />
-        );
-    }
+            {view === 'results' && (
+                <ResultsViewer
+                    slides={slides}
+                    onExit={() => {
+                        const nextView = (selectedProject && selectedProject.id.startsWith('quiz-')) ? 'quiz' : 'editor';
+                        setView(nextView);
+                    }}
+                />
+            )}
 
-    if (view === 'viewer') {
-        if (slides.length === 0) {
-            return (
-                <div className="min-h-screen bg-[#050510] flex items-center justify-center p-8">
-                    <div className="entry-card shadow-2xl glass anim-up" style={{ padding: isMobile ? '20px' : '40px' }}>
-                        <div className="responsive-grid">
-                            <div className="responsive-header" style={{ textAlign: 'center', alignItems: 'center' }}>
-                                <div style={{ fontSize: '5rem', marginBottom: '10px' }}>📋</div>
-                                <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '10px' }}>Sin Contenido</h1>
-                            </div>
-                            <div className="responsive-content" style={{ textAlign: 'center', alignItems: 'center', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <p style={{ color: '#94a3b8', fontSize: '1rem' }}>
-                                    El administrador aún no ha creado diapositivas para esta presentación.
-                                </p>
-                                <button
-                                    onClick={() => window.location.href = 'https://central.institutotinykids.com/'}
-                                    className="btn-premium"
-                                    style={{ width: '100%', padding: '14px' }}
-                                >
-                                    Volver al Inicio
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        return (
-            <SlideViewer
-                key={currentSlideIdx} // CRITICAL: Reset state on slide change
-                slide={slides[currentSlideIdx]}
-                alias={alias}
-                role={role}
-                currentIndex={currentSlideIdx}
-                totalSlides={slides.length}
-                isFirst={currentSlideIdx === 0}
-                isLast={currentSlideIdx === slides.length - 1}
-                onNext={() => setCurrentSlideIdx(i => Math.min(i + 1, slides.length - 1))}
-                onPrev={() => setCurrentSlideIdx(i => Math.max(i - 1, 0))}
-                onComplete={handleCompleteSlide}
-            />
-        );
-    }
-
-    if (view === 'results_success') {
-        return (
-            <div style={{
-                height: '100vh',
-                width: '100vw',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'radial-gradient(circle at center, #1e1b4b, #050510)',
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                zIndex: 100
-            }}>
-                {/* Background glow */}
-                <div style={{ position: 'absolute', top: '10%', left: '10%', width: '400px', height: '400px', background: '#4f46e5', filter: 'blur(150px)', opacity: 0.2, pointerEvents: 'none' }}></div>
-                <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: '400px', height: '400px', background: '#10b981', filter: 'blur(150px)', opacity: 0.2, pointerEvents: 'none' }}></div>
-
-                <div className="entry-card glass anim-up" style={{
-                    maxHeight: '90vh',
-                    padding: isMobile ? '25px 20px' : '50px 30px',
-                    position: 'relative',
-                    zIndex: 110,
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '24px'
-                }}>
-                    <div className="responsive-grid">
-                        <div className="responsive-header" style={{ alignItems: 'center', textAlign: 'center' }}>
-                            <div style={{ fontSize: isMobile ? '3.5rem' : '5rem' }}>🎉</div>
-                            <h1 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', marginBottom: '12px', lineHeight: 1.1 }}>
-                                {role === 'teacher' ? 'Lección Finalizada' : '¡Misión Cumplida!'}
-                            </h1>
-                            <p style={{ fontSize: isMobile ? '0.9rem' : '1rem', color: '#a78bfa', fontWeight: 800 }}>
-                                {role === 'teacher' ? 'Buen trabajo moderando la clase' : `Excelente trabajo, ${alias}`}
-                            </p>
-                        </div>
-
-                        <div className="responsive-content" style={{ alignItems: 'center', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
-                                {role === 'teacher'
-                                    ? 'Puedes reiniciar esta presentación o volver al inicio para seleccionar otro programa.'
-                                    : 'Tus respuestas han sido registradas exitosamente en el sistema.'}
-                            </p>
-
-                            {role === 'teacher' ? (
-                                <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
-                                    <button
-                                        onClick={() => { setCurrentSlideIdx(0); setView('viewer'); }}
-                                        className="btn-outline"
-                                        style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}
-                                    >
-                                        Reiniciar
-                                    </button>
+            {view === 'viewer' && (
+                slides.length === 0 ? (
+                    <div className="min-h-screen bg-[#050510] flex items-center justify-center p-8">
+                        <div className="entry-card shadow-2xl glass anim-up" style={{ padding: isMobile ? '20px' : '40px' }}>
+                            <div className="responsive-grid">
+                                <div className="responsive-header" style={{ textAlign: 'center', alignItems: 'center' }}>
+                                    <div style={{ fontSize: '5rem', marginBottom: '10px' }}>📋</div>
+                                    <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '10px' }}>Sin Contenido</h1>
+                                </div>
+                                <div className="responsive-content" style={{ textAlign: 'center', alignItems: 'center', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    <p style={{ color: '#94a3b8', fontSize: '1rem' }}>
+                                        El administrador aún no ha creado diapositivas para esta presentación.
+                                    </p>
                                     <button
                                         onClick={() => window.location.href = 'https://central.institutotinykids.com/'}
                                         className="btn-premium"
-                                        style={{ flex: 1, padding: '14px', fontSize: '0.9rem' }}
+                                        style={{ width: '100%', padding: '14px' }}
                                     >
-                                        Home
+                                        Volver al Inicio
                                     </button>
                                 </div>
-                            ) : (
-                                <button
-                                    onClick={() => window.location.reload()}
-                                    className="btn-premium"
-                                    style={{ padding: isMobile ? '12px 30px' : '14px 40px', fontSize: isMobile ? '0.9rem' : '1rem', width: '100%' }}
-                                >
-                                    Finalizar Sesión
-                                </button>
-                            )}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <SlideViewer
+                        key={currentSlideIdx}
+                        slide={slides[currentSlideIdx]}
+                        alias={alias}
+                        role={role}
+                        currentIndex={currentSlideIdx}
+                        totalSlides={slides.length}
+                        isFirst={currentSlideIdx === 0}
+                        isLast={currentSlideIdx === slides.length - 1}
+                        onNext={() => setCurrentSlideIdx(i => Math.min(i + 1, slides.length - 1))}
+                        onPrev={() => setCurrentSlideIdx(i => Math.max(i - 1, 0))}
+                        onComplete={handleCompleteSlide}
+                    />
+                )
+            )}
+
+            {view === 'results_success' && (
+                <div style={{
+                    height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'radial-gradient(circle at center, #1e1b4b, #050510)',
+                    position: 'fixed', top: 0, left: 0, zIndex: 100
+                }}>
+                    <div className="entry-card glass anim-up" style={{
+                        maxHeight: '90vh', padding: isMobile ? '25px 20px' : '50px 30px',
+                        position: 'relative', zIndex: 110, background: 'rgba(255, 255, 255, 0.05)',
+                        backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '24px'
+                    }}>
+                        <div className="responsive-grid">
+                            <div className="responsive-header" style={{ alignItems: 'center', textAlign: 'center' }}>
+                                <div style={{ fontSize: isMobile ? '3.5rem' : '5rem' }}>🎉</div>
+                                <h1 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', marginBottom: '12px', lineHeight: 1.1 }}>
+                                    {role === 'teacher' ? 'Lección Finalizada' : '¡Misión Cumplida!'}
+                                </h1>
+                                <p style={{ fontSize: isMobile ? '0.9rem' : '1rem', color: '#a78bfa', fontWeight: 800 }}>
+                                    {role === 'teacher' ? 'Buen trabajo moderando la clase' : `Excelente trabajo, ${alias}`}
+                                </p>
+                            </div>
+                            <div className="responsive-content" style={{ alignItems: 'center', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
+                                    {role === 'teacher'
+                                        ? 'Puedes reiniciar esta presentación o volver al inicio para seleccionar otro programa.'
+                                        : 'Tus respuestas han sido registradas exitosamente en el sistema.'}
+                                </p>
+                                {role === 'teacher' ? (
+                                    <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
+                                        <button onClick={() => { setCurrentSlideIdx(0); setView('viewer'); }} className="btn-outline" style={{ flex: 1, padding: '14px' }}>Reiniciar</button>
+                                        <button onClick={() => window.location.href = 'https://central.institutotinykids.com/'} className="btn-premium" style={{ flex: 1, padding: '14px' }}>Home</button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => window.location.reload()} className="btn-premium" style={{ width: '100%', padding: '14px' }}>Finalizar Sesión</button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        );
-    }
+            )}
 
-    return null;
+            <AnimatePresence>
+                {toast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        style={{
+                            position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
+                            zIndex: 99999, padding: '12px 24px', borderRadius: '16px',
+                            background: toast.type === 'error' ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)',
+                            color: 'white', fontWeight: 700, fontSize: '0.9rem',
+                            display: 'flex', alignItems: 'center', gap: '12px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                    >
+                        {toast.type === 'error' ? '❌' : '✅'} {toast.message}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
 }
