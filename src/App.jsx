@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import AliasEntry from './components/AliasEntry';
-import SlideViewer from './components/SlideViewer';
-import SlideEditor from './components/SlideEditor';
-import ResultsViewer from './components/ResultsViewer';
-import QuizApp from './components/QuizApp';
+import HomeView from './components/HomeView';
+import SlideViewer from './components/GuiaPres';
+import SlideEditor from './components/GuiaEditor';
+import ResultadosView from './components/ResultadosView';
+import QuizView from './components/QuizView';
+import GaleriaView from './components/GaleriaView';
 import { supabase } from './lib/supabase';
 import confetti from 'canvas-confetti';
 
@@ -106,7 +107,7 @@ export default function App() {
 
     const handleEnterAsAdmin = () => {
         setRole('admin');
-        setView('editor');
+        setView('gallery');
     };
 
     const toggleActive = async () => {
@@ -173,7 +174,7 @@ export default function App() {
     return (
         <div className="app-container">
             {view === 'entry' && (
-                <AliasEntry
+                <HomeView
                     onEnter={handleEnterAsStudent}
                     onAdmin={handleEnterAsAdmin}
                     onTeacher={handleEnterAsTeacher}
@@ -181,7 +182,7 @@ export default function App() {
             )}
 
             {view === 'quiz' && (
-                <QuizApp
+                <QuizView
                     onExit={() => {
                         if (role === 'admin') {
                             setView('editor');
@@ -211,7 +212,7 @@ export default function App() {
             {(view === 'preview_quiz' || view === 'preview_viewer') && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 9999, overflowY: 'auto', background: '#000' }}>
                     {view === 'preview_quiz' ? (
-                        <QuizApp
+                        <QuizView
                             onExit={() => {
                                 setView(lastView);
                                 setPreviewMode(false);
@@ -266,19 +267,46 @@ export default function App() {
                 </div>
             )}
 
+            {view === 'gallery' && (
+                <GaleriaView
+                    onOpenGuide={(p) => {
+                        setSelectedProject(p);
+                        setIsActive(p.is_active);
+                        loadProjectSlides(p.id);
+                        setView('editor');
+                    }}
+                    onOpenQuiz={(p) => {
+                        setSelectedProject(p);
+                        setIsActive(p.is_active);
+                        setView('quiz');
+                    }}
+                    onExit={() => setView('entry')}
+                    onPreview={(p, fromGallery = true) => {
+                        setLastView('gallery');
+                        setCameFromGallery(fromGallery);
+                        setSelectedProject(p);
+                        setIsActive(p.is_active);
+                        if (p.id.startsWith('quiz-')) {
+                            setView('preview_quiz');
+                        } else {
+                            loadProjectSlides(p.id).then(() => {
+                                setView('preview_viewer');
+                                setCurrentSlideIdx(0);
+                            });
+                        }
+                        setPreviewMode(true);
+                    }}
+                />
+            )}
+
             {view === 'editor' && (
                 <SlideEditor
                     slides={slides}
                     isActive={isActive}
-                    onSave={async () => {
-                        if (!selectedProject) {
-                            alert("Selecciona un proyecto primero en la Gallery");
-                            return;
-                        }
-                    }}
+                    onSave={() => { }}
                     onExit={() => {
                         if (role === 'admin') {
-                            window.location.href = 'https://central.institutotinykids.com/';
+                            setView('gallery');
                         } else {
                             setView('entry');
                         }
@@ -289,51 +317,21 @@ export default function App() {
                         setView('results');
                     }}
                     selectedProject={selectedProject}
-                    returnFromResults={returnFromResults}
-                    onSelectProject={(p) => {
-                        setSelectedProject(p);
-                        setIsActive(p.is_active);
-                        loadProjectSlides(p.id);
-                        setReturnFromResults(false);
-                    }}
-                    onOpenQuiz={(p) => {
-                        if (p) {
-                            setSelectedProject(p);
-                            setIsActive(p.is_active);
-                        }
-                        setView('quiz');
-                    }}
-                    onPreview={(p, fromGallery = false) => {
-                        setLastView(view);
-                        setCameFromGallery(fromGallery);
-                        if (p) {
-                            setSelectedProject(p);
-                            setIsActive(p.is_active);
-                            if (p.id.startsWith('quiz-')) {
-                                setView('preview_quiz');
-                            } else {
-                                loadProjectSlides(p.id).then(() => {
-                                    setView('preview_viewer');
-                                    setCurrentSlideIdx(0);
-                                });
-                            }
-                        } else if (selectedProject) {
-                            if (selectedProject.id.startsWith('quiz-')) {
-                                setView('preview_quiz');
-                            } else {
-                                setView('preview_viewer');
-                                setCurrentSlideIdx(0);
-                            }
-                        }
+                    onGoToGallery={() => setView('gallery')}
+                    onPreview={(p) => {
+                        setLastView('editor');
+                        setCameFromGallery(false);
+                        setView(p.id.startsWith('quiz-') ? 'preview_quiz' : 'preview_viewer');
+                        setCurrentSlideIdx(0);
                         setPreviewMode(true);
                     }}
                 />
             )}
 
             {view === 'results' && (
-                <ResultsViewer
-                    slides={slides}
-                    onExit={() => {
+                <ResultadosView
+                    project={selectedProject}
+                    onBack={() => {
                         const nextView = (selectedProject && selectedProject.id.startsWith('quiz-')) ? 'quiz' : 'editor';
                         setView(nextView);
                     }}

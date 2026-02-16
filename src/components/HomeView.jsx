@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Settings, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Folder, ChevronLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-export default function AliasEntry({ onEnter, onAdmin, onTeacher }) {
+export default function HomeView({ onEnter, onAdmin, onTeacher }) {
     const [view, setView] = useState('role_selection'); // role_selection, admin_login, teacher_login, student_alias, project_selection, project_pass
     const [alias, setAlias] = useState('');
     const [pass, setPass] = useState('');
