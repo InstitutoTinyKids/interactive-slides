@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import {
     Plus, Folder, ChevronLeft, LayoutGrid, HelpCircle,
@@ -28,6 +28,9 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
 
     const [tempFolders, setTempFolders] = useState([]);
     const [tempProjects, setTempProjects] = useState([]);
+    const [draggingProjectId, setDraggingProjectId] = useState(null);
+    const [hoveredFolderId, setHoveredFolderId] = useState(null);
+    const folderRefs = useRef({});
 
     useEffect(() => {
         const handleResize = () => {
@@ -38,6 +41,32 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
         loadProjects();
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    const handleDrag = (event, info) => {
+        if (!isSortMode) return;
+        const x = info.point.x;
+        const y = info.point.y;
+        let foundFolderId = null;
+        Object.entries(folderRefs.current).forEach(([id, ref]) => {
+            if (ref) {
+                const rect = ref.getBoundingClientRect();
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    foundFolderId = id;
+                }
+            }
+        });
+        setHoveredFolderId(foundFolderId);
+    };
+
+    const handleDragEnd = async (projectId) => {
+        if (hoveredFolderId) {
+            setTempProjects(prev => prev.map(p =>
+                p.id === projectId ? { ...p, folder_id: hoveredFolderId } : p
+            ));
+        }
+        setDraggingProjectId(null);
+        setHoveredFolderId(null);
+    };
 
     const loadProjects = async () => {
         setLoading(true);
@@ -233,18 +262,18 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
 
     return (
         <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'auto', padding: isMobile ? '20px' : isTablet ? '30px' : '40px' }}>
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '20px' : '40px', gap: '15px' }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '20px' : '30px', gap: '15px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     {currentFolderId && (
-                        <button onClick={() => setCurrentFolderId(null)} className="btn-outline" style={{ padding: '10px' }}>
-                            <ChevronLeft size={24} />
+                        <button onClick={() => setCurrentFolderId(null)} className="btn-outline" style={{ padding: '8px' }}>
+                            <ChevronLeft size={20} />
                         </button>
                     )}
                     <div>
-                        <h1 style={{ fontSize: isMobile ? '1.8rem' : isTablet ? '2.2rem' : '2.5rem', fontWeight: 900, color: 'white', marginBottom: '4px' }}>
+                        <h1 style={{ fontSize: isMobile ? '1.5rem' : isTablet ? '1.8rem' : '2rem', fontWeight: 900, color: 'white', marginBottom: '2px' }}>
                             {currentFolderId ? folders.find(f => f.id === currentFolderId)?.name : 'Galería'}
                         </h1>
-                        <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                        <div style={{ display: 'flex', gap: '15px', marginTop: '5px' }}>
                             {['all', 'guias', 'quiz'].map(tab => (
                                 <button
                                     key={tab}
@@ -252,9 +281,9 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                                     style={{
                                         background: 'none', border: 'none',
                                         color: galleryTab === tab ? (tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed') : '#475569',
-                                        fontSize: '0.9rem', fontWeight: 800, cursor: 'pointer',
+                                        fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer',
                                         borderBottom: galleryTab === tab ? `2px solid ${tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed'}` : '2px solid transparent',
-                                        paddingBottom: '5px'
+                                        paddingBottom: '3px'
                                     }}
                                 >
                                     {tab.toUpperCase() === 'ALL' ? 'TODAS' : tab.toUpperCase() === 'GUIAS' ? 'GUIAS' : 'QUIZZES'}
@@ -265,21 +294,21 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                 </div>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
                     {selectedProjects.length > 0 && (
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button onClick={handleDuplicateSelected} className="btn-outline" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}><Copy size={20} /> Duplicar</button>
-                            <button onClick={() => setShowMoveModal(true)} className="btn-outline" style={{ background: 'rgba(167, 139, 250, 0.1)', color: '#a78bfa', borderColor: 'rgba(167, 139, 250, 0.2)', padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}><Move size={20} /> Mover</button>
-                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}><Trash2 size={20} /> Eliminar</button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button onClick={handleDuplicateSelected} className="btn-outline" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.8rem' }}><Copy size={16} /> Duplicar</button>
+                            <button onClick={() => setShowMoveModal(true)} className="btn-outline" style={{ background: 'rgba(167, 139, 250, 0.1)', color: '#a78bfa', borderColor: 'rgba(167, 139, 250, 0.2)', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.8rem' }}><Move size={16} /> Mover</button>
+                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.8rem' }}><Trash2 size={16} /> Eliminar</button>
                         </div>
                     )}
-                    <button onClick={onExit} className="btn-outline" style={{ padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '8px' }}><ChevronLeft size={20} /> Home</button>
-                    <button onClick={toggleSortMode} className="btn-outline" style={{ padding: '12px 25px', background: isSortMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)', color: isSortMode ? '#10b981' : 'white', borderColor: isSortMode ? '#10b981' : 'rgba(255,255,255,0.1)', fontWeight: 800 }}>{isSortMode ? 'Listo' : 'Ordenar'}</button>
+                    <button onClick={onExit} className="btn-outline" style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}><ChevronLeft size={16} /> Home</button>
+                    <button onClick={toggleSortMode} className="btn-outline" style={{ padding: '10px 18px', background: isSortMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)', color: isSortMode ? '#10b981' : 'white', borderColor: isSortMode ? '#10b981' : 'rgba(255,255,255,0.1)', fontWeight: 800, fontSize: '0.8rem' }}>{isSortMode ? 'Listo' : 'Ordenar'}</button>
                     <div style={{ position: 'relative' }}>
-                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowTypeDropdown(!showTypeDropdown); }} className="btn-premium" style={{ padding: '12px 25px' }}><Plus size={20} /> Agregar</button>
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowTypeDropdown(!showTypeDropdown); }} className="btn-premium" style={{ padding: '10px 18px', fontSize: '0.8rem' }}><Plus size={16} /> Agregar</button>
                         {showTypeDropdown && (
-                            <div className="glass" style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, width: '220px', zIndex: 9999, padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(15, 15, 30, 0.95)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                                <button onClick={(e) => { e.stopPropagation(); setAddType('guias'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}><LayoutGrid size={18} color="#a78bfa" /> <span>Guía</span></button>
-                                <button onClick={(e) => { e.stopPropagation(); setAddType('quiz'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}><HelpCircle size={18} color="#3b82f6" /> <span>Quiz</span></button>
-                                <button onClick={(e) => { e.stopPropagation(); setAddType('folder'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px' }}><FolderPlus size={18} color="#10b981" /> <span>Carpeta</span></button>
+                            <div className="glass" style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, width: '180px', zIndex: 9999, padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(15, 15, 30, 0.95)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                                <button onClick={(e) => { e.stopPropagation(); setAddType('guias'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', borderRadius: '10px', fontSize: '0.8rem' }}><LayoutGrid size={16} color="#a78bfa" /> <span>Guía</span></button>
+                                <button onClick={(e) => { e.stopPropagation(); setAddType('quiz'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', borderRadius: '10px', fontSize: '0.8rem' }}><HelpCircle size={16} color="#3b82f6" /> <span>Quiz</span></button>
+                                <button onClick={(e) => { e.stopPropagation(); setAddType('folder'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', borderRadius: '10px', fontSize: '0.8rem' }}><FolderPlus size={16} color="#10b981" /> <span>Carpeta</span></button>
                             </div>
                         )}
                     </div>
@@ -294,28 +323,36 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                         axis="y"
                         values={isSortMode ? tempFolders : folders}
                         onReorder={setTempFolders}
-                        style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '100%' : '380px'}, 1fr))`, gap: '30px', listStyle: 'none', padding: 0 }}
+                        style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '100%' : '280px'}, 1fr))`, gap: '20px', listStyle: 'none', padding: 0 }}
                     >
                         {!currentFolderId && (isSortMode ? tempFolders : folders).map(f => (
                             <Reorder.Item
                                 key={f.id}
                                 value={f}
                                 drag={isSortMode}
-                                className="glass project-card"
-                                style={{ padding: '30px', cursor: isSortMode ? 'grab' : 'pointer', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}
+                                className={`glass project-card ${hoveredFolderId === f.id ? 'folder-highlight' : ''}`}
+                                style={{
+                                    padding: '20px',
+                                    cursor: isSortMode ? 'grab' : 'pointer',
+                                    border: hoveredFolderId === f.id ? '2px solid #10b981' : '1px solid rgba(255,255,255,0.05)',
+                                    position: 'relative',
+                                    backgroundColor: hoveredFolderId === f.id ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                                    boxShadow: hoveredFolderId === f.id ? '0 0 20px rgba(16, 185, 129, 0.2)' : 'none'
+                                }}
                                 onClick={() => !isSortMode && setCurrentFolderId(f.id)}
+                                ref={el => folderRefs.current[f.id] = el}
                             >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <div style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '16px', borderRadius: '18px' }}>
-                                        {isSortMode ? <GripVertical size={30} /> : <Folder size={36} fill="currentColor" />}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <div style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '12px', borderRadius: '14px' }}>
+                                        {isSortMode ? <GripVertical size={24} /> : <Folder size={30} fill="currentColor" />}
                                     </div>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button onClick={(e) => { e.stopPropagation(); setAddType('folder'); setEditingFolderId(f.id); setNewProjectName(f.name); setShowAddModal(true); }} className="btn-outline" style={{ padding: '8px' }}><Edit2 size={16} /></button>
-                                        <button onClick={async (e) => { e.stopPropagation(); if (confirm("¿Eliminar carpeta? Los proyectos quedarán sin carpeta.")) await supabase.from('folders').delete().eq('id', f.id); loadProjects(); }} className="btn-outline" style={{ padding: '8px', color: '#ef4444' }}><Trash2 size={16} /></button>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                        <button onClick={(e) => { e.stopPropagation(); setAddType('folder'); setEditingFolderId(f.id); setNewProjectName(f.name); setShowAddModal(true); }} className="btn-outline" style={{ padding: '6px' }}><Edit2 size={12} /></button>
+                                        <button onClick={async (e) => { e.stopPropagation(); if (confirm("¿Eliminar carpeta? Los proyectos quedarán sin carpeta.")) await supabase.from('folders').delete().eq('id', f.id); loadProjects(); }} className="btn-outline" style={{ padding: '6px', color: '#ef4444' }}><Trash2 size={12} /></button>
                                     </div>
                                 </div>
-                                <h3 style={{ fontSize: '1.8rem', color: 'white', fontWeight: 900 }}>{f.name}</h3>
-                                <p style={{ color: '#94a3b8', marginTop: '10px' }}>{projects.filter(p => p.folder_id === f.id).length} elementos</p>
+                                <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 900 }}>{f.name}</h3>
+                                <p style={{ color: '#94a3b8', marginTop: '6px', fontSize: '0.8rem' }}>{projects.filter(p => p.folder_id === f.id).length} elementos</p>
                             </Reorder.Item>
                         ))}
                     </Reorder.Group>
@@ -327,7 +364,7 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                             const otherProjects = (isSortMode ? tempProjects : projects).filter(p => p.folder_id !== currentFolderId);
                             if (isSortMode) setTempProjects([...otherProjects, ...newOrder]);
                         }}
-                        style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '100%' : '380px'}, 1fr))`, gap: '30px', listStyle: 'none', padding: 0, marginTop: '30px' }}
+                        style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '100%' : '280px'}, 1fr))`, gap: '20px', listStyle: 'none', padding: 0, marginTop: '20px' }}
                     >
                         {(isSortMode ? tempProjects : projects)
                             .filter(p => {
@@ -344,33 +381,45 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                                         key={p.id}
                                         value={p}
                                         drag={isSortMode}
+                                        onDragStart={() => setDraggingProjectId(p.id)}
+                                        onDrag={handleDrag}
+                                        onDragEnd={() => handleDragEnd(p.id)}
                                         className={`glass project-card ${selectedProjects.includes(p.id) ? 'selected' : ''}`}
-                                        style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px', border: selectedProjects.includes(p.id) ? '2px solid #3b82f6' : '1px solid rgba(255,255,255,0.05)', position: 'relative', cursor: isSortMode ? 'grab' : 'default' }}
+                                        style={{
+                                            padding: '20px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '15px',
+                                            border: selectedProjects.includes(p.id) ? '2px solid #3b82f6' : '1px solid rgba(255,255,255,0.05)',
+                                            position: 'relative',
+                                            cursor: isSortMode ? 'grab' : 'default',
+                                            zIndex: draggingProjectId === p.id ? 1000 : 1
+                                        }}
                                     >
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                            <div style={{ padding: '16px', background: isQuiz ? 'rgba(59, 130, 246, 0.12)' : 'rgba(124, 58, 237, 0.12)', borderRadius: '18px', color: isQuiz ? '#3b82f6' : '#a78bfa' }}>
-                                                {isSortMode ? <GripVertical size={30} /> : (isQuiz ? <HelpCircle size={36} /> : <ShieldCheck size={36} />)}
+                                            <div style={{ padding: '12px', background: isQuiz ? 'rgba(59, 130, 246, 0.12)' : 'rgba(124, 58, 237, 0.12)', borderRadius: '14px', color: isQuiz ? '#3b82f6' : '#a78bfa' }}>
+                                                {isSortMode ? <GripVertical size={24} /> : (isQuiz ? <HelpCircle size={28} /> : <ShieldCheck size={28} />)}
                                             </div>
                                             {!isSortMode && (
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <div style={{ fontSize: '0.75rem', fontWeight: 900, padding: '6px 16px', borderRadius: '100px', background: isQuiz ? '#1e3a8a' : '#3b1e8a', color: 'white', textTransform: 'uppercase' }}>{isQuiz ? 'QUIZ' : 'GUIA'}</div>
-                                                        <input type="checkbox" checked={selectedProjects.includes(p.id)} onChange={() => toggleProjectSelection(p.id)} style={{ width: '26px', height: '26px', cursor: 'pointer' }} />
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <div style={{ fontSize: '0.65rem', fontWeight: 900, padding: '4px 12px', borderRadius: '100px', background: isQuiz ? '#1e3a8a' : '#3b1e8a', color: 'white', textTransform: 'uppercase' }}>{isQuiz ? 'QUIZ' : 'GUIA'}</div>
+                                                        <input type="checkbox" checked={selectedProjects.includes(p.id)} onChange={() => toggleProjectSelection(p.id)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
                                                     </div>
-                                                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: p.is_active ? '#10b981' : '#64748b' }}>{p.is_active ? 'Activo' : 'Pausado'}</div>
+                                                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: p.is_active ? '#10b981' : '#64748b' }}>{p.is_active ? 'Activo' : 'Pausado'}</div>
                                                 </div>
                                             )}
                                         </div>
                                         <div>
-                                            <h3 style={{ fontSize: '1.8rem', color: 'white', marginBottom: '20px', fontWeight: 900 }}>{p.name}</h3>
+                                            <h3 style={{ fontSize: '1.3rem', color: 'white', marginBottom: '12px', fontWeight: 900 }}>{p.name}</h3>
                                             {!isSortMode && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#94a3b8', background: 'rgba(0,0,0,0.4)', padding: '14px 22px', borderRadius: '18px', width: 'fit-content' }}><Key size={20} /><span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span></div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', background: 'rgba(0,0,0,0.4)', padding: '10px 16px', borderRadius: '14px', width: 'fit-content', fontSize: '0.8rem' }}><Key size={16} /><span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span></div>
                                             )}
                                         </div>
                                         {!isSortMode && (
-                                            <div style={{ display: 'flex', gap: '12px', marginTop: 'auto' }}>
-                                                <button onClick={() => isQuiz ? onOpenQuiz(p) : onOpenGuide(p)} className="btn-premium" style={{ flex: 1, padding: '15px', fontSize: '1.2rem', fontWeight: 900, borderRadius: '20px' }}>Editar</button>
-                                                <button onClick={() => onPreview(p, true)} className="btn-outline" style={{ flex: 1, padding: '15px', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', fontSize: '1.2rem', fontWeight: 700, borderRadius: '20px' }}>Preview</button>
+                                            <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                                                <button onClick={() => isQuiz ? onOpenQuiz(p) : onOpenGuide(p)} className="btn-premium" style={{ flex: 1, padding: '12px', fontSize: '1rem', fontWeight: 900, borderRadius: '15px' }}>Editar</button>
+                                                <button onClick={() => onPreview(p, true)} className="btn-outline" style={{ flex: 1, padding: '12px', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', fontSize: '1rem', fontWeight: 700, borderRadius: '15px' }}>Preview</button>
                                             </div>
                                         )}
                                     </Reorder.Item>
