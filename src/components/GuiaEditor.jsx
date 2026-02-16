@@ -331,7 +331,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         border: selectedElementId === el.id ? '2px solid #7c3aed' : '1px dashed rgba(255,255,255,0.3)',
                                         borderRadius: '8px',
                                         padding: '5px',
-                                        width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 7}%` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
+                                        width: el.type === 'drag'
+                                            ? (el.imageSize ? `${(el.imageSize / 100) * 25}%` : (el.width ? `${(el.width / 900) * 100}%` : '25%'))
+                                            : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
                                         height: el.type === 'drag' ? 'auto' : (el.height ? `${(el.height / 506) * 100}%` : 'auto'),
                                         aspectRatio: el.type === 'drag' ? '1/1' : 'auto',
                                         display: 'flex',
@@ -433,10 +435,10 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                                         <div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 900 }}>TAMAÑO IMAGEN</label>
+                                                <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 900 }}>TAMAÑO IMAGEN (MAX 500)</label>
                                                 <span style={{ fontSize: '0.65rem', color: '#a78bfa', fontWeight: 900 }}>{currentSlide.elements.find(el => el.id === selectedElementId).imageSize || 100}%</span>
                                             </div>
-                                            <input type="range" min="20" max="300" value={currentSlide.elements.find(el => el.id === selectedElementId).imageSize || 100} onChange={(e) => {
+                                            <input type="range" min="20" max="500" value={currentSlide.elements.find(el => el.id === selectedElementId).imageSize || 100} onChange={(e) => {
                                                 const val = parseInt(e.target.value);
                                                 setLocalSlides(prev => prev.map((s, idx) => idx === selectedIdx ? { ...s, elements: s.elements.map(el => el.id === selectedElementId ? { ...el, imageSize: val } : el) } : s));
                                             }} style={{ width: '100%', accentColor: '#7c3aed' }} />

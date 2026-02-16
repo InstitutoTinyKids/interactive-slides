@@ -289,8 +289,11 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                         cursor: tool === 'drag' ? 'grab' : 'default',
                                         pointerEvents: 'auto',
                                         touchAction: 'none',
-                                        width: `${(item.imageSize || 100) / 100 * 7}cqw`,
-                                        height: `${(item.imageSize || 100) / 100 * 7}cqw`,
+                                        width: item.imageSize
+                                            ? `${(item.imageSize / 100) * 25}cqw`
+                                            : (item.width ? `${(item.width / canvasWidth) * 100}cqw` : '25cqw'),
+                                        height: 'auto',
+                                        aspectRatio: '1/1',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
@@ -309,9 +312,7 @@ export default function SlideViewer({ slide, alias, currentIndex, totalSlides, o
                                             }}
                                         />
                                     ) : (
-                                        <div style={{ width: '100%', height: '100%', background: '#7c3aed', borderRadius: '16px', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Move color="white" size="50%" />
-                                        </div>
+                                        <Move size="3cqw" color="#3b82f6" opacity={0.5} />
                                     )}
                                 </div>
                             );
