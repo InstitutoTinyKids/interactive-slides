@@ -318,8 +318,27 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             )}
 
                             {(currentSlide.elements || []).filter(el => el.type !== 'draw').map(el => (
-                                <div key={el.id} onMouseDown={(e) => { e.stopPropagation(); setDraggingElementId(el.id); setSelectedElementId(el.id); }} style={{ position: 'absolute', left: `${el.x}%`, top: `${el.y}%`, transform: 'translate(-50%, -50%)', zIndex: 100, cursor: 'move', border: selectedElementId === el.id ? '2px solid #7c3aed' : '1px dashed rgba(255,255,255,0.3)', borderRadius: '8px', padding: '5px', width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 50}px` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'), height: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 50}px` : (el.height ? `${(el.height / 506) * 100}%` : 'auto'), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {el.type === 'text' && <textarea value={el.text} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value; setLocalSlides(copy); }} style={{ background: 'transparent', border: 'none', color: 'white', textAlign: 'center', width: '100%', height: '100%', outline: 'none', resize: 'none', fontWeight: 800 }} />}
+                                <div key={el.id}
+                                    onMouseDown={(e) => { e.stopPropagation(); setDraggingElementId(el.id); setSelectedElementId(el.id); }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${el.x}%`,
+                                        top: `${el.y}%`,
+                                        transform: 'translate(-50%, -50%)',
+                                        zIndex: 100,
+                                        cursor: 'move',
+                                        border: selectedElementId === el.id ? '2px solid #7c3aed' : '1px dashed rgba(255,255,255,0.3)',
+                                        borderRadius: '8px',
+                                        padding: '5px',
+                                        width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 50}px` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
+                                        height: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 50}px` : (el.height ? `${(el.height / 506) * 100}%` : 'auto'),
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    {el.type === 'text' && <textarea value={el.text} onClick={(e) => e.stopPropagation()} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value; setLocalSlides(copy); }} style={{ background: 'transparent', border: 'none', color: 'white', textAlign: 'center', width: '100%', height: '100%', outline: 'none', resize: 'none', fontWeight: 800 }} />}
                                     {el.type === 'drag' && (el.url ? <img src={el.url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Move size={20} color="#3b82f6" />)}
                                     {el.type === 'stamp' && <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '2px dashed red', background: 'rgba(239, 68, 68, 0.1)' }} />}
                                     {['text', 'stamp'].includes(el.type) && <div onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }} style={{ position: 'absolute', bottom: '-5px', right: '-5px', width: '15px', height: '15px', background: '#7c3aed', borderRadius: '50%', cursor: 'nwse-resize' }} />}
