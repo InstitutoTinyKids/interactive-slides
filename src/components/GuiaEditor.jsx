@@ -443,8 +443,6 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         </div>
                                     </div>
                                 )}
-
-                                <p style={{ fontSize: '0.6rem', color: '#444455', marginTop: '15px', textAlign: 'center' }}>Selecciona el elemento en el lienzo para moverlo o editarlo</p>
                             </motion.div>
                         )}
 
