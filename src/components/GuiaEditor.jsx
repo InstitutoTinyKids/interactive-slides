@@ -274,6 +274,16 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-end', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                    {isMobile && (
+                        <>
+                            <button onClick={() => setShowSlidesPanel(!showSlidesPanel)} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', fontSize: '0.8rem', background: showSlidesPanel ? 'rgba(124, 58, 237, 0.2)' : 'none' }}>
+                                <Layers size={18} />
+                            </button>
+                            <button onClick={() => setShowSettingsPanel(!showSettingsPanel)} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', fontSize: '0.8rem', background: showSettingsPanel ? 'rgba(167, 139, 250, 0.2)' : 'none' }}>
+                                <SettingsIcon size={18} />
+                            </button>
+                        </>
+                    )}
                     <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontSize: '0.8rem', fontWeight: 700 }}><Eye size={16} /> Resultados</button>
                     <button onClick={async () => { const saved = await handleSaveAll(false); if (saved) onPreview(currentProject, false); }} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontSize: '0.8rem', fontWeight: 700, background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }} disabled={loading}><Play size={16} /> Preview</button>
                     <button onClick={onToggleActive} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontSize: '0.8rem', fontWeight: 700, color: isActive ? '#ef4444' : '#10b981', background: isActive ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)' }}>{isActive ? <Pause size={16} /> : <Play size={16} />} {isActive ? 'Suspender' : 'Activar'}</button>
@@ -281,16 +291,26 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 </div>
             </header>
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'row', overflow: 'hidden', position: 'relative' }}>
                 <aside style={{
                     width: showSlidesPanel ? '220px' : '0px',
                     minWidth: showSlidesPanel ? '220px' : '0px',
                     borderRight: '1px solid rgba(255,255,255,0.05)',
-                    background: '#070715', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease', overflow: 'hidden'
+                    background: '#070715',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'all 0.3s ease',
+                    overflow: 'hidden',
+                    position: (isMobile || isTablet) ? 'absolute' : 'relative',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    zIndex: 500,
+                    boxShadow: (isMobile || isTablet) && showSlidesPanel ? '20px 0 50px rgba(0,0,0,0.5)' : 'none'
                 }}>
                     <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         {localSlides.map((slide, idx) => (
-                            <div key={slide.id} onClick={() => setSelectedIdx(idx)} style={{ position: 'relative', borderRadius: '12px', border: `3px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'} `, background: '#000', minHeight: '110px', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s', boxShadow: selectedIdx === idx ? '0 10px 25px rgba(124, 58, 237, 0.2)' : '0 4px 10px rgba(0,0,0,0.3)' }}>
+                            <div key={slide.id} onClick={() => { setSelectedIdx(idx); if (isMobile) setShowSlidesPanel(false); }} style={{ position: 'relative', borderRadius: '12px', border: `3px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'} `, background: '#000', minHeight: '110px', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s', boxShadow: selectedIdx === idx ? '0 10px 25px rgba(124, 58, 237, 0.2)' : '0 4px 10px rgba(0,0,0,0.3)' }}>
                                 <span style={{ position: 'absolute', top: '5px', left: '5px', zIndex: 10, fontSize: '10px', fontWeight: 900, background: 'rgba(0,0,0,0.8)', width: '20px', height: '20px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>{idx + 1}</span>
                                 {slide.image_url ? <img src={slide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}><ImageIcon size={22} color="white" /></div>}
                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx); }} style={{ position: 'absolute', top: '5px', right: '5px', zIndex: 10, background: 'rgba(239, 68, 68, 0.9)', border: 'none', color: 'white', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={12} /></button>
@@ -302,11 +322,11 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                 <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at center, #0a0a20, #050510)', overflow: 'auto', position: 'relative' }} onClick={() => setSelectedElementId(null)}>
                     {currentSlide && (
-                        <div ref={canvasContainerRef} style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'center', transition: 'transform 0.1s ease-out', width: currentSlide?.format === '1/1' ? '700px' : '900px', aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '12px', position: 'relative', overflow: 'hidden', boxShadow: '0 40px 100px -20px black', border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+                        <div ref={canvasContainerRef} style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'center', transition: 'transform 0.1s ease-out', width: currentSlide?.format === '1/1' ? (isMobile ? '300px' : '700px') : (isMobile ? '340px' : '900px'), aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '12px', position: 'relative', overflow: 'hidden', boxShadow: '0 40px 100px -20px black', border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
                             {currentSlide.image_url ? <img src={currentSlide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} /> : (
-                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
-                                    <label className="btn-premium" style={{ padding: '12px 25px', cursor: 'pointer', fontSize: '1rem', fontWeight: 900 }}>Subir Fondo HD <input type="file" style={{ display: 'none' }} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].format = '16/9'; setLocalSlides(copy); handleFileUpload(e, 'bg', selectedIdx); }} /></label>
-                                    <label className="btn-outline" style={{ padding: '12px 25px', cursor: 'pointer', fontSize: '1rem', fontWeight: 900 }}>Subir Fondo Square <input type="file" style={{ display: 'none' }} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].format = '1/1'; setLocalSlides(copy); handleFileUpload(e, 'bg', selectedIdx); }} /></label>
+                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexDirection: isMobile ? 'column' : 'row', padding: '20px' }}>
+                                    <label className="btn-premium" style={{ padding: '10px 20px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 900, textAlign: 'center' }}>Subir Fondo HD <input type="file" style={{ display: 'none' }} onChange={(e) => { const copy = [...localSlides]; if (copy[selectedIdx]) copy[selectedIdx].format = '16/9'; setLocalSlides(copy); handleFileUpload(e, 'bg', selectedIdx); }} /></label>
+                                    <label className="btn-outline" style={{ padding: '10px 20px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 900, textAlign: 'center' }}>Subir Fondo Square <input type="file" style={{ display: 'none' }} onChange={(e) => { const copy = [...localSlides]; if (copy[selectedIdx]) copy[selectedIdx].format = '1/1'; setLocalSlides(copy); handleFileUpload(e, 'bg', selectedIdx); }} /></label>
                                 </div>
                             )}
 
@@ -341,7 +361,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         justifyContent: 'center'
                                     }}
                                 >
-                                    {el.type === 'text' && <textarea value={el.text} onClick={(e) => e.stopPropagation()} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value; setLocalSlides(copy); }} style={{ background: 'transparent', border: 'none', color: 'white', textAlign: 'center', width: '100%', height: '100%', outline: 'none', resize: 'none', fontWeight: 800 }} />}
+                                    {el.type === 'text' && <textarea value={el.text} onClick={(e) => e.stopPropagation()} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value; setLocalSlides(copy); }} style={{ background: 'transparent', border: 'none', color: 'white', textAlign: 'center', width: '100%', height: '100%', outline: 'none', resize: 'none', fontWeight: 800, fontSize: isMobile ? '0.6rem' : '1rem' }} />}
                                     {el.type === 'drag' && (el.url ? <img src={el.url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Move size={20} color="#3b82f6" />)}
                                     {el.type === 'stamp' && <div style={{ width: '100%', height: '100%', borderRadius: '50%', border: '2px dashed red', background: 'rgba(239, 68, 68, 0.1)' }} />}
                                     {['text', 'stamp'].includes(el.type) && <div onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }} style={{ position: 'absolute', bottom: '-5px', right: '-5px', width: '15px', height: '15px', background: '#7c3aed', borderRadius: '50%', cursor: 'nwse-resize' }} />}
@@ -351,7 +371,21 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     )}
                 </main>
 
-                <aside style={{ width: showSettingsPanel ? '340px' : '0px', background: '#0a0a1a', borderLeft: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'all 0.3s ease' }}>
+                <aside style={{
+                    width: showSettingsPanel ? (isMobile ? '280px' : '340px') : '0px',
+                    background: '#0a0a1a',
+                    borderLeft: '1px solid rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease',
+                    position: (isMobile || isTablet) ? 'absolute' : 'relative',
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    zIndex: 500,
+                    boxShadow: (isMobile || isTablet) && showSettingsPanel ? '-20px 0 50px rgba(0,0,0,0.5)' : 'none'
+                }}>
                     <div style={{ padding: '25px', flex: 1, display: 'flex', flexDirection: 'column', gap: '25px', overflowY: 'auto' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.04)', padding: '18px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <button onClick={() => setCanvasZoom(Math.max(0.2, canvasZoom - 0.1))} style={{ background: 'none', border: 'none', color: 'white', opacity: 0.5, cursor: 'pointer' }}><ZoomOut size={20} /></button>
@@ -393,7 +427,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     return (
                                         <button
                                             key={t.type}
-                                            onClick={() => addElement(t.type)}
+                                            onClick={() => { addElement(t.type); if (isMobile) setShowSettingsPanel(false); }}
                                             className="btn-outline"
                                             style={{
                                                 display: 'flex',

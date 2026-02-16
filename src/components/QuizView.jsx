@@ -85,14 +85,14 @@ const INITIAL_QUESTIONS = [
   }
 ];
 
-export default function App() {
+export default function QuizView({ project, role, previewMode, onExit }) {
   // --- ESTADOS ---
-  const [view, setView] = useState('home'); // home, admin, playing, results
+  const [view, setView] = useState(role === 'admin' && !previewMode ? 'admin' : 'playing');
   const [questions, setQuestions] = useState(INITIAL_QUESTIONS);
 
   // Estados del Admin
   const [adminPass, setAdminPass] = useState('');
-  const [isAdminAuth, setIsAdminAuth] = useState(false);
+  const [isAdminAuth, setIsAdminAuth] = useState(role === 'admin');
   const [editingQ, setEditingQ] = useState(null); // Pregunta siendo editada/creada
 
   // Estados del Juego
@@ -148,8 +148,7 @@ export default function App() {
 
   const restartApp = () => {
     setIsRunning(false);
-    setView('home');
-    setAdminPass('');
+    if (onExit) onExit();
   };
 
   // --- LOGICA DEL JUEGO ---
@@ -217,43 +216,7 @@ export default function App() {
 
   // --- RENDERIZADO ---
 
-  if (view === 'home') {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 font-sans">
-        <div className="max-w-md w-full bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-700">
-          <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Grammar Quiz</h1>
-          <p className="text-gray-400 text-center mb-8">Demuestra tus conocimientos en inglés.</p>
 
-          <button
-            onClick={startQuiz}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all transform hover:scale-105 mb-6"
-          >
-            <Play size={24} />
-            INICIAR ACTIVIDAD
-          </button>
-
-          <div className="border-t border-gray-700 pt-6">
-            <p className="text-sm text-gray-500 mb-2">Administración</p>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                placeholder="Clave (123)"
-                className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 flex-1 text-white focus:outline-none focus:border-blue-500"
-                value={adminPass}
-                onChange={(e) => setAdminPass(e.target.value)}
-              />
-              <button
-                onClick={goToAdmin}
-                className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-gray-300"
-              >
-                <Settings size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (view === 'admin') {
     // Calcular el índice de la pregunta en edición para mostrarlo
@@ -413,14 +376,7 @@ export default function App() {
           <div className="text-center mt-6">
             <button
               className="text-gray-600 text-sm hover:text-gray-400 flex items-center justify-center gap-1 mx-auto"
-              onClick={() => {
-                const pass = prompt('Ingresa la clave de administrador para cancelar el juego:');
-                if (pass === '123') {
-                  restartApp();
-                } else if (pass !== null) {
-                  alert('Clave incorrecta');
-                }
-              }}
+              onClick={restartApp}
             >
               Cancelar Juego
             </button>
