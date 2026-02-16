@@ -27,6 +27,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
     const [isEditingProjectName, setIsEditingProjectName] = useState(false);
     const [isEditingAccessCode, setIsEditingAccessCode] = useState(false);
     const [canvasZoom, setCanvasZoom] = useState(1);
+    const [showMoreSettings, setShowMoreSettings] = useState(false);
+    const nameInputRef = useRef(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -180,8 +182,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         const newSlides = [...localSlides];
         const newEl = {
             id: crypto.randomUUID(), type, x: 50, y: 50,
-            width: type === 'text' ? 300 : (type === 'drag' ? 80 : null),
-            height: type === 'text' ? 150 : (type === 'drag' ? 80 : null),
+            width: type === 'text' ? 300 : (type === 'drag' ? 100 : 80),
+            height: type === 'text' ? 150 : (type === 'drag' ? 100 : 80),
             text: type === 'text' ? 'Escribe aquí...' : '', url: '', imageSize: type === 'drag' ? 100 : undefined
         };
         if (!localSlides[selectedIdx]) return;
@@ -302,16 +304,28 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '22px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <h3 style={{ fontSize: '0.8rem', color: 'white', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}><SettingsIcon size={18} color="#a78bfa" /> Ajustes</h3>
-                                <button className="btn-outline" style={{ fontSize: '0.65rem', padding: '6px 12px' }}>VER MÁS</button>
+                                <button onClick={() => setShowMoreSettings(!showMoreSettings)} className="btn-outline" style={{ fontSize: '0.65rem', padding: '6px 12px', background: showMoreSettings ? 'rgba(167, 139, 250, 0.2)' : 'none' }}>{showMoreSettings ? 'VER MENOS' : 'VER MÁS'}</button>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                 <div>
-                                    <label style={{ fontSize: '0.65rem', color: '#444455', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>NOMBRE</label>
+                                    <label style={{ fontSize: '0.65rem', color: '#444455', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>NOMBRE DEL PROYECTO</label>
                                     <div style={{ position: 'relative' }}>
-                                        <input className="premium-input" style={{ width: '100%', paddingRight: '40px', background: 'rgba(0,0,0,0.3)', h: '45px' }} value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} />
-                                        <Edit2 size={16} color="#64748b" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                                        <input ref={nameInputRef} className="premium-input" style={{ width: '100%', paddingRight: '40px', background: 'rgba(0,0,0,0.3)', height: '45px' }} value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} />
+                                        <Edit2 size={16} color="#64748b" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }} onClick={() => nameInputRef.current?.focus()} />
                                     </div>
                                 </div>
+
+                                {showMoreSettings && (
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ display: 'flex', flexDirection: 'column', gap: '15px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                                        <div>
+                                            <label style={{ fontSize: '0.65rem', color: '#444455', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>CLAVE DE ACCESO</label>
+                                            <div style={{ position: 'relative' }}>
+                                                <input className="premium-input" style={{ width: '100%', paddingRight: '40px', background: 'rgba(0,0,0,0.3)', height: '45px' }} value={currentProject?.access_code || ''} onChange={(e) => setCurrentProject({ ...currentProject, access_code: e.target.value })} />
+                                                <Key size={16} color="#64748b" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
                             </div>
                         </div>
 
@@ -319,7 +333,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                             <h3 style={{ fontSize: '0.8rem', color: 'white', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><LayoutGrid size={18} color="#3b82f6" /> Herramientas</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 {[{ type: 'draw', icon: Paintbrush, label: 'DRAW' }, { type: 'drag', icon: Move, label: 'DRAG' }, { type: 'stamp', icon: Target, label: 'STAMP' }, { type: 'text', icon: Type, label: 'TEXT' }].map(t => (
-                                    <button key={t.type} onClick={() => t.type !== 'draw' && addElement(t.type)} className="btn-outline" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px', borderRadius: '18px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}><t.icon size={22} color={t.type === 'draw' ? '#a78bfa' : t.type === 'drag' ? '#3b82f6' : t.type === 'stamp' ? '#ef4444' : '#10b981'} /><span style={{ fontSize: '0.7rem', fontWeight: 800 }}>{t.label}</span></button>
+                                    <button key={t.type} onClick={() => addElement(t.type)} className="btn-outline" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px', borderRadius: '18px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}><t.icon size={22} color={t.type === 'draw' ? '#a78bfa' : t.type === 'drag' ? '#3b82f6' : t.type === 'stamp' ? '#ef4444' : '#10b981'} /><span style={{ fontSize: '0.7rem', fontWeight: 800 }}>{t.label}</span></button>
                                 ))}
                             </div>
                         </div>
