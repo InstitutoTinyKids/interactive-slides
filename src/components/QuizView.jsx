@@ -1,115 +1,182 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Play, Clock, Check, X, HelpCircle, SkipForward, RotateCcw, Edit2, Trash2, Plus, Save, ArrowRight, Eye, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import {
+  Settings, Play, Clock, Check, X, HelpCircle, SkipForward,
+  RotateCcw, Edit2, Trash2, Plus, Save, ArrowRight, Eye,
+  AlertTriangle, ChevronDown, ChevronUp, LayoutGrid, Pause, Key, Image as ImageIcon,
+  Paintbrush, Type, Target, Layers, ZoomIn, ZoomOut, Music
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// --- DATOS INICIALES (Extraídos de tus imágenes) ---
-const INITIAL_QUESTIONS = [
-  {
-    id: 1,
-    question: "Choose the correct option: The guitarist will play fast ______ the stage ______.",
-    options: ["on / tonight", "at / tomorrow", "at / tonight", "in / right now"],
-    correctAnswer: 0 // A
-  },
-  {
-    id: 2,
-    question: "Fill in the blanks: 'The singer ______ ______ (perform/passionately) ______ the recording studio tomorrow.'",
-    options: ["performs passionately on", "will perform passionate at", "will passionately perform at", "will perform passionately in"],
-    correctAnswer: 3 // D
-  },
-  {
-    id: 3,
-    question: "Find the mistake: 'The drummer will play loudly on the concert hall next weekend.'",
-    options: ["The word 'drummer' is incorrect.", "The preposition 'on' should be 'at'.", "The adverb 'loudly' is wrong.", "The time marker 'next weekend' is wrong."],
-    correctAnswer: 1 // B
-  },
-  {
-    id: 4,
-    question: "Unscramble the sentence: 'at / The / interact / festival / will / music / the / frontman / energetically / tonight'",
-    options: [
-      "The frontman at the music festival will interact energetically tonight.",
-      "The frontman will interact energetically at the music festival tonight.",
-      "Tonight the frontman will energetically interact at the music festival.",
-      "The music festival will interact at the frontman energetically tonight."
-    ],
-    correctAnswer: 1 // B
-  },
-  {
-    id: 5,
-    question: "Challenge: How and where will the singer perform tomorrow? (Venue: Theater / Adverb: Well)",
-    options: ["She will perform well at the theater tomorrow.", "She will play well at the theater later.", "The singer perform well on the theater tomorrow.", "She will perform well in the theater tomorrow."],
-    correctAnswer: 3 // D
-  },
-  {
-    id: 6,
-    question: "Which sentence describes a bassist's action with high energy in a private space right now?",
-    options: [
-      "The bassist perform loudly on the stage right now.",
-      "The bassist will perform energetically in the recording studio right now.",
-      "The singer will perform energetically in the recording studio right now.",
-      "The bassist will play fast at the concert hall tonight."
-    ],
-    correctAnswer: 1 // B
-  },
-  {
-    id: 7,
-    question: "The ______ will ______ (jump) ______ (fast) on the platform next weekend.",
-    options: ["drummer / jump / loudly", "frontwoman / will jump / fast", "frontwoman / will jump / fastly", "bassist / will jumps / fast"],
-    correctAnswer: 1 // B
-  },
-  {
-    id: 8,
-    question: "What is the most accurate way to describe a drummer playing with passion in the band's vehicle later?",
-    options: [
-      "The drummer will play passionately at the tour bus later.",
-      "The drummer will plays passionate in the tour bus tonight.",
-      "The guitarist will play passionately on the tour bus later.",
-      "The drummer will play passionately in the tour bus later."
-    ],
-    correctAnswer: 3 // D
-  },
-  {
-    id: 9,
-    question: "The ______ (Frontman) will ______ (interact) ______ (energetically) ______ the music festival ______ (tomorrow).",
-    options: [
-      "singer / will interact / energetically / on / tomorrow",
-      "frontman / will interact / energetically / at / tomorrow",
-      "frontman / interact / energetically / at / tonight",
-      "frontman / will interact / energetic / in / tomorrow"
-    ],
-    correctAnswer: 1 // B
-  },
-  {
-    id: 10,
-    question: "Complete the tour report: 'The bassist will play ______ (well) ______ the backstage ______ (later).'",
-    options: ["well / on / tonight", "good / at / later", "well / at / next weekend", "well / in / later"],
-    correctAnswer: 3 // D
-  }
-];
+// --- DATOS INICIALES ---
+const INITIAL_QUESTIONS = [];
 
-export default function QuizView({ project, role, previewMode, onExit }) {
+export default function QuizView({ onExit, isAdmin = false, role = 'student', project, isActive, onToggleActive, onViewResults, previewMode = false, onPreview }) {
   // --- ESTADOS ---
+  const isTeacher = role === 'teacher';
+  // Si es admin, vamos directo al panel de edición. Si no, a jugar.
   const [view, setView] = useState(role === 'admin' && !previewMode ? 'admin' : 'playing');
   const [questions, setQuestions] = useState(INITIAL_QUESTIONS);
+  const [selectedQIdx, setSelectedQIdx] = useState(0);
+  const [projectLocal, setProjectLocal] = useState(project);
 
   // Estados del Admin
-  const [adminPass, setAdminPass] = useState('');
   const [isAdminAuth, setIsAdminAuth] = useState(role === 'admin');
   const [editingQ, setEditingQ] = useState(null); // Pregunta siendo editada/creada
 
   // Estados del Juego
   const [currentQIndex, setCurrentQIndex] = useState(0);
-  const [answersLog, setAnswersLog] = useState([]); // { qId, selected, correct, timeSpent }
+  const [answersLog, setAnswersLog] = useState([]); // { qId, selected, correct, isSkipped }
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [feedback, setFeedback] = useState(null); // 'correct', 'incorrect'
   const [selectedOption, setSelectedOption] = useState(null);
+  const [fullImage, setFullImage] = useState(null);
 
   // Estados de Ayudas
   const [hiddenOptions, setHiddenOptions] = useState([]); // Índices ocultos por 50/50
 
-  // Estado nuevo para la revisión
   const [showReview, setShowReview] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [previewModeLocal] = useState(project?.previewMode || false);
+  const [localAccessCode, setLocalAccessCode] = useState(project?.access_code || '123');
+
+  // Estados para edición del nombre del proyecto
+  const [isEditingProjectName, setIsEditingProjectName] = useState(false);
+  const [hasUnsavedNameChanges, setHasUnsavedNameChanges] = useState(false);
+
+  const [isEditingAccessCode, setIsEditingAccessCode] = useState(false);
+  const [hasUnsavedCodeChanges, setHasUnsavedCodeChanges] = useState(false);
+  const [showProjectDetails, setShowProjectDetails] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
 
   const timerRef = useRef(null);
+  const autoSaveTimerRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Iniciar juego automáticamente si estamos en modo playing
+  useEffect(() => {
+    if (view === 'playing') {
+      setIsRunning(true);
+    }
+  }, [view]);
+
+  // Video Range Loop Logic
+  useEffect(() => {
+    let interval;
+    if (view === 'playing' && questions[currentQIndex]?.type === 'video' && questions[currentQIndex]?.videoEnd) {
+      const start = questions[currentQIndex].videoStart || 0;
+      const end = questions[currentQIndex].videoEnd;
+
+      interval = setInterval(() => {
+        const iframe = document.getElementById('quiz-video-player');
+        if (iframe) {
+          const msg = JSON.stringify({ event: 'listening', id: 1, channel: 'widget' });
+          iframe.contentWindow.postMessage(msg, '*');
+        }
+      }, 500);
+
+      const handleVideoMessage = (event) => {
+        try {
+          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+          if (data.event === 'infoDelivery' && data.info && data.info.currentTime) {
+            if (data.info.currentTime >= end) {
+              const iframe = document.getElementById('quiz-video-player');
+              if (iframe) {
+                const seekCmd = JSON.stringify({ event: 'command', func: 'seekTo', args: [Number(start), true] });
+                iframe.contentWindow.postMessage(seekCmd, '*');
+              }
+            }
+          }
+        } catch (e) { }
+      };
+      window.addEventListener('message', handleVideoMessage);
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('message', handleVideoMessage);
+      };
+    }
+  }, [view, currentQIndex, questions]);
+
+  // Sync project details when changed from parent
+  useEffect(() => {
+    if (project) {
+      setProjectLocal(project);
+      setLocalAccessCode(project.access_code);
+    }
+  }, [project]);
+
+  // --- CARGA DE DATOS ---
+  useEffect(() => {
+    if (project && project.id) {
+      loadQuizData();
+    }
+  }, [project]);
+
+  const loadQuizData = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('questions')
+        .eq('id', project.id)
+        .single();
+
+      if (data && Array.isArray(data.questions)) {
+        setQuestions(data.questions);
+      } else {
+        setQuestions([]);
+      }
+    } catch (err) {
+      console.error("Error loading quiz data:", err);
+    }
+    setLoading(false);
+  };
+
+  const handleSaveQuiz = async (updatedQuestions, isSilent = false) => {
+    if (!project || !project.id) return;
+    if (!isSilent) setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          questions: updatedQuestions,
+          name: projectLocal?.name,
+          access_code: localAccessCode
+        })
+        .eq('id', project.id);
+
+      if (error) throw error;
+      setQuestions(updatedQuestions);
+      if (!isSilent) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      }
+      return true;
+    } catch (err) {
+      if (!isSilent) alert('Error al guardar: ' + err.message);
+      return false;
+    } finally {
+      if (!isSilent) setLoading(false);
+    }
+  };
+
+  // Auto-save logic
+  useEffect(() => {
+    if (view !== 'admin' || !project?.id) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleSaveQuiz(questions, true);
+    }, 3000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [questions, projectLocal?.name, localAccessCode, view]);
 
   // --- LOGICA DEL CRONOMETRO ---
   useEffect(() => {
@@ -124,7 +191,7 @@ export default function QuizView({ project, role, previewMode, onExit }) {
   }, [isRunning]);
 
   // --- FUNCIONES DE NAVEGACION ---
-  const startQuiz = () => {
+  const restartApp = () => {
     setCurrentQIndex(0);
     setAnswersLog([]);
     setTimer(0);
@@ -132,80 +199,67 @@ export default function QuizView({ project, role, previewMode, onExit }) {
     setSelectedOption(null);
     setHiddenOptions([]);
     setIsRunning(true);
-    setShowReview(false); // Resetear revisión al iniciar
+    setShowReview(false);
     setView('playing');
-  };
-
-  const goToAdmin = () => {
-    if (adminPass === '123') {
-      setIsAdminAuth(true);
-      setView('admin');
-      setAdminPass('');
-    } else {
-      alert('Contraseña incorrecta');
-    }
-  };
-
-  const restartApp = () => {
-    setIsRunning(false);
-    if (onExit) onExit();
   };
 
   // --- LOGICA DEL JUEGO ---
   const handleAnswer = (optionIndex) => {
-    if (feedback !== null) return; // Evitar doble click
+    if (feedback !== null) return;
 
     const currentQ = questions[currentQIndex];
     const isCorrect = optionIndex === currentQ.correctAnswer;
+    const isSkip = optionIndex === -1;
 
-    setIsRunning(false); // Pausar timer durante feedback
-    setSelectedOption(optionIndex);
-    setFeedback(isCorrect ? 'correct' : 'incorrect');
+    setIsRunning(false);
+    if (!isSkip) {
+      setSelectedOption(optionIndex);
+      setFeedback(isCorrect ? 'correct' : 'incorrect');
+    }
 
-    // Guardar respuesta
     const logEntry = {
       question: currentQ,
       selected: optionIndex,
       isCorrect: isCorrect,
-      isSkipped: optionIndex === -1
+      isSkipped: isSkip
     };
 
-    // Retraso para mostrar feedback visual
-    setTimeout(() => {
-      setAnswersLog(prev => [...prev, logEntry]);
-
+    const proceed = async () => {
+      if (!previewMode) {
+        setAnswersLog(prev => [...prev, logEntry]);
+      }
       if (currentQIndex < questions.length - 1) {
-        // Siguiente pregunta
         setCurrentQIndex(prev => prev + 1);
         setFeedback(null);
         setSelectedOption(null);
         setHiddenOptions([]);
         setIsRunning(true);
       } else {
-        // Fin del juego
         setView('results');
       }
-    }, 1500);
+    };
+
+    if (isSkip) {
+      proceed();
+    } else {
+      setTimeout(proceed, 1500);
+    }
   };
 
   const handleFiftyFifty = () => {
-    // Penalización: +10 segundos
+    if (feedback !== null || hiddenOptions.length > 0) return;
     setTimer(prev => prev + 10);
-
     const currentQ = questions[currentQIndex];
     const wrongIndices = currentQ.options
       .map((_, idx) => idx)
       .filter(idx => idx !== currentQ.correctAnswer);
-
-    // Mezclar y tomar 2 para ocultar
-    const shuffledWrong = wrongIndices.sort(() => 0.5 - Math.random());
+    const shuffledWrong = [...wrongIndices].sort(() => 0.5 - Math.random());
     setHiddenOptions(shuffledWrong.slice(0, 2));
   };
 
   const handlePass = () => {
-    // Penalización: +30 segundos y cuenta como incorrecta/saltada
     setTimer(prev => prev + 30);
-    handleAnswer(-1); // -1 indica saltada
+    handleAnswer(-1);
   };
 
   const formatTime = (seconds) => {
@@ -214,82 +268,130 @@ export default function QuizView({ project, role, previewMode, onExit }) {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  // --- RENDERIZADO ---
-
-
+  if (loading && questions.length === 0 && !isAdmin) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#050510', color: 'white' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid rgba(59, 130, 246, 0.2)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <p style={{ marginTop: '20px', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', color: '#64748b' }}>Cargando Quiz...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   if (view === 'admin') {
-    // Calcular el índice de la pregunta en edición para mostrarlo
-    const editingIndex = editingQ ? questions.findIndex(q => q.id === editingQ.id) : -1;
+    const currentEditingQ = editingQ || questions[selectedQIdx] || null;
 
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-6 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Edit2 className="text-blue-400" /> Panel de Administración
-            </h2>
-            <button onClick={restartApp} className="text-gray-400 hover:text-white">Salir</button>
+      <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden', flexDirection: 'column' }}>
+        <header style={{
+          height: '75px',
+          padding: '0 30px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(10,10,25,0.9)',
+          backdropFilter: 'blur(20px)',
+          zIndex: 100
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <button onClick={onExit} style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '15px', color: '#3b82f6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LayoutGrid size={24} /></button>
+            <div>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white', lineHeight: 1.1 }}>{projectLocal?.name || 'Cargando...'}</h2>
+              <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Panel de Administración</span>
+            </div>
           </div>
 
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-6 transition-all">
-            <h3 className="text-lg font-semibold mb-4 text-purple-400">
-              {editingQ ? `Editar Pregunta #${editingIndex + 1}` : 'Crear Nueva Pregunta'}
-            </h3>
-            <AdminForm
-              initialData={editingQ}
-              onSave={(q) => {
-                if (editingQ) {
-                  setQuestions(questions.map(item => item.id === q.id ? q : item));
-                } else {
-                  setQuestions([...questions, { ...q, id: Date.now() }]);
-                }
-                setEditingQ(null);
-              }}
-              onCancel={() => setEditingQ(null)}
-            />
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem' }}><Eye size={18} /> Resultados</button>
+            <button onClick={async () => { const saved = await handleSaveQuiz(questions, false); if (saved && onPreview) onPreview(projectLocal); }} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }} disabled={loading}><Play size={18} /> Preview</button>
+            <button onClick={onToggleActive} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', background: isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: isActive ? '#ef4444' : '#10b981', border: `1px solid ${isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}` }}>{isActive ? <Pause size={18} /> : <Play size={18} />} {isActive ? 'Suspender' : 'Activar'}</button>
+            <button onClick={() => handleSaveQuiz(questions)} className="btn-premium" style={{ padding: '12px 25px', borderRadius: '14px', fontSize: '0.85rem' }} disabled={loading}><Save size={18} /> Guardar Cambios</button>
           </div>
+        </header>
 
-          <div className="space-y-4">
-            {questions.map((q, idx) => {
-              const isActive = editingQ?.id === q.id;
-              return (
-                <div
-                  key={q.id}
-                  onClick={() => setEditingQ(q)}
-                  className={`bg-gray-800 p-4 rounded-lg flex justify-between items-center border transition-all cursor-pointer ${isActive ? 'border-blue-500 bg-blue-900/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'border-gray-700 hover:border-gray-600'}`}
-                >
-                  <div className="flex-1">
-                    <span className={`${isActive ? 'text-blue-400' : 'text-blue-500'} font-bold mr-2`}>#{idx + 1}</span>
-                    <span className={isActive ? 'text-white font-medium' : 'text-gray-200'}>{q.question}</span>
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          <aside style={{ width: '380px', minWidth: '380px', borderRight: '1px solid rgba(255,255,255,0.05)', background: '#0a0a1a', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'white' }}>Preguntas</h3>
+                <p style={{ fontSize: '0.7rem', color: '#64748b' }}>{questions.length} preguntas creadas</p>
+              </div>
+              <button onClick={() => setEditingQ({ id: Date.now(), question: '', options: ['', '', '', ''], correctAnswer: 0, isNew: true })} style={{ background: '#7c3aed', border: 'none', color: 'white', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px rgba(124, 58, 237, 0.3)' }}><Plus size={20} /></button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {questions.map((q, idx) => (
+                <div key={q.id} onClick={() => { setSelectedQIdx(idx); setEditingQ(q); }} style={{ padding: '20px', borderRadius: '20px', border: `1px solid ${selectedQIdx === idx ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`, background: selectedQIdx === idx ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.15)', padding: '4px 10px', borderRadius: '8px' }}>#{idx + 1}</span>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <Edit2 size={16} style={{ color: '#64748b', opacity: 0.6 }} />
+                      <Trash2 size={16} style={{ color: '#ef4444', opacity: 0.6, cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); if (window.confirm('¿ESTÁS SEGURO?')) { const updated = questions.filter((_, i) => i !== idx); setQuestions(updated); if (selectedQIdx >= updated.length) setSelectedQIdx(Math.max(0, updated.length - 1)); } }} />
+                    </div>
                   </div>
-                  <div className="flex gap-2 ml-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingQ(q);
-                      }}
-                      className={`p-2 rounded-full transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-blue-900/50 text-blue-400'}`}
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm('¿Estás seguro de que deseas eliminar esta pregunta?')) {
-                          setQuestions(questions.filter(item => item.id !== q.id));
-                          if (editingQ?.id === q.id) setEditingQ(null);
-                        }
-                      }}
-                      className="p-2 hover:bg-red-900/50 text-red-400 rounded-full transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                  <p style={{ fontSize: '0.9rem', color: selectedQIdx === idx ? 'white' : '#94a3b8', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{q.question || "Sin enunciado..."}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #0a0a1a, #050510)', overflowY: 'auto', padding: '40px' }}>
+            <div style={{ maxWidth: '900px', width: '100%', margin: '0 auto' }}>
+              {currentEditingQ ? (
+                <div className="glass" style={{ padding: '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'white', marginBottom: '30px' }}>{currentEditingQ.isNew ? 'Nueva Pregunta' : 'Editar Pregunta'}</h2>
+                  <AdminForm
+                    initialData={currentEditingQ}
+                    onSave={(q) => {
+                      let newQuestions;
+                      if (editingQ?.isNew) {
+                        const { isNew, ...qData } = q;
+                        newQuestions = [...questions, qData];
+                      } else {
+                        newQuestions = questions.map(item => item.id === q.id ? q : item);
+                      }
+                      setQuestions(newQuestions);
+                      setEditingQ(null);
+                    }}
+                    onCancel={() => setEditingQ(null)}
+                  />
+                </div>
+              ) : (
+                <div style={{ height: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
+                  <HelpCircle size={80} color="white" strokeWidth={1} />
+                  <p style={{ marginTop: '20px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Selecciona o crea una pregunta</p>
+                </div>
+              )}
+            </div>
+          </main>
+
+          <aside style={{ width: '350px', minWidth: '350px', background: '#0a0a1a', borderLeft: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+              <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2.5px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}><Settings size={18} /> Ajustes</div>
+                <button onClick={() => setShowProjectDetails(!showProjectDetails)} className="btn-outline" style={{ fontSize: '0.6rem', padding: '4px 8px' }}>{showProjectDetails ? 'OCULTAR' : 'VER MÁS'}</button>
+              </h3>
+
+              {showProjectDetails && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre</label>
+                    <div style={{ position: 'relative' }}>
+                      <input className="premium-input" value={projectLocal?.name || ''} readOnly={!isEditingProjectName} onChange={(e) => { setProjectLocal({ ...projectLocal, name: e.target.value }); setHasUnsavedNameChanges(true); }} />
+                      <button onClick={async () => { if (isEditingProjectName && hasUnsavedNameChanges) { await supabase.from('projects').update({ name: projectLocal.name }).eq('id', project.id); setHasUnsavedNameChanges(false); } setIsEditingProjectName(!isEditingProjectName); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Clave Acceso</label>
+                    <div style={{ position: 'relative' }}>
+                      <input className="premium-input" value={localAccessCode} readOnly={!isEditingAccessCode} onChange={(e) => { setLocalAccessCode(e.target.value); setHasUnsavedCodeChanges(true); }} />
+                      <button onClick={async () => { if (isEditingAccessCode && hasUnsavedCodeChanges) { await supabase.from('projects').update({ access_code: localAccessCode }).eq('id', project.id); setHasUnsavedCodeChanges(false); } setIsEditingAccessCode(!isEditingAccessCode); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}</button>
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              )}
+            </div>
+          </aside>
         </div>
       </div>
     );
@@ -297,178 +399,110 @@ export default function QuizView({ project, role, previewMode, onExit }) {
 
   if (view === 'playing') {
     const currentQ = questions[currentQIndex];
+    if (!currentQ) return null;
+
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center p-4">
-        {/* Header */}
-        <div className="w-full max-w-3xl flex justify-between items-center mb-8 pt-4">
-          <div className="bg-gray-800 px-4 py-2 rounded-full text-sm font-mono text-blue-300 border border-gray-700">
-            Pregunta {currentQIndex + 1} / {questions.length}
-          </div>
-          <div className={`flex items-center gap-2 text-xl font-bold font-mono px-4 py-2 rounded-lg ${feedback ? 'text-yellow-400' : 'text-white'}`}>
-            <Clock size={20} />
-            {formatTime(timer)}
-          </div>
+      <div style={{ height: '100vh', width: '100vw', background: '#000', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '10px 25px', borderRadius: '100px', border: '1px solid rgba(59, 130, 246, 0.3)', fontSize: '0.9rem', fontWeight: 700, color: '#93c5fd' }}>Pregunta {currentQIndex + 1} / {questions.length}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem', fontWeight: 900 }}><Clock size={24} color="#3b82f6" /> {formatTime(timer)}</div>
         </div>
 
-        {/* Question Area */}
-        <div className="w-full max-w-3xl flex-1 flex flex-col justify-center">
-          <h2 className="text-2xl md:text-3xl font-medium leading-relaxed mb-10 text-center">
-            {currentQ.question}
-          </h2>
+        <div style={{ flex: 1, width: '100%', maxWidth: '1200px', display: 'flex', flexDirection: isLandscape ? 'row' : 'column', alignItems: 'center', gap: '40px', overflow: 'hidden', padding: '20px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center', gap: '20px', minWidth: '40%' }}>
+            <h2 style={{ fontSize: (currentQ.type === 'image' || currentQ.type === 'video') ? '1.5rem' : '2.5rem', fontWeight: 900 }}>{currentQ.question}</h2>
+            {currentQ.type === 'image' && currentQ.mediaUrl && <img src={currentQ.mediaUrl} onClick={() => setFullImage(currentQ.mediaUrl)} style={{ width: '100%', maxHeight: '40vh', objectFit: 'contain', borderRadius: '15px' }} />}
+            {currentQ.type === 'audio' && currentQ.mediaUrl && <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />}
+            {currentQ.type === 'video' && currentQ.mediaUrl && (
+              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '40vh', borderRadius: '15px', overflow: 'hidden' }}>
+                {(() => {
+                  const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
+                  const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${currentQ.videoStart || 0}${currentQ.videoEnd ? `&end=${currentQ.videoEnd}` : ''}&autoplay=1&enablejsapi=1`;
+                  return <iframe id="quiz-video-player" width="100%" height="100%" src={embedUrl} frameBorder="0" allow="autoplay" allowFullScreen></iframe>;
+                })()}
+              </div>
+            )}
+          </div>
 
-          <div className="grid grid-cols-1 gap-4 mb-8">
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: currentQ.options.length > 2 ? '1fr 1fr' : '1fr', gap: '15px', width: '100%' }}>
             {currentQ.options.map((opt, idx) => {
-              if (hiddenOptions.includes(idx)) return <div key={idx} className="h-16"></div>; // Espacio vacío para opciones ocultas
-
-              let btnClass = "bg-gray-800 hover:bg-gray-700 border-gray-700 text-gray-200";
-
+              if (hiddenOptions.includes(idx)) return <div key={idx} style={{ opacity: 0 }} />;
+              let color = 'rgba(255,255,255,0.05)';
+              let border = 'rgba(255,255,255,0.1)';
               if (feedback) {
-                if (idx === currentQ.correctAnswer) btnClass = "bg-green-600 border-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.5)]";
-                else if (idx === selectedOption) btnClass = "bg-red-600 border-red-500 text-white";
-                else btnClass = "opacity-50 bg-gray-800 border-gray-700";
+                if (idx === currentQ.correctAnswer) { color = 'rgba(16, 185, 129, 0.2)'; border = '#10b981'; }
+                else if (idx === selectedOption) { color = 'rgba(239, 68, 68, 0.2)'; border = '#ef4444'; }
               }
-
               return (
-                <button
-                  key={idx}
-                  onClick={() => handleAnswer(idx)}
-                  disabled={feedback !== null}
-                  className={`relative p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center ${btnClass}`}
-                >
-                  <span className="w-8 h-8 rounded-full border border-current flex items-center justify-center mr-4 text-sm font-bold opacity-70">
-                    {String.fromCharCode(65 + idx)}
-                  </span>
-                  <span className="text-lg">{opt}</span>
-                  {feedback && idx === currentQ.correctAnswer && <Check className="absolute right-4" />}
-                  {feedback && idx === selectedOption && idx !== currentQ.correctAnswer && <X className="absolute right-4" />}
+                <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null} style={{ padding: '25px', borderRadius: '15px', background: color, border: `1px solid ${border}`, color: 'white', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', transition: '0.2s', fontSize: '1.1rem', fontWeight: 700 }}>
+                  <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: feedback && idx === currentQ.correctAnswer ? '#10b981' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {feedback && idx === currentQ.correctAnswer ? <Check size={16} /> : (feedback && idx === selectedOption ? <X size={16} /> : String.fromCharCode(65 + idx))}
+                  </div>
+                  {opt}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Lifelines / Footer */}
-        <div className="w-full max-w-3xl mt-auto pb-6">
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={handleFiftyFifty}
-              disabled={feedback !== null || hiddenOptions.length > 0}
-              className="flex flex-col items-center gap-1 text-sm text-blue-400 disabled:opacity-30 hover:text-blue-300 transition-colors"
-            >
-              <div className="w-12 h-12 rounded-full bg-gray-800 border border-blue-900 flex items-center justify-center shadow-lg">
-                <span className="font-bold">50:50</span>
-              </div>
-              <span>+10s</span>
-            </button>
-
-            <button
-              onClick={handlePass}
-              disabled={feedback !== null}
-              className="flex flex-col items-center gap-1 text-sm text-purple-400 disabled:opacity-30 hover:text-purple-300 transition-colors"
-            >
-              <div className="w-12 h-12 rounded-full bg-gray-800 border border-purple-900 flex items-center justify-center shadow-lg">
-                <SkipForward size={20} />
-              </div>
-              <span>Pasar (+30s)</span>
-            </button>
+        <div style={{ display: 'flex', gap: '30px', margin: '20px 0' }}>
+          <div style={{ textAlign: 'center' }}>
+            <button onClick={handleFiftyFifty} disabled={feedback || hiddenOptions.length > 0} style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.2)', border: '2px solid #3b82f6', color: '#3b82f6', fontWeight: 900, cursor: 'pointer', opacity: (feedback || hiddenOptions.length > 0) ? 0.3 : 1 }}>50:50</button>
+            <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#3b82f6', marginTop: '5px' }}>+10s</p>
           </div>
-
-          <div className="text-center mt-6">
-            <button
-              className="text-gray-600 text-sm hover:text-gray-400 flex items-center justify-center gap-1 mx-auto"
-              onClick={restartApp}
-            >
-              Cancelar Juego
-            </button>
+          <div style={{ textAlign: 'center' }}>
+            <button onClick={handlePass} disabled={feedback} style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(124, 58, 237, 0.2)', border: '2px solid #7c3aed', color: '#a78bfa', cursor: 'pointer', opacity: feedback ? 0.3 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SkipForward size={24} /></button>
+            <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#a78bfa', marginTop: '5px' }}>Pasar (+30s)</p>
           </div>
         </div>
+
+        <button onClick={() => { if (window.confirm('¿Cancelar juego?')) { onExit(); } }} style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6 }}>Cancelar Juego</button>
+
+        {fullImage && (
+          <div onClick={() => setFullImage(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, cursor: 'zoom-out' }}>
+            <img src={fullImage} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain' }} />
+            <X size={32} style={{ position: 'absolute', top: '20px', right: '20px', color: 'white' }} />
+          </div>
+        )}
       </div>
     );
   }
 
   if (view === 'results') {
-    const correctCount = answersLog.filter(a => a.isCorrect).length;
-    const incorrectCount = answersLog.filter(a => !a.isCorrect && !a.isSkipped).length;
-    const skippedCount = answersLog.filter(a => a.isSkipped).length;
+    const correct = answersLog.filter(a => a.isCorrect).length;
+    const incorrect = answersLog.filter(a => !a.isCorrect && !a.isSkipped).length;
+    const skipped = answersLog.filter(a => a.isSkipped).length;
 
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-6 overflow-y-auto">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-2">Resultados</h2>
-            <div className="text-6xl font-mono text-blue-400 font-bold mb-4">{formatTime(timer)}</div>
-            <p className="text-gray-400">Tiempo Total</p>
+      <div style={{ height: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div className="glass anim-up" style={{ padding: '40px', maxWidth: '800px', width: '100%', textAlign: 'center' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🏆</div>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px' }}>¡Juego Terminado!</h2>
+          <p style={{ color: '#94a3b8', marginBottom: '40px' }}>Estadísticas de la partida</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '15px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{formatTime(timer)}</div>
+              <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Tiempo</div>
+            </div>
+            <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '20px', borderRadius: '15px', color: '#10b981' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{correct}</div>
+              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Correctas</div>
+            </div>
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '20px', borderRadius: '15px', color: '#ef4444' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{incorrect}</div>
+              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Incorrectas</div>
+            </div>
+            <div style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '15px', color: '#a78bfa' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{skipped}</div>
+              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Saltadas</div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="bg-green-900/30 border border-green-800 p-4 rounded-xl text-center">
-              <div className="text-2xl font-bold text-green-400">{correctCount}</div>
-              <div className="text-xs text-green-200">Correctas</div>
-            </div>
-            <div className="bg-red-900/30 border border-red-800 p-4 rounded-xl text-center">
-              <div className="text-2xl font-bold text-red-400">{incorrectCount}</div>
-              <div className="text-xs text-red-200">Incorrectas</div>
-            </div>
-            <div className="bg-yellow-900/30 border border-yellow-800 p-4 rounded-xl text-center">
-              <div className="text-2xl font-bold text-yellow-400">{skippedCount}</div>
-              <div className="text-xs text-yellow-200">Saltadas</div>
-            </div>
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <button onClick={restartApp} className="btn-premium" style={{ flex: 1 }}>Reiniciar</button>
+            <button onClick={onExit} className="btn-outline" style={{ flex: 1 }}>Volver</button>
           </div>
-
-          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 mb-8">
-            <div
-              className="flex items-center justify-between cursor-pointer"
-              onClick={() => setShowReview(!showReview)}
-            >
-              <div className="flex items-center gap-2">
-                <Eye size={20} className="text-blue-400" />
-                <h3 className="text-lg font-bold">Revisión</h3>
-              </div>
-              <div className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300">
-                <span>{showReview ? 'Ocultar' : 'Ver más'}</span>
-                {showReview ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </div>
-            </div>
-
-            {showReview && (
-              <div className="space-y-6 mt-6 border-t border-gray-700 pt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                {answersLog.map((log, idx) => (
-                  <div key={idx} className="border-b border-gray-700 pb-4 last:border-0">
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="font-medium text-gray-200 w-10/12">
-                        <span className="text-gray-500 mr-2">{idx + 1}.</span>
-                        {log.question.question}
-                      </p>
-                      {log.isCorrect ? <Check className="text-green-500" /> : <X className="text-red-500" />}
-                    </div>
-
-                    <div className="ml-6 text-sm">
-                      {log.isSkipped ? (
-                        <p className="text-yellow-500 italic">Pregunta Saltada (+30s)</p>
-                      ) : (
-                        <p className={`${log.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                          Tu respuesta: <span className="font-semibold">{log.question.options[log.selected]}</span>
-                        </p>
-                      )}
-
-                      {!log.isCorrect && (
-                        <p className="text-blue-400 mt-1">
-                          Correcta: <span className="font-semibold">{log.question.options[log.question.correctAnswer]}</span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={restartApp}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg"
-          >
-            <RotateCcw /> REINICIAR ACTIVIDAD
-          </button>
         </div>
       </div>
     );
@@ -477,76 +511,64 @@ export default function QuizView({ project, role, previewMode, onExit }) {
   return null;
 }
 
-// Sub-componente para formulario
 function AdminForm({ initialData, onSave, onCancel }) {
-  const [formData, setFormData] = useState({
-    question: '',
-    options: ['', '', '', ''],
-    correctAnswer: 0
-  });
+  const [formData, setFormData] = useState({ question: '', type: 'text', mediaUrl: '', videoStart: 0, videoEnd: 0, options: ['', '', '', ''], correctAnswer: 0 });
+  const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
-    }
-  }, [initialData]);
+  useEffect(() => { if (initialData) setFormData({ ...formData, ...initialData }); }, [initialData]);
 
-  const handleChangeOption = (idx, val) => {
-    const newOpts = [...formData.options];
-    newOpts[idx] = val;
-    setFormData({ ...formData, options: newOpts });
+  const handleFileUpload = async (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fileName = `quiz/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+      const { error } = await supabase.storage.from('media').upload(fileName, file);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
+      setFormData({ ...formData, mediaUrl: publicUrl });
+    } catch (error) { alert('Error: ' + error.message); }
+    setUploading(false);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.question || formData.options.some(o => !o)) return alert("Completa todos los campos");
-    onSave(formData);
-    // Reset si es nuevo
-    if (!initialData) setFormData({ question: '', options: ['', '', '', ''], correctAnswer: 0 });
-  };
+  const handleSubmit = (e) => { e.preventDefault(); onSave(formData); };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">Pregunta</label>
-        <textarea
-          className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white"
-          rows="2"
-          value={formData.question}
-          onChange={e => setFormData({ ...formData, question: e.target.value })}
-        />
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+        {[{ id: 'text', label: 'Pregunta', Icon: HelpCircle, color: '#a78bfa' }, { id: 'audio', label: 'Audio', Icon: Music, color: '#3b82f6' }, { id: 'video', label: 'Video', Icon: Play, color: '#ef4444' }, { id: 'image', label: 'Imagen', Icon: ImageIcon, color: '#10b981' }].map(t => (
+          <button key={t.id} type="button" onClick={() => setFormData({ ...formData, type: t.id })} style={{ padding: '12px', borderRadius: '12px', background: formData.type === t.id ? `${t.color}20` : 'rgba(255,255,255,0.03)', border: `1px solid ${formData.type === t.id ? t.color : 'rgba(255,255,255,0.1)'}`, color: formData.type === t.id ? t.color : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 700 }}><t.Icon size={16} /> {t.label}</button>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <textarea style={{ width: '100%', minHeight: '100px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', padding: '15px', color: 'white', fontSize: '1rem', outline: 'none' }} placeholder="Escribe la pregunta..." value={formData.question} onChange={e => setFormData({ ...formData, question: e.target.value })} required />
+
+      {(formData.type === 'audio' || formData.type === 'image') && (
+        <label className="btn-outline" style={{ cursor: 'pointer', textAlign: 'center' }}>{uploading ? 'Subiendo...' : (formData.mediaUrl ? 'Cambiar Archivo' : 'Elegir Archivo')} <input type="file" hidden accept={formData.type === 'audio' ? 'audio/*' : 'image/*'} onChange={e => handleFileUpload(e, formData.type)} /></label>
+      )}
+
+      {formData.type === 'video' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <input className="premium-input" placeholder="URL de Youtube" value={formData.mediaUrl} onChange={e => setFormData({ ...formData, mediaUrl: e.target.value })} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+            <input className="premium-input" placeholder="Inicio (seg)" type="number" value={formData.videoStart} onChange={e => setFormData({ ...formData, videoStart: parseInt(e.target.value) || 0 })} />
+            <input className="premium-input" placeholder="Fin (seg)" type="number" value={formData.videoEnd} onChange={e => setFormData({ ...formData, videoEnd: parseInt(e.target.value) || 0 })} />
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
         {formData.options.map((opt, idx) => (
-          <div key={idx} className="flex gap-2 items-center">
-            <input
-              type="radio"
-              name="correct"
-              checked={formData.correctAnswer === idx}
-              onChange={() => setFormData({ ...formData, correctAnswer: idx })}
-              className="accent-blue-500 w-4 h-4"
-            />
-            <input
-              type="text"
-              placeholder={`Opción ${idx + 1}`}
-              className={`flex-1 bg-gray-900 border ${formData.correctAnswer === idx ? 'border-blue-500' : 'border-gray-600'} rounded p-2 text-white`}
-              value={opt}
-              onChange={e => handleChangeOption(idx, e.target.value)}
-            />
+          <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${formData.correctAnswer === idx ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <input type="radio" checked={formData.correctAnswer === idx} onChange={() => setFormData({ ...formData, correctAnswer: idx })} style={{ cursor: 'pointer' }} />
+            <input style={{ background: 'none', border: 'none', color: 'white', width: '100%', outline: 'none' }} value={opt} onChange={e => { const copy = [...formData.options]; copy[idx] = e.target.value; setFormData({ ...formData, options: copy }); }} placeholder={`Opción ${idx + 1}`} required />
           </div>
         ))}
       </div>
 
-      <div className="flex gap-3 mt-4">
-        <button type="submit" className="flex-1 bg-green-600 hover:bg-green-500 py-2 rounded text-white flex justify-center gap-2 items-center">
-          <Save size={18} /> Guardar
-        </button>
-        {onCancel && (
-          <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">
-            Cancelar
-          </button>
-        )}
+      <div style={{ display: 'flex', gap: '15px' }}>
+        <button type="submit" className="btn-premium" style={{ flex: 1 }}><Save size={20} /> Guardar Pregunta</button>
+        <button type="button" onClick={onCancel} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
       </div>
     </form>
   );
