@@ -447,9 +447,9 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                     <div className="glass" style={{ width: '450px', padding: '40px', background: '#0a0a1a' }}>
                         <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '20px' }}>Mover {selectedProjects.length} Proyectos</h2>
                         <select className="premium-input" style={{ width: '100%', marginBottom: '20px', background: 'rgba(255,255,255,0.05)', color: 'white' }} value={targetFolderForMove} onChange={(e) => setTargetFolderForMove(e.target.value)}>
-                            <option value="">Selecciona destino...</option>
-                            <option value="root">Raíz (Principal)</option>
-                            {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                            <option value="" style={{ color: '#000' }}>Selecciona destino...</option>
+                            <option value="root" style={{ color: '#000' }}>Raíz (Principal)</option>
+                            {folders.map(f => <option key={f.id} value={f.id} style={{ color: '#000' }}>{f.name}</option>)}
                         </select>
                         <div style={{ display: 'flex', gap: '15px' }}>
                             <button onClick={() => setShowMoveModal(false)} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
