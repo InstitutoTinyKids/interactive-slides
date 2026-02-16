@@ -303,7 +303,7 @@ export default function App() {
                 <SlideEditor
                     slides={slides}
                     isActive={isActive}
-                    onSave={() => { }}
+                    onSave={() => loadProjectSlides(selectedProject.id)}
                     onExit={() => {
                         if (role === 'admin') {
                             setView('gallery');
@@ -318,9 +318,10 @@ export default function App() {
                     }}
                     selectedProject={selectedProject}
                     onGoToGallery={() => setView('gallery')}
-                    onPreview={(p) => {
+                    onPreview={async (p) => {
                         setLastView('editor');
                         setCameFromGallery(false);
+                        if (!p.id.startsWith('quiz-')) await loadProjectSlides(p.id);
                         setView(p.id.startsWith('quiz-') ? 'preview_quiz' : 'preview_viewer');
                         setCurrentSlideIdx(0);
                         setPreviewMode(true);

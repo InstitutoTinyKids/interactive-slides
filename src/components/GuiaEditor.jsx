@@ -58,12 +58,15 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         if (!currentProject) return;
         if (!isSilent) setLoading(true);
         try {
-            await supabase.from('projects').update({
+            const { error: pError } = await supabase.from('projects').update({
                 name: currentProject.name,
                 access_code: currentProject.access_code
             }).eq('id', currentProject.id);
+            if (pError) throw pError;
 
-            await supabase.from('slides').delete().eq('project_id', currentProject.id);
+            // Delete existing slides safely
+            const { error: dError } = await supabase.from('slides').delete().eq('project_id', currentProject.id);
+            if (dError) throw dError;
 
             const toInsert = localSlides.map((s, idx) => ({
                 id: s.id || crypto.randomUUID(),
@@ -71,30 +74,30 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 image_url: s.image_url,
                 audio_url: s.audio_url,
                 elements: [
-                    ...s.elements.filter(e => e.type !== 'format_metadata'),
+                    ...(s.elements || []).filter(e => e.type !== 'format_metadata'),
                     { id: 'fmt-meta', type: 'format_metadata', value: s.format || '16/9' }
                 ],
                 order_index: idx
             }));
 
             if (toInsert.length > 0) {
-                await supabase.from('slides').insert(toInsert);
+                const { error: sError } = await supabase.from('slides').insert(toInsert);
+                if (sError) throw sError;
             }
 
             if (!isSilent) {
+                if (onSave) onSave(); // Sync with parent
                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 window.dispatchEvent(new CustomEvent('show-toast', {
-                    detail: { message: '✅ ¡Proyecto guardado con éxito!', type: 'success' }
+                    detail: { message: '✅ ¡Guardado!', type: 'success' }
                 }));
             }
             return true;
         } catch (err) {
             console.error('Error saving:', err);
-            if (!isSilent) {
-                window.dispatchEvent(new CustomEvent('show-toast', {
-                    detail: { message: '❌ Error al guardar: ' + err.message, type: 'error' }
-                }));
-            }
+            window.dispatchEvent(new CustomEvent('show-toast', {
+                detail: { message: '❌ Error al guardar: ' + err.message, type: 'error' }
+            }));
             return false;
         } finally {
             if (!isSilent) setLoading(false);
@@ -144,11 +147,16 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             if (error) throw error;
             const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
 
-            const newSlides = [...localSlides];
-            if (type === 'bg') newSlides[slideIdx].image_url = publicUrl;
-            else if (type === 'audio') newSlides[slideIdx].audio_url = publicUrl;
-            else if (type === 'drag_img') newSlides[slideIdx].elements[elementIdx].url = publicUrl;
-            setLocalSlides(newSlides);
+            setLocalSlides(prev => prev.map((s, idx) => {
+                if (idx !== slideIdx) return s;
+                const updated = { ...s };
+                if (type === 'bg') updated.image_url = publicUrl;
+                else if (type === 'audio') updated.audio_url = publicUrl;
+                else if (type === 'drag_img') {
+                    updated.elements = s.elements.map((el, ei) => ei === elementIdx ? { ...el, url: publicUrl } : el);
+                }
+                return updated;
+            }));
         } catch (error) {
             alert('Error al subir: ' + error.message);
         }
@@ -174,21 +182,25 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     const addSlide = () => {
         const newSlide = { id: crypto.randomUUID(), image_url: '', audio_url: '', format: '16/9', elements: [], order_index: localSlides.length };
-        setLocalSlides([...localSlides, newSlide]);
+        setLocalSlides(prev => [...prev, newSlide]);
         setSelectedIdx(localSlides.length);
     };
 
     const addElement = (type) => {
-        const newSlides = [...localSlides];
+        if (!localSlides[selectedIdx]) return;
         const newEl = {
             id: crypto.randomUUID(), type, x: 50, y: 50,
             width: type === 'text' ? 300 : (type === 'drag' ? 100 : 80),
             height: type === 'text' ? 150 : (type === 'drag' ? 100 : 80),
             text: type === 'text' ? 'Escribe aquí...' : '', url: '', imageSize: type === 'drag' ? 100 : undefined
         };
-        if (!localSlides[selectedIdx]) return;
-        newSlides[selectedIdx].elements.push(newEl);
-        setLocalSlides(newSlides);
+        setLocalSlides(prev => prev.map((s, idx) => {
+            if (idx !== selectedIdx) return s;
+            return {
+                ...s,
+                elements: [...(s.elements || []), newEl]
+            };
+        }));
     };
 
     const handleCanvasMouseMove = (e) => {
@@ -307,16 +319,15 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 <button onClick={() => setShowMoreSettings(!showMoreSettings)} className="btn-outline" style={{ fontSize: '0.65rem', padding: '6px 12px', background: showMoreSettings ? 'rgba(167, 139, 250, 0.2)' : 'none' }}>{showMoreSettings ? 'VER MENOS' : 'VER MÁS'}</button>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                <div>
-                                    <label style={{ fontSize: '0.65rem', color: '#444455', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>NOMBRE DEL PROYECTO</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <input ref={nameInputRef} className="premium-input" style={{ width: '100%', paddingRight: '40px', background: 'rgba(0,0,0,0.3)', height: '45px' }} value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} />
-                                        <Edit2 size={16} color="#64748b" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }} onClick={() => nameInputRef.current?.focus()} />
-                                    </div>
-                                </div>
-
-                                {showMoreSettings && (
-                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ display: 'flex', flexDirection: 'column', gap: '15px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                                {showMoreSettings ? (
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        <div>
+                                            <label style={{ fontSize: '0.65rem', color: '#444455', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>NOMBRE DEL PROYECTO</label>
+                                            <div style={{ position: 'relative' }}>
+                                                <input ref={nameInputRef} className="premium-input" style={{ width: '100%', paddingRight: '40px', background: 'rgba(0,0,0,0.3)', height: '45px' }} value={currentProject?.name || ''} onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })} />
+                                                <Edit2 size={16} color="#64748b" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }} onClick={() => nameInputRef.current?.focus()} />
+                                            </div>
+                                        </div>
                                         <div>
                                             <label style={{ fontSize: '0.65rem', color: '#444455', fontWeight: 900, display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>CLAVE DE ACCESO</label>
                                             <div style={{ position: 'relative' }}>
@@ -325,6 +336,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                             </div>
                                         </div>
                                     </motion.div>
+                                ) : (
+                                    <div style={{ textAlign: 'center', padding: '10px', opacity: 0.5, fontSize: '0.75rem' }}>Haz clic en VER MÁS para editar el proyecto</div>
                                 )}
                             </div>
                         </div>
