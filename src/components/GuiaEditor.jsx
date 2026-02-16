@@ -366,7 +366,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '22px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <h3 style={{ fontSize: '0.8rem', color: 'white', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><LayoutGrid size={18} color="#3b82f6" /> Herramientas</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                {[{ type: 'draw', icon: Paintbrush, label: 'DRAW' }, { type: 'drag', icon: Move, label: 'DRAG' }, { type: 'stamp', icon: Target, label: 'STAMP' }, { type: 'text', icon: Type, label: 'TEXT' }].map(t => {
+                                {[{ type: 'draw', icon: Paintbrush, label: 'DRAW', color: '#a78bfa' }, { type: 'drag', icon: Move, label: 'DRAG', color: '#3b82f6' }, { type: 'stamp', icon: Target, label: 'STAMP', color: '#ef4444' }, { type: 'text', icon: Type, label: 'TEXT', color: '#10b981' }].map(t => {
                                     const isActive = currentSlide?.elements?.some(el => el.type === t.type);
                                     return (
                                         <button
@@ -380,19 +380,53 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                                 gap: '8px',
                                                 padding: '20px',
                                                 borderRadius: '18px',
-                                                background: isActive ? 'rgba(124, 58, 237, 0.15)' : 'rgba(255,255,255,0.02)',
-                                                border: isActive ? '1px solid #7c3aed' : '1px solid rgba(255,255,255,0.05)',
+                                                background: isActive ? `${t.color}22` : 'rgba(255,255,255,0.02)',
+                                                border: isActive ? `1px solid ${t.color}` : '1px solid rgba(255,255,255,0.05)',
                                                 position: 'relative'
                                             }}
                                         >
-                                            <t.icon size={22} color={isActive ? '#a78bfa' : (t.type === 'draw' ? '#a78bfa' : t.type === 'drag' ? '#3b82f6' : t.type === 'stamp' ? '#ef4444' : '#10b981')} />
+                                            <t.icon size={22} color={t.color} />
                                             <span style={{ fontSize: '0.7rem', fontWeight: 800, color: isActive ? 'white' : '#64748b' }}>{t.label}</span>
-                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', width: '6px', height: '6px', borderRadius: '50%', background: '#a78bfa' }} />}
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', width: '6px', height: '6px', borderRadius: '50%', background: t.color }} />}
                                         </button>
                                     );
                                 })}
                             </div>
                         </div>
+
+                        {selectedElementId && (
+                            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ background: 'rgba(124, 58, 237, 0.05)', padding: '22px', borderRadius: '24px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                    <h3 style={{ fontSize: '0.8rem', color: 'white', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}><SettingsIcon size={18} color="#a78bfa" /> Elemento</h3>
+                                    <button onClick={() => {
+                                        setLocalSlides(prev => prev.map((s, idx) => idx === selectedIdx ? { ...s, elements: s.elements.filter(el => el.id !== selectedElementId) } : s));
+                                        setSelectedElementId(null);
+                                    }} style={{ background: 'rgba(239, 68, 68, 0.2)', border: 'none', color: '#ef4444', padding: '8px', borderRadius: '10px', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                                </div>
+
+                                {currentSlide.elements.find(el => el.id === selectedElementId)?.type === 'drag' && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        <label className="btn-outline" style={{ width: '100%', cursor: 'pointer', padding: '12px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '0.75rem' }}>
+                                            <ImageIcon size={16} /> {currentSlide.elements.find(el => el.id === selectedElementId).url ? 'Cambiar Imagen' : 'Subir Imagen'}
+                                            <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'drag_img', selectedIdx, currentSlide.elements.findIndex(el => el.id === selectedElementId))} />
+                                        </label>
+
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <label style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 900 }}>TAMAÑO IMAGEN</label>
+                                                <span style={{ fontSize: '0.65rem', color: '#a78bfa', fontWeight: 900 }}>{currentSlide.elements.find(el => el.id === selectedElementId).imageSize || 100}%</span>
+                                            </div>
+                                            <input type="range" min="20" max="300" value={currentSlide.elements.find(el => el.id === selectedElementId).imageSize || 100} onChange={(e) => {
+                                                const val = parseInt(e.target.value);
+                                                setLocalSlides(prev => prev.map((s, idx) => idx === selectedIdx ? { ...s, elements: s.elements.map(el => el.id === selectedElementId ? { ...el, imageSize: val } : el) } : s));
+                                            }} style={{ width: '100%', accentColor: '#7c3aed' }} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <p style={{ fontSize: '0.6rem', color: '#444455', marginTop: '15px', textAlign: 'center' }}>Selecciona el elemento en el lienzo para moverlo o editarlo</p>
+                            </motion.div>
+                        )}
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '22px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <h3 style={{ fontSize: '0.8rem', color: 'white', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Music size={18} color="#10b981" /> Audio</h3>
