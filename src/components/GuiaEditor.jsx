@@ -331,8 +331,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                         border: selectedElementId === el.id ? '2px solid #7c3aed' : '1px dashed rgba(255,255,255,0.3)',
                                         borderRadius: '8px',
                                         padding: '5px',
-                                        width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 50}px` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
-                                        height: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 50}px` : (el.height ? `${(el.height / 506) * 100}%` : 'auto'),
+                                        width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 7}%` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'),
+                                        height: el.type === 'drag' ? 'auto' : (el.height ? `${(el.height / 506) * 100}%` : 'auto'),
+                                        aspectRatio: el.type === 'drag' ? '1/1' : 'auto',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center'
