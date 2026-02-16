@@ -188,6 +188,21 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     const addElement = (type) => {
         if (!localSlides[selectedIdx]) return;
+
+        // DRAW is a special toggle tool, not a multiple object tool
+        if (type === 'draw') {
+            const hasDraw = localSlides[selectedIdx].elements?.some(el => el.id === 'slide-draw-tool');
+            setLocalSlides(prev => prev.map((s, idx) => {
+                if (idx !== selectedIdx) return s;
+                const filtered = (s.elements || []).filter(el => el.id !== 'slide-draw-tool');
+                return {
+                    ...s,
+                    elements: hasDraw ? filtered : [...filtered, { id: 'slide-draw-tool', type: 'draw', x: 50, y: 50 }]
+                };
+            }));
+            return;
+        }
+
         const newEl = {
             id: crypto.randomUUID(), type, x: 50, y: 50,
             width: type === 'text' ? 300 : (type === 'drag' ? 100 : 80),
@@ -211,7 +226,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
         const x = ((clientX - rect.left) / rect.width) * 100;
         const y = ((clientY - rect.top) / rect.height) * 100;
 
-        if (draggingElementId) {
+        if (draggingElementId && draggingElementId !== 'slide-draw-tool') {
             const newSlides = [...localSlides];
             const element = newSlides[selectedIdx]?.elements.find(el => el.id === draggingElementId);
             if (element) {
@@ -279,6 +294,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                 <span style={{ position: 'absolute', top: '5px', left: '5px', zIndex: 10, fontSize: '10px', fontWeight: 900, background: 'rgba(0,0,0,0.8)', width: '20px', height: '20px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>{idx + 1}</span>
                                 {slide.image_url ? <img src={slide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}><ImageIcon size={22} color="white" /></div>}
                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx); }} style={{ position: 'absolute', top: '5px', right: '5px', zIndex: 10, background: 'rgba(239, 68, 68, 0.9)', border: 'none', color: 'white', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                                {slide.elements?.some(el => el.type === 'draw') && <div style={{ position: 'absolute', bottom: '5px', left: '5px', background: '#a78bfa', color: 'black', padding: '2px 6px', borderRadius: '4px', fontSize: '8px', fontWeight: 900 }}>DRAW ON</div>}
                             </div>
                         ))}
                     </div>
@@ -293,7 +309,15 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     <label className="btn-outline" style={{ padding: '12px 25px', cursor: 'pointer', fontSize: '1rem', fontWeight: 900 }}>Subir Fondo Square <input type="file" style={{ display: 'none' }} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].format = '1/1'; setLocalSlides(copy); handleFileUpload(e, 'bg', selectedIdx); }} /></label>
                                 </div>
                             )}
-                            {(currentSlide.elements || []).map(el => (
+
+                            {/* Draw Tool Visual Indicator for Teacher */}
+                            {currentSlide.elements?.some(el => el.type === 'draw') && (
+                                <div style={{ position: 'absolute', inset: 0, border: '4px solid rgba(167, 139, 250, 0.3)', pointerEvents: 'none', zIndex: 10 }}>
+                                    <div style={{ position: 'absolute', top: '10px', left: '10px', background: '#a78bfa', color: 'black', padding: '4px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '5px' }}><Paintbrush size={12} /> MODO DIBUJO ACTIVO</div>
+                                </div>
+                            )}
+
+                            {(currentSlide.elements || []).filter(el => el.type !== 'draw').map(el => (
                                 <div key={el.id} onMouseDown={(e) => { e.stopPropagation(); setDraggingElementId(el.id); setSelectedElementId(el.id); }} style={{ position: 'absolute', left: `${el.x}%`, top: `${el.y}%`, transform: 'translate(-50%, -50%)', zIndex: 100, cursor: 'move', border: selectedElementId === el.id ? '2px solid #7c3aed' : '1px dashed rgba(255,255,255,0.3)', borderRadius: '8px', padding: '5px', width: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 50}px` : (el.width ? `${(el.width / 900) * 100}%` : 'auto'), height: el.type === 'drag' ? `${(el.imageSize || 100) / 100 * 50}px` : (el.height ? `${(el.height / 506) * 100}%` : 'auto'), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     {el.type === 'text' && <textarea value={el.text} onChange={(e) => { const copy = [...localSlides]; copy[selectedIdx].elements.find(item => item.id === el.id).text = e.target.value; setLocalSlides(copy); }} style={{ background: 'transparent', border: 'none', color: 'white', textAlign: 'center', width: '100%', height: '100%', outline: 'none', resize: 'none', fontWeight: 800 }} />}
                                     {el.type === 'drag' && (el.url ? <img src={el.url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Move size={20} color="#3b82f6" />)}
@@ -342,9 +366,31 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '22px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <h3 style={{ fontSize: '0.8rem', color: 'white', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><LayoutGrid size={18} color="#3b82f6" /> Herramientas</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                {[{ type: 'draw', icon: Paintbrush, label: 'DRAW' }, { type: 'drag', icon: Move, label: 'DRAG' }, { type: 'stamp', icon: Target, label: 'STAMP' }, { type: 'text', icon: Type, label: 'TEXT' }].map(t => (
-                                    <button key={t.type} onClick={() => addElement(t.type)} className="btn-outline" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px', borderRadius: '18px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}><t.icon size={22} color={t.type === 'draw' ? '#a78bfa' : t.type === 'drag' ? '#3b82f6' : t.type === 'stamp' ? '#ef4444' : '#10b981'} /><span style={{ fontSize: '0.7rem', fontWeight: 800 }}>{t.label}</span></button>
-                                ))}
+                                {[{ type: 'draw', icon: Paintbrush, label: 'DRAW' }, { type: 'drag', icon: Move, label: 'DRAG' }, { type: 'stamp', icon: Target, label: 'STAMP' }, { type: 'text', icon: Type, label: 'TEXT' }].map(t => {
+                                    const isActive = currentSlide?.elements?.some(el => el.type === t.type);
+                                    return (
+                                        <button
+                                            key={t.type}
+                                            onClick={() => addElement(t.type)}
+                                            className="btn-outline"
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                padding: '20px',
+                                                borderRadius: '18px',
+                                                background: isActive ? 'rgba(124, 58, 237, 0.15)' : 'rgba(255,255,255,0.02)',
+                                                border: isActive ? '1px solid #7c3aed' : '1px solid rgba(255,255,255,0.05)',
+                                                position: 'relative'
+                                            }}
+                                        >
+                                            <t.icon size={22} color={isActive ? '#a78bfa' : (t.type === 'draw' ? '#a78bfa' : t.type === 'drag' ? '#3b82f6' : t.type === 'stamp' ? '#ef4444' : '#10b981')} />
+                                            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: isActive ? 'white' : '#64748b' }}>{t.label}</span>
+                                            {isActive && <div style={{ position: 'absolute', top: '8px', right: '8px', width: '6px', height: '6px', borderRadius: '50%', background: '#a78bfa' }} />}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
