@@ -298,54 +298,53 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     return (
       <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden', flexDirection: 'column' }}>
         <header style={{
-          height: (isMobile || isTablet) ? 'auto' : '75px',
-          padding: (isMobile || isTablet) ? '15px' : '0 30px',
+          height: '75px',
+          padding: '0 30px',
           display: 'flex',
-          flexDirection: (isMobile || isTablet) ? 'column' : 'row',
-          alignItems: (isMobile || isTablet) ? 'flex-start' : 'center',
+          alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '15px',
+          gap: '20px',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           background: 'rgba(10,10,25,0.9)',
           backdropFilter: 'blur(20px)',
           zIndex: 1000
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', width: '100%' }}>
-            <button onClick={onExit} style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '15px', color: '#3b82f6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LayoutGrid size={24} /></button>
-            <div style={{ flex: 1 }}>
-              <h2 style={{ fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 900, color: 'white', lineHeight: 1.1 }}>{projectLocal?.name || 'Cargando...'}</h2>
-              <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Editor Quiz</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 1, minWidth: 0 }}>
+            <button onClick={onExit} style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '15px', color: '#3b82f6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><LayoutGrid size={24} /></button>
+            <div style={{ overflow: 'hidden' }}>
+              <h2 style={{ fontSize: isMobile ? '0.9rem' : '1.1rem', fontWeight: 900, color: 'white', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{projectLocal?.name || 'Cargando...'}</h2>
+              <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Editor Quiz</span>
             </div>
             {(isMobile || isTablet) && (
               <button
                 onClick={() => setShowQuestionsPanel(!showQuestionsPanel)}
-                style={{ padding: '10px', background: showQuestionsPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.05)', borderRadius: '12px', border: 'none', color: 'white', cursor: 'pointer' }}
+                style={{ padding: '10px', background: showQuestionsPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.05)', borderRadius: '12px', border: 'none', color: 'white', cursor: 'pointer', flexShrink: 0 }}
               >
                 <Layers size={20} />
               </button>
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', width: (isMobile || isTablet) ? '100%' : 'auto', justifyContent: (isMobile || isTablet) ? 'space-between' : 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
             <button
               onClick={() => setShowSettingsPanel(!showSettingsPanel)}
               className="btn-outline"
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '14px', background: showSettingsPanel ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', background: showSettingsPanel ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
               title="Ajustes"
             >
-              <Settings size={20} />
+              <Settings size={18} />
             </button>
-            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '14px' }} title="Resultados">
-              <Eye size={20} />
+            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }} title="Resultados">
+              <Eye size={18} />
             </button>
-            <button onClick={async () => { const saved = await handleSaveQuiz(questions, false); if (saved && onPreview) onPreview(projectLocal); }} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', borderRadius: '14px', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }} disabled={loading}>
-              <Play size={18} /> {!(isMobile || isCompact) && 'Preview'}
+            <button onClick={async () => { const saved = await handleSaveQuiz(questions, false); if (saved && onPreview) onPreview(projectLocal); }} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', fontWeight: 700 }} disabled={loading}>
+              <Play size={16} /> {!(isMobile) && 'Preview'}
             </button>
-            <button onClick={onToggleActive} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 18px', borderRadius: '14px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', background: isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: isActive ? '#ef4444' : '#10b981', border: `1px solid ${isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}` }}>
-              {isActive ? <Pause size={18} /> : <Play size={18} />} {!(isMobile || isCompact) && (isActive ? 'Suspender' : 'Activar')}
+            <button onClick={onToggleActive} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', background: isActive ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: isActive ? '#ef4444' : '#10b981', border: `1px solid ${isActive ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}` }}>
+              {isActive ? <Pause size={16} /> : <Play size={16} />} {!(isMobile) && (isActive ? 'Suspender' : 'Activar')}
             </button>
-            <button onClick={() => handleSaveQuiz(questions)} className="btn-premium" style={{ padding: '10px 22px', borderRadius: '14px', fontSize: '0.8rem' }} disabled={loading}>
-              <Save size={18} /> GUARDAR
+            <button onClick={() => handleSaveQuiz(questions)} className="btn-premium" style={{ padding: '10px 18px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 900 }} disabled={loading}>
+              <Save size={16} /> GUARDAR
             </button>
           </div>
         </header>
