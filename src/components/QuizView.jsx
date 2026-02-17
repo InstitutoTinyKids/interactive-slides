@@ -4,7 +4,7 @@ import {
   Settings, Play, Clock, Check, X, HelpCircle, SkipForward,
   RotateCcw, Edit2, Trash2, Plus, Save, ArrowRight, Eye,
   AlertTriangle, ChevronDown, ChevronUp, LayoutGrid, Pause, Key, Image as ImageIcon,
-  Paintbrush, Type, Target, Layers, ZoomIn, ZoomOut, Music
+  Paintbrush, Type, Target, Layers, ZoomIn, ZoomOut, Music, ShieldCheck
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -401,14 +401,17 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                     initialData={currentEditingQ}
                     onSave={(q) => {
                       let newQuestions;
-                      if (editingQ?.isNew) {
+                      if (q.isNew) {
                         const { isNew, ...qData } = q;
                         newQuestions = [...questions, qData];
+                        setQuestions(newQuestions);
+                        // Cuando es nueva, la cerramos para volver a la lista
+                        setTimeout(() => setEditingQ(null), 1500);
                       } else {
                         newQuestions = questions.map(item => item.id === q.id ? q : item);
+                        setQuestions(newQuestions);
+                        // Si es edición, NO cerramos para que vea el "¡GUARDADO!" en el botón
                       }
-                      setQuestions(newQuestions);
-                      setEditingQ(null);
                     }}
                     onCancel={() => setEditingQ(null)}
                     isMobile={isMobile}
