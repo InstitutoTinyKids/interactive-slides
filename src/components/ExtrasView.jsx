@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Plus, Edit2, ExternalLink, Gamepad2, Link as LinkIcon, Trash2, X, ChevronLeft,
-    Folder, FolderPlus, GripVertical, Move, Save
+    Folder, FolderPlus, GripVertical, Move, Save, Play, Pause
 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -21,7 +21,7 @@ export default function ExtrasView({ onExit }) {
     const [modalType, setModalType] = useState(null); // 'link', 'game', 'folder'
     const [editingExtra, setEditingExtra] = useState(null);
     const [editingFolderId, setEditingFolderId] = useState(null);
-    const [formData, setFormData] = useState({ title: '', content: '' });
+    const [formData, setFormData] = useState({ title: '', content: '', is_active: true });
     const [showMoveModal, setShowMoveModal] = useState(false);
     const [targetFolderForMove, setTargetFolderForMove] = useState('');
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -90,14 +90,14 @@ export default function ExtrasView({ onExit }) {
         setModalType(type);
         setEditingExtra(null);
         setEditingFolderId(null);
-        setFormData({ title: '', content: '' });
+        setFormData({ title: '', content: '', is_active: true });
         setShowModal(true);
     };
 
     const handleEdit = (extra) => {
         setModalType(extra.type);
         setEditingExtra(extra);
-        setFormData({ title: extra.title, content: extra.content });
+        setFormData({ title: extra.title, content: extra.content, is_active: extra.is_active ?? true });
         setShowModal(true);
     };
 
@@ -139,7 +139,8 @@ export default function ExtrasView({ onExit }) {
                     title: formData.title.trim(),
                     type: modalType,
                     content: formData.content.trim(),
-                    folder_id: currentFolderId
+                    folder_id: currentFolderId,
+                    is_active: formData.is_active
                 };
 
                 if (editingExtra) {
@@ -202,6 +203,20 @@ export default function ExtrasView({ onExit }) {
             window.open(extra.content, '_blank');
         } else if (extra.type === 'game') {
             window.open(`/games/${extra.content}`, '_blank');
+        }
+    };
+
+    const toggleActive = async (extra) => {
+        try {
+            const newActiveState = !extra.is_active;
+            await dbService.updateExtra(extra.id, { is_active: newActiveState });
+            setExtras(prev => prev.map(e =>
+                e.id === extra.id ? { ...e, is_active: newActiveState } : e
+            ));
+            notify.success(newActiveState ? 'Extra activado' : 'Extra pausado');
+        } catch (err) {
+            console.error('Error toggling active:', err);
+            notify.error('Error al cambiar estado');
         }
     };
 
@@ -436,7 +451,9 @@ export default function ExtrasView({ onExit }) {
                                                     gap: '15px',
                                                     cursor: isSortMode ? 'grab' : 'default',
                                                     position: 'relative',
-                                                    zIndex: draggingExtraId === extra.id ? 1000 : 1
+                                                    zIndex: draggingExtraId === extra.id ? 1000 : 1,
+                                                    opacity: !extra.is_active ? 0.5 : 1,
+                                                    transition: 'opacity 0.3s'
                                                 }}
                                             >
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -459,17 +476,59 @@ export default function ExtrasView({ onExit }) {
                                                 </div>
 
                                                 {!isSortMode && (
-                                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                                        <button onClick={() => handleEdit(extra)} className="btn-outline" style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}>
-                                                            <Edit2 size={14} /> Editar
-                                                        </button>
-                                                        <button onClick={() => handleOpen(extra)} className="btn-premium" style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}>
-                                                            <ExternalLink size={14} /> Abrir
-                                                        </button>
-                                                        <button onClick={() => handleDelete(extra.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
+                                                    <>
+                                                        {/* Toggle Active/Pause */}
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                {extra.is_active ? (
+                                                                    <Play size={14} color="#10b981" />
+                                                                ) : (
+                                                                    <Pause size={14} color="#f59e0b" />
+                                                                )}
+                                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: extra.is_active ? '#10b981' : '#f59e0b', textTransform: 'uppercase' }}>
+                                                                    {extra.is_active ? 'Activo' : 'Pausado'}
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); toggleActive(extra); }}
+                                                                style={{
+                                                                    width: '44px',
+                                                                    height: '24px',
+                                                                    borderRadius: '12px',
+                                                                    border: 'none',
+                                                                    background: extra.is_active ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(255,255,255,0.1)',
+                                                                    position: 'relative',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.3s'
+                                                                }}
+                                                            >
+                                                                <div style={{
+                                                                    width: '18px',
+                                                                    height: '18px',
+                                                                    borderRadius: '50%',
+                                                                    background: 'white',
+                                                                    position: 'absolute',
+                                                                    top: '3px',
+                                                                    left: extra.is_active ? '23px' : '3px',
+                                                                    transition: 'all 0.3s',
+                                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                                                }} />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Action Buttons */}
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <button onClick={() => handleEdit(extra)} className="btn-outline" style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}>
+                                                                <Edit2 size={14} /> Editar
+                                                            </button>
+                                                            <button onClick={() => handleOpen(extra)} className="btn-premium" style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}>
+                                                                <ExternalLink size={14} /> Abrir
+                                                            </button>
+                                                            <button onClick={() => handleDelete(extra.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </>
                                                 )}
                                             </Reorder.Item>
                                         ))}
@@ -567,6 +626,53 @@ export default function ExtrasView({ onExit }) {
                                             </optgroup>
                                         </select>
                                     )}
+                                </div>
+                            )}
+
+                            {/* Toggle Active/Pause en Modal */}
+                            {modalType !== 'folder' && (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        {formData.is_active ? (
+                                            <Play size={16} color="#10b981" />
+                                        ) : (
+                                            <Pause size={16} color="#f59e0b" />
+                                        )}
+                                        <div>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'white' }}>
+                                                Estado del Extra
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                                                {formData.is_active ? 'Activo y visible' : 'Pausado y oculto'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
+                                        style={{
+                                            width: '52px',
+                                            height: '28px',
+                                            borderRadius: '14px',
+                                            border: 'none',
+                                            background: formData.is_active ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(255,255,255,0.1)',
+                                            position: 'relative',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s'
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: '22px',
+                                            height: '22px',
+                                            borderRadius: '50%',
+                                            background: 'white',
+                                            position: 'absolute',
+                                            top: '3px',
+                                            left: formData.is_active ? '27px' : '3px',
+                                            transition: 'all 0.3s',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                        }} />
+                                    </button>
                                 </div>
                             )}
 
