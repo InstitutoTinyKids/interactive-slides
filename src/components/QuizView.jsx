@@ -54,6 +54,10 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
   const [showQuestionsPanel, setShowQuestionsPanel] = useState(window.innerWidth >= 1200);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+
+  const timerRef = useRef(null);
+  const autoSaveTimerRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
