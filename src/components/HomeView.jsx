@@ -99,7 +99,7 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
                     className="role-btn glass"
                 >
                     <div className="role-btn-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
-                        <User size={28} />
+                        <User size={24} />
                     </div>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ fontWeight: 800, color: 'white', margin: 0 }}>Student</h3>
@@ -112,7 +112,7 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
                     className="role-btn glass"
                 >
                     <div className="role-btn-icon" style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#a78bfa' }}>
-                        <GraduationCap size={28} />
+                        <GraduationCap size={24} />
                     </div>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ fontWeight: 800, color: 'white', margin: 0 }}>Teacher</h3>
@@ -125,7 +125,7 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
                     className="role-btn glass"
                 >
                     <div className="role-btn-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-                        <Settings size={28} />
+                        <Settings size={24} />
                     </div>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ fontWeight: 800, color: 'white', margin: 0 }}>Admin</h3>
