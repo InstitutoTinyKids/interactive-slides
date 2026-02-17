@@ -1,34 +1,60 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Settings as SettingsIcon, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Plus, LayoutGrid, Eye, HelpCircle, Save, Layers, Image as ImageIcon, Trash2, Edit2, Copy, Move, Target, Pause, ShieldCheck, Folder, FolderPlus, ArrowUp, ArrowDown, ChevronLeft, GripVertical, Music, Paintbrush, Type, Upload, ZoomIn, ZoomOut } from 'lucide-react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { supabase } from '../lib/supabase';
+import {
+    Settings as SettingsIcon, Play, X, Key, Plus, Eye, Save,
+    Layers, Trash2, Edit2, Copy, Move, ChevronLeft,
+    GripVertical, Music, Paintbrush, Type, Upload, ZoomIn, ZoomOut,
+    Image as ImageIcon, Pause, ShieldCheck
+} from 'lucide-react';
+import { Header } from './common/Header';
+import { Sidebar } from './common/Sidebar';
+import { SmartImage } from './common/SmartImage';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { dbService } from '../services/db';
+import { validateProject } from '../utils/helpers';
+import { useApp } from '../context/AppContext';
 import { optimizeImage } from '../lib/imageOptimizer';
+import { motion, Reorder } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
 export default function SlideEditor({ slides, onSave, onExit, isActive, onToggleActive, onViewResults, selectedProject, onPreview, onGoToGallery }) {
+    const { isMobile: appIsMobile, notify } = useApp();
     const [localSlides, setLocalSlides] = useState(slides || []);
     const [selectedIdx, setSelectedIdx] = useState(0);
     const [loading, setLoading] = useState(false);
     const [currentProject, setCurrentProject] = useState(selectedProject);
+    const [saveStatus, setSaveStatus] = useState('idle'); // idle, saved
 
-    // For dragging and resizing in editor
+    // Responsive state
+    const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
+    const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
+    const [showSlidesPanel, setShowSlidesPanel] = useState(window.innerWidth >= 1200);
+    const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+
+    // Canvas & Interaction
     const canvasContainerRef = useRef(null);
     const [draggingElementId, setDraggingElementId] = useState(null);
     const [resizingElementId, setResizingElementId] = useState(null);
     const [selectedElementId, setSelectedElementId] = useState(null);
+    const [canvasZoom, setCanvasZoom] = useState(1);
 
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
-    const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
-    const [showSlidesPanel, setShowSlidesPanel] = useState(window.innerWidth >= 1200);
-    const [showSettingsPanel, setShowSettingsPanel] = useState(false);
-
-    // Estados para edición controlada en Ajustes
+    // UI State
     const [isEditingProjectName, setIsEditingProjectName] = useState(false);
     const [isEditingAccessCode, setIsEditingAccessCode] = useState(false);
-    const [canvasZoom, setCanvasZoom] = useState(1);
     const [showMoreSettings, setShowMoreSettings] = useState(false);
     const nameInputRef = useRef(null);
+
+    // Keyboard Shortcuts
+    useKeyboardShortcuts({
+        'ctrl+s': () => handleSaveAll(),
+        'ctrl+p': () => onPreview(currentProject, true),
+        'escape': () => {
+            setShowSlidesPanel(appIsMobile ? false : window.innerWidth >= 1200);
+            setShowSettingsPanel(false);
+        }
+    });
+
+    // Unified Responsive state (re-using logic from handleResize)
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     useEffect(() => {
         const handleResize = () => {
@@ -54,17 +80,21 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     const handleSaveAll = async (isSilent = false) => {
         if (!currentProject) return;
+
+        // Data Validation
+        const validation = validateProject(currentProject);
+        if (!validation.valid) {
+            if (!isSilent) notify.error(validation.message);
+            return false;
+        }
+
         if (!isSilent) setLoading(true);
         try {
-            const { error: pError } = await supabase.from('projects').update({
+            // Projects table update
+            await dbService.updateProject(currentProject.id, {
                 name: currentProject.name,
                 access_code: currentProject.access_code
-            }).eq('id', currentProject.id);
-            if (pError) throw pError;
-
-            // Delete existing slides safely
-            const { error: dError } = await supabase.from('slides').delete().eq('project_id', currentProject.id);
-            if (dError) throw dError;
+            });
 
             const toInsert = localSlides.map((s, idx) => ({
                 id: s.id || crypto.randomUUID(),
@@ -78,24 +108,19 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 order_index: idx
             }));
 
-            if (toInsert.length > 0) {
-                const { error: sError } = await supabase.from('slides').insert(toInsert);
-                if (sError) throw sError;
-            }
+            await dbService.saveSlides(currentProject.id, toInsert);
 
             if (!isSilent) {
                 if (onSave) onSave(); // Sync with parent
+                setSaveStatus('saved');
+                setTimeout(() => setSaveStatus('idle'), 1000);
                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                window.dispatchEvent(new CustomEvent('show-toast', {
-                    detail: { message: '✅ ¡Guardado!', type: 'success' }
-                }));
+                notify.success('¡Cambios guardados con éxito!');
             }
             return true;
         } catch (err) {
             console.error('Error saving:', err);
-            window.dispatchEvent(new CustomEvent('show-toast', {
-                detail: { message: '❌ Error al guardar: ' + err.message, type: 'error' }
-            }));
+            if (!isSilent) notify.error('Hubo un error al guardar: ' + err.message);
             return false;
         } finally {
             if (!isSilent) setLoading(false);
@@ -120,7 +145,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             const parts = url.split('/storage/v1/object/public/media/');
             if (parts.length > 1) {
                 const fileName = parts[1];
-                await supabase.storage.from('media').remove([fileName]);
+                await dbService.deleteFile('media', fileName);
             }
         } catch (err) {
             console.warn('Error deleting file:', err);
@@ -141,9 +166,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
             }
 
             const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-            const { error } = await supabase.storage.from('media').upload(fileName, file);
-            if (error) throw error;
-            const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
+            await dbService.uploadFile('media', fileName, file);
+            const publicUrl = dbService.getPublicUrl('media', fileName);
 
             setLocalSlides(prev => prev.map((s, idx) => {
                 if (idx !== slideIdx) return s;
@@ -156,7 +180,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 return updated;
             }));
         } catch (error) {
-            alert('Error al subir: ' + error.message);
+            notify.error('Error al subir: ' + error.message);
         }
         setLoading(false);
     };
@@ -255,107 +279,161 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
     return (
         <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', background: '#050510', overflow: 'hidden' }} onMouseMove={handleCanvasMouseMove} onMouseUp={() => { setDraggingElementId(null); setResizingElementId(null); }} onTouchEnd={() => { setDraggingElementId(null); setResizingElementId(null); }} onClick={(e) => { if (e.target === e.currentTarget) setSelectedElementId(null); }}>
-            <header style={{
-                height: '75px',
-                padding: '0 25px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                borderBottom: '1px solid rgba(255,255,255,0.08)',
-                background: 'rgba(10,10,24,0.95)',
-                backdropFilter: 'blur(20px)',
-                zIndex: 1000,
-                gap: '15px'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 1, minWidth: 0 }}>
-                    <button onClick={onGoToGallery} title="VOLVER A GALERIA" style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '15px', color: '#3b82f6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><LayoutGrid size={24} /></button>
-                    <div style={{ overflow: 'hidden' }}>
-                        <h2 style={{ fontSize: isMobile ? '0.9rem' : '1.1rem', fontWeight: 900, color: 'white', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentProject?.name}</h2>
-                        <span style={{ fontSize: '0.65rem', color: '#444455', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Editor de Programa</span>
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
-                    {isCompact && (
-                        <button
-                            onClick={() => setShowSlidesPanel(!showSlidesPanel)}
-                            style={{
-                                padding: '10px',
-                                background: showSlidesPanel ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-                                borderRadius: '12px',
-                                border: '1px solid rgba(16, 185, 129, 0.2)',
-                                color: '#10b981',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                            title="Diapositivas"
-                        >
-                            <Layers size={18} />
-                        </button>
-                    )}
+            <Header
+                title={currentProject?.name}
+                onBack={onGoToGallery}
+            >
+                {isCompact && (
                     <button
-                        onClick={() => setShowSettingsPanel(!showSettingsPanel)}
-                        className="btn-outline"
+                        onClick={() => setShowSlidesPanel(!showSlidesPanel)}
                         style={{
                             padding: '10px',
-                            background: showSettingsPanel ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+                            background: showSlidesPanel ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
                             borderRadius: '12px',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                            color: '#10b981',
+                            cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
                         }}
-                        title="Ajustes"
+                        title="Diapositivas"
                     >
-                        <SettingsIcon size={18} />
+                        <Layers size={18} />
                     </button>
-                    <button onClick={onViewResults} className="btn-outline" style={{ padding: '10px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Resultados"><Eye size={18} /></button>
-                    <button onClick={async () => { const saved = await handleSaveAll(false); if (saved) onPreview(currentProject, false); }} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }} disabled={loading}><Play size={16} /> {!isMobile && 'Preview'}</button>
-                    <button onClick={onToggleActive} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', background: isActive ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: isActive ? '#ef4444' : '#10b981', border: `1px solid ${isActive ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}` }}>{isActive ? <Pause size={16} /> : <Play size={16} />} {!isMobile && (isActive ? 'Suspender' : 'Activar')}</button>
-                    <button onClick={() => handleSaveAll(false)} className="btn-premium" style={{ padding: '10px 18px', fontSize: '0.75rem', fontWeight: 900, borderRadius: '12px' }} disabled={loading}><Save size={16} /> GUARDAR</button>
-                </div>
-            </header>
+                )}
+                <button
+                    onClick={() => setShowSettingsPanel(!showSettingsPanel)}
+                    className="btn-outline"
+                    style={{
+                        padding: '10px',
+                        background: showSettingsPanel ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                    title="Ajustes"
+                >
+                    <SettingsIcon size={18} />
+                </button>
+                <button onClick={onViewResults} className="btn-outline" style={{ padding: '10px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Resultados"><Eye size={18} /></button>
+
+                {!isMobile && (
+                    <button
+                        onClick={async () => {
+                            const saved = await handleSaveAll(false);
+                            if (saved) onPreview(currentProject, false);
+                        }}
+                        className="btn-outline"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+                        disabled={loading}
+                    >
+                        <Play size={16} /> Preview
+                    </button>
+                )}
+
+                <button
+                    onClick={onToggleActive}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', background: isActive ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: isActive ? '#ef4444' : '#10b981', border: `1px solid ${isActive ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}` }}
+                >
+                    {isActive ? <Pause size={16} /> : <Play size={16} />}
+                    {!isMobile && (isActive ? 'Suspender' : 'Activar')}
+                </button>
+
+                <button
+                    onClick={() => handleSaveAll(false)}
+                    className={saveStatus === 'saved' ? 'btn-success' : 'btn-premium'}
+                    style={{
+                        padding: '10px 18px',
+                        fontSize: '0.75rem',
+                        fontWeight: 900,
+                        borderRadius: '12px',
+                        background: saveStatus === 'saved' ? '#10b981' : undefined,
+                        color: saveStatus === 'saved' ? 'white' : undefined
+                    }}
+                    disabled={loading || saveStatus === 'saved'}
+                >
+                    {saveStatus === 'saved' ? (
+                        <><ShieldCheck size={16} /> ¡GUARDADO!</>
+                    ) : (
+                        <><Save size={16} /> GUARDAR</>
+                    )}
+                </button>
+            </Header>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'row', overflow: 'hidden', position: 'relative' }}>
-                <aside style={{
-                    width: showSlidesPanel ? '240px' : '0px',
-                    minWidth: showSlidesPanel ? '240px' : '0px',
-                    borderRight: '1px solid rgba(255,255,255,0.05)',
-                    background: '#070715',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    overflow: 'hidden',
-                    position: (isMobile || isTablet) ? 'absolute' : 'relative',
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    zIndex: 2000,
-                    boxShadow: (isMobile || isTablet) && showSlidesPanel ? '20px 0 50px rgba(0,0,0,0.5)' : 'none'
-                }}>
-                    <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <h3 style={{ fontSize: '0.7rem', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '1px' }}>Diapositivas</h3>
-                            <p style={{ fontSize: '0.6rem', color: '#475569' }}>{localSlides.length} creadas</p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={addSlide} style={{ background: '#7c3aed', border: 'none', color: 'white', width: '30px', height: '30px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={16} /></button>
-                            {(isMobile || isTablet) && <button onClick={() => setShowSlidesPanel(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', width: '30px', height: '30px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>}
-                        </div>
+                <Sidebar
+                    isOpen={showSlidesPanel}
+                    onClose={() => setShowSlidesPanel(false)}
+                    title="DIAPOSITIVAS"
+                    side="left"
+                    width="240px"
+                    isMobile={appIsMobile || isTablet}
+                >
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                        <button
+                            onClick={addSlide}
+                            className="btn-premium"
+                            style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                        >
+                            <Plus size={18} /> Nueva
+                        </button>
                     </div>
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+
+                    <Reorder.Group
+                        axis="y"
+                        values={localSlides}
+                        onReorder={setLocalSlides}
+                        style={{ display: 'flex', flexDirection: 'column', gap: '15px', listStyle: 'none', padding: 0 }}
+                    >
                         {localSlides.map((slide, idx) => (
-                            <div key={slide.id} onClick={() => { setSelectedIdx(idx); if (isMobile) setShowSlidesPanel(false); }} style={{ position: 'relative', borderRadius: '12px', border: `3px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'} `, background: '#000', minHeight: '110px', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer', transition: '0.2s', boxShadow: selectedIdx === idx ? '0 10px 25px rgba(124, 58, 237, 0.2)' : '0 4px 10px rgba(0,0,0,0.3)' }}>
+                            <Reorder.Item
+                                key={slide.id}
+                                value={slide}
+                                onClick={() => {
+                                    setSelectedIdx(idx);
+                                    if (appIsMobile) setShowSlidesPanel(false);
+                                }}
+                                style={{
+                                    position: 'relative',
+                                    borderRadius: '12px',
+                                    border: `3px solid ${selectedIdx === idx ? '#7c3aed' : 'transparent'}`,
+                                    background: '#000',
+                                    minHeight: '110px',
+                                    aspectRatio: '16/9',
+                                    overflow: 'hidden',
+                                    cursor: 'grab',
+                                    transition: '0.2s',
+                                    boxShadow: selectedIdx === idx ? '0 10px 25px rgba(124, 58, 237, 0.2)' : '0 4px 10px rgba(0,0,0,0.3)'
+                                }}
+                            >
                                 <span style={{ position: 'absolute', top: '5px', left: '5px', zIndex: 10, fontSize: '10px', fontWeight: 900, background: 'rgba(0,0,0,0.8)', width: '20px', height: '20px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>{idx + 1}</span>
-                                {slide.image_url ? <img src={slide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}><ImageIcon size={22} color="white" /></div>}
-                                <button onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx); }} style={{ position: 'absolute', top: '5px', right: '5px', zIndex: 10, background: 'rgba(239, 68, 68, 0.9)', border: 'none', color: 'white', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={12} /></button>
-                                {slide.elements?.some(el => el.type === 'draw') && <div style={{ position: 'absolute', bottom: '5px', left: '5px', background: '#a78bfa', color: 'black', padding: '2px 6px', borderRadius: '4px', fontSize: '8px', fontWeight: 900 }}>DRAW ON</div>}
-                            </div>
+
+                                <SmartImage
+                                    src={slide.image_url}
+                                    alt={`Slide ${idx + 1}`}
+                                    style={{ width: '100%', height: '100%' }}
+                                />
+
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (confirm('¿Eliminar esta diapositiva?')) handleDeleteSlide(idx);
+                                    }}
+                                    style={{ position: 'absolute', top: '5px', right: '5px', zIndex: 10, background: 'rgba(239, 68, 68, 0.9)', border: 'none', color: 'white', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}
+                                >
+                                    <Trash2 size={12} />
+                                </button>
+
+                                {slide.elements?.some(el => el.type === 'draw') && (
+                                    <div style={{ position: 'absolute', bottom: '5px', left: '5px', background: '#a78bfa', color: 'black', padding: '2px 6px', borderRadius: '4px', fontSize: '8px', fontWeight: 900 }}>DRAW ON</div>
+                                )}
+                            </Reorder.Item>
                         ))}
-                    </div>
-                </aside>
+                    </Reorder.Group>
+                </Sidebar>
 
                 <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at center, #0a0a20, #050510)', overflow: 'auto', position: 'relative' }} onClick={() => setSelectedElementId(null)}>
                     {currentSlide && (
@@ -408,27 +486,14 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     )}
                 </main>
 
-                <aside style={{
-                    width: showSettingsPanel ? (isMobile ? '100%' : '340px') : '0px',
-                    minWidth: showSettingsPanel ? (isMobile ? '100%' : '340px') : '0px',
-                    background: '#0a0a1a',
-                    borderLeft: '1px solid rgba(255,255,255,0.05)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    position: (isMobile || isTablet) ? 'absolute' : 'relative',
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    zIndex: 2000,
-                    boxShadow: (isMobile || isTablet) && showSettingsPanel ? '-20px 0 50px rgba(0,0,0,0.5)' : 'none'
-                }}>
-                    <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={{ fontSize: '0.8rem', color: 'white', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}><SettingsIcon size={18} color="#a78bfa" /> Ajustes</h3>
-                        {(isMobile || isTablet) && <button onClick={() => setShowSettingsPanel(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>}
-                    </div>
-                    <div style={{ padding: '25px', flex: 1, display: 'flex', flexDirection: 'column', gap: '25px', overflowY: 'auto' }}>
+                <Sidebar
+                    isOpen={showSettingsPanel}
+                    onClose={() => setShowSettingsPanel(false)}
+                    title="AJUSTES"
+                    width="340px"
+                    isMobile={appIsMobile || isTablet}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.04)', padding: '18px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <button onClick={() => setCanvasZoom(Math.max(0.2, canvasZoom - 0.1))} style={{ background: 'none', border: 'none', color: 'white', opacity: 0.5, cursor: 'pointer' }}><ZoomOut size={20} /></button>
                             <span style={{ flex: 1, textAlign: 'center', fontWeight: 900, fontSize: '1.2rem', color: '#a78bfa' }}>{Math.round(canvasZoom * 100)}%</span>
@@ -499,6 +564,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     <button onClick={() => {
                                         setLocalSlides(prev => prev.map((s, idx) => idx === selectedIdx ? { ...s, elements: s.elements.filter(el => el.id !== selectedElementId) } : s));
                                         setSelectedElementId(null);
+                                        notify.success('Elemento eliminado');
                                     }} style={{ background: 'rgba(239, 68, 68, 0.2)', border: 'none', color: '#ef4444', padding: '8px', borderRadius: '10px', cursor: 'pointer' }}><Trash2 size={16} /></button>
                                 </div>
 
@@ -526,10 +592,13 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '22px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <h3 style={{ fontSize: '0.8rem', color: 'white', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Music size={18} color="#10b981" /> Audio</h3>
-                            <label className="btn-outline" style={{ width: '100%', cursor: 'pointer', padding: '15px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '0.85rem' }}><Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'} <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} /></label>
+                            <label className="btn-outline" style={{ width: '100%', cursor: 'pointer', padding: '15px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '0.85rem' }}>
+                                <Music size={18} /> {currentSlide?.audio_url ? 'Cambiar Audio' : 'Subir Audio'}
+                                <input type="file" style={{ display: 'none' }} accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio', selectedIdx)} />
+                            </label>
                         </div>
                     </div>
-                </aside>
+                </Sidebar>
             </div>
         </div>
     );

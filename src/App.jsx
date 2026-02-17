@@ -6,14 +6,26 @@ import SlideEditor from './components/GuiaEditor';
 import ResultadosView from './components/ResultadosView';
 import QuizView from './components/QuizView';
 import GaleriaView from './components/GaleriaView';
-import { supabase } from './lib/supabase';
+import { dbService } from './services/db';
 import confetti from 'canvas-confetti';
+
+import { Toaster } from 'react-hot-toast';
+import { AppProvider, useApp } from './context/AppContext';
 
 const PROJECT_ID = 'main-project';
 
 export default function App() {
+    return (
+        <AppProvider>
+            <AppRoot />
+            <Toaster position="top-center" reverseOrder={false} />
+        </AppProvider>
+    );
+}
+
+function AppRoot() {
+    const { role, setRole, isMobile, notify } = useApp();
     const [view, setView] = useState('entry');
-    const [role, setRole] = useState('student'); // student, teacher, admin
     const [alias, setAlias] = useState('');
     const [selectedProject, setSelectedProject] = useState(null);
     const [isActive, setIsActive] = useState(false);
@@ -23,23 +35,17 @@ export default function App() {
     const [previewMode, setPreviewMode] = useState(false);
     const [lastView, setLastView] = useState('entry');
     const [cameFromGallery, setCameFromGallery] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
     const [returnFromResults, setReturnFromResults] = useState(false);
 
-    const [toast, setToast] = useState(null);
-
     useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 1024);
-        window.addEventListener('resize', handleResize);
-
         const handleToast = (e) => {
-            setToast(e.detail);
-            setTimeout(() => setToast(null), 3000);
+            const { type, message } = e.detail;
+            if (type === 'error') notify.error(message);
+            else notify.success(message);
         };
         window.addEventListener('show-toast', handleToast);
 
         return () => {
-            window.removeEventListener('resize', handleResize);
             window.removeEventListener('show-toast', handleToast);
         };
     }, []);
@@ -61,11 +67,7 @@ export default function App() {
     const loadProjectSlides = async (projectId) => {
         setLoading(true);
         try {
-            const { data: slidesData } = await supabase
-                .from('slides')
-                .select('*')
-                .eq('project_id', projectId)
-                .order('order_index', { ascending: true });
+            const slidesData = await dbService.getSlides(projectId);
 
             if (slidesData) {
                 const processed = slidesData.map(s => {
@@ -81,6 +83,7 @@ export default function App() {
             }
         } catch (error) {
             console.error('Error loading project slides:', error);
+            notify.error('Error al cargar diapositivas');
         }
         setLoading(false);
     };
@@ -114,15 +117,12 @@ export default function App() {
         if (!selectedProject) return;
         const newState = !isActive;
         try {
-            await supabase
-                .from('projects')
-                .update({ is_active: newState })
-                .eq('id', selectedProject.id);
-
+            await dbService.updateProject(selectedProject.id, { is_active: newState });
             setIsActive(newState);
+            notify.success(newState ? 'Programa activado' : 'Programa pausado');
         } catch (error) {
             console.error('Error toggling status:', error);
-            setIsActive(newState);
+            notify.error('Error al cambiar estado');
         }
     };
 
@@ -137,7 +137,7 @@ export default function App() {
                     if (slideElementIds.includes(id)) filteredText[id] = val;
                 });
 
-                await supabase.from('interactions').insert({
+                await dbService.createInteraction({
                     slide_id: currentSlide.id,
                     alias: alias,
                     drawings: interactionData.paths || [],
@@ -422,26 +422,7 @@ export default function App() {
                 </div>
             )}
 
-            <AnimatePresence>
-                {toast && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                        style={{
-                            position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
-                            zIndex: 99999, padding: '12px 24px', borderRadius: '16px',
-                            background: toast.type === 'error' ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)',
-                            color: 'white', fontWeight: 700, fontSize: '0.9rem',
-                            display: 'flex', alignItems: 'center', gap: '12px',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(255,255,255,0.1)'
-                        }}
-                    >
-                        {toast.type === 'error' ? '❌' : '✅'} {toast.message}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+
         </div>
     );
 }

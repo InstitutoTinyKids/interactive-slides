@@ -1,19 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
 import {
   Settings, Play, Clock, Check, X, HelpCircle, SkipForward,
   RotateCcw, Edit2, Trash2, Plus, Save, ArrowRight, Eye,
   AlertTriangle, ChevronDown, ChevronUp, LayoutGrid, Pause, Key, Image as ImageIcon,
-  Paintbrush, Type, Target, Layers, ZoomIn, ZoomOut, Music, ShieldCheck
+  Paintbrush, Type, Target, Layers, ZoomIn, ZoomOut, Music, ShieldCheck, ChevronLeft
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { Header } from './common/Header';
+import { Sidebar } from './common/Sidebar';
+import { SmartImage } from './common/SmartImage';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { dbService } from '../services/db';
+import { useApp } from '../context/AppContext';
+import { validateProject } from '../utils/helpers';
 
 // --- DATOS INICIALES ---
 const INITIAL_QUESTIONS = [];
 
 export default function QuizView({ onExit, isAdmin = false, role = 'student', project, isActive, onToggleActive, onViewResults, previewMode = false, onPreview }) {
   // --- ESTADOS ---
+  const { isMobile: appIsMobile, notify } = useApp();
   const isTeacher = role === 'teacher';
   // Si es admin, vamos directo al panel de edición. Si no, a jugar.
   const [view, setView] = useState(role === 'admin' && !previewMode ? 'admin' : 'playing');
@@ -51,6 +58,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   const [showProjectDetails, setShowProjectDetails] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
+  const [saveStatus, setSaveStatus] = useState('idle'); // idle, saved
   const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
   const [showQuestionsPanel, setShowQuestionsPanel] = useState(window.innerWidth >= 1200);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
@@ -133,17 +141,23 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     }
   }, [project]);
 
+  // Keyboard Shortcuts
+  useKeyboardShortcuts({
+    'ctrl+s': () => handleSaveQuiz(questions),
+    'ctrl+p': () => onPreview(projectLocal, true),
+    'escape': () => {
+      setShowQuestionsPanel(isMobile ? false : window.innerWidth >= 1200);
+      setShowSettingsPanel(false);
+    }
+  });
+
   const loadQuizData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('questions')
-        .eq('id', project.id)
-        .single();
-
-      if (data && Array.isArray(data.questions)) {
-        setQuestions(data.questions);
+      const projects = await dbService.getProjects();
+      const current = projects.find(p => p.id === project.id);
+      if (current && Array.isArray(current.questions)) {
+        setQuestions(current.questions);
       } else {
         setQuestions([]);
       }
@@ -155,25 +169,32 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 
   const handleSaveQuiz = async (updatedQuestions, isSilent = false) => {
     if (!project || !project.id) return;
+
+    // Validation
+    const validation = validateProject({ ...projectLocal, questions: updatedQuestions });
+    if (!validation.valid) {
+      if (!isSilent) notify.error(validation.message);
+      return false;
+    }
+
     if (!isSilent) setLoading(true);
     try {
-      const { error } = await supabase
-        .from('projects')
-        .update({
-          questions: updatedQuestions,
-          name: projectLocal?.name,
-          access_code: localAccessCode
-        })
-        .eq('id', project.id);
+      await dbService.updateProject(project.id, {
+        questions: updatedQuestions,
+        name: projectLocal?.name,
+        access_code: localAccessCode
+      });
 
-      if (error) throw error;
       setQuestions(updatedQuestions);
       if (!isSilent) {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 1000);
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        notify.success('¡Quiz guardado con éxito!');
       }
       return true;
     } catch (err) {
-      if (!isSilent) alert('Error al guardar: ' + err.message);
+      if (!isSilent) notify.error('Error al guardar: ' + err.message);
       return false;
     } finally {
       if (!isSilent) setLoading(false);
@@ -297,111 +318,154 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 
     return (
       <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden', flexDirection: 'column' }}>
-        <header style={{
-          height: '75px',
-          padding: '0 30px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '20px',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-          background: 'rgba(10,10,25,0.9)',
-          backdropFilter: 'blur(20px)',
-          zIndex: 1000
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 1, minWidth: 0 }}>
-            <button onClick={onExit} style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '15px', color: '#3b82f6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><LayoutGrid size={24} /></button>
-            <div style={{ overflow: 'hidden' }}>
-              <h2 style={{ fontSize: isMobile ? '0.9rem' : '1.1rem', fontWeight: 900, color: 'white', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{projectLocal?.name || 'Cargando...'}</h2>
-              <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Editor Quiz</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
-            {isCompact && (
-              <button
-                onClick={() => setShowQuestionsPanel(!showQuestionsPanel)}
-                style={{
-                  padding: '10px',
-                  background: showQuestionsPanel ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(16, 185, 129, 0.2)',
-                  color: '#10b981',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                title="Lista de Preguntas"
-              >
-                <Layers size={18} />
-              </button>
-            )}
+        <Header
+          title={projectLocal?.name}
+          onBack={onExit}
+        >
+          {isCompact && (
             <button
-              onClick={() => setShowSettingsPanel(!showSettingsPanel)}
+              onClick={() => setShowQuestionsPanel(!showQuestionsPanel)}
               className="btn-outline"
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', background: showSettingsPanel ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-              title="Ajustes"
+              style={{
+                padding: '10px',
+                background: showQuestionsPanel ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
+                borderRadius: '12px',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                color: '#10b981',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Lista de Preguntas"
             >
-              <Settings size={18} />
+              <Layers size={18} />
             </button>
-            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }} title="Resultados">
-              <Eye size={18} />
-            </button>
-            <button onClick={async () => { const saved = await handleSaveQuiz(questions, false); if (saved && onPreview) onPreview(projectLocal); }} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', fontWeight: 700 }} disabled={loading}>
-              <Play size={16} /> {!(isMobile) && 'Preview'}
-            </button>
-            <button onClick={onToggleActive} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', background: isActive ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: isActive ? '#ef4444' : '#10b981', border: `1px solid ${isActive ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}` }}>
-              {isActive ? <Pause size={16} /> : <Play size={16} />} {!(isMobile) && (isActive ? 'Suspender' : 'Activar')}
-            </button>
-            <button onClick={() => handleSaveQuiz(questions)} className="btn-premium" style={{ padding: '10px 18px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 900 }} disabled={loading}>
-              <Save size={16} /> GUARDAR
-            </button>
-          </div>
-        </header>
+          )}
+
+          <button
+            onClick={() => setShowSettingsPanel(!showSettingsPanel)}
+            className="btn-outline"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px',
+              borderRadius: '12px',
+              background: showSettingsPanel ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
+            title="Ajustes"
+          >
+            <Settings size={18} />
+          </button>
+
+          <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }} title="Resultados">
+            <Eye size={18} />
+          </button>
+
+          <button
+            onClick={async () => {
+              const saved = await handleSaveQuiz(questions, false);
+              if (saved && onPreview) onPreview(projectLocal);
+            }}
+            className="btn-outline"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', fontWeight: 700 }}
+            disabled={loading}
+          >
+            <Play size={16} /> {!isMobile && 'Preview'}
+          </button>
+
+          <button
+            onClick={onToggleActive}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', background: isActive ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: isActive ? '#ef4444' : '#10b981', border: `1px solid ${isActive ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}` }}
+          >
+            {isActive ? <Pause size={16} /> : <Play size={16} />} {!isMobile && (isActive ? 'Suspender' : 'Activar')}
+          </button>
+
+          <button
+            onClick={() => handleSaveQuiz(questions)}
+            className={saveStatus === 'saved' ? 'btn-success' : 'btn-premium'}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '12px',
+              fontSize: '0.75rem',
+              fontWeight: 900,
+              background: saveStatus === 'saved' ? '#10b981' : undefined,
+              color: saveStatus === 'saved' ? 'white' : undefined
+            }}
+            disabled={loading || saveStatus === 'saved'}
+          >
+            {saveStatus === 'saved' ? (
+              <><ShieldCheck size={16} /> ¡GUARDADO!</>
+            ) : (
+              <><Save size={16} /> GUARDAR</>
+            )}
+          </button>
+        </Header>
 
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-          <aside style={{
-            width: showQuestionsPanel ? (isMobile ? '100%' : '380px') : '0px',
-            minWidth: showQuestionsPanel ? (isMobile ? '100%' : '380px') : '0px',
-            borderRight: '1px solid rgba(255,255,255,0.05)',
-            background: '#0a0a1a',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            position: (isMobile || isTablet) ? 'absolute' : 'relative',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            zIndex: 500,
-            boxShadow: (isMobile || isTablet) && showQuestionsPanel ? '20px 0 50px rgba(0,0,0,0.5)' : 'none'
-          }}>
-            <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'white' }}>Preguntas</h3>
-                <p style={{ fontSize: '0.7rem', color: '#64748b' }}>{questions.length} preguntas creadas</p>
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => { setEditingQ({ id: Date.now(), question: '', options: ['', '', '', ''], correctAnswer: 0, isNew: true }); if (isMobile || isTablet) setShowQuestionsPanel(false); }} style={{ background: '#7c3aed', border: 'none', color: 'white', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px rgba(124, 58, 237, 0.3)' }}><Plus size={20} /></button>
-                {(isMobile || isTablet) && <button onClick={() => setShowQuestionsPanel(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={20} /></button>}
-              </div>
+          <Sidebar
+            isOpen={showQuestionsPanel}
+            onClose={() => setShowQuestionsPanel(false)}
+            title="PREGUNTAS"
+            side="left"
+            width="380px"
+            isMobile={appIsMobile || isTablet}
+          >
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+              <button
+                onClick={() => {
+                  setEditingQ({ id: Date.now(), question: '', options: ['', '', '', ''], correctAnswer: 0, isNew: true });
+                  if (appIsMobile || isTablet) setShowQuestionsPanel(false);
+                }}
+                className="btn-premium"
+                style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                <Plus size={20} /> Nueva
+              </button>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {questions.map((q, idx) => (
-                <div key={q.id} onClick={() => { setSelectedQIdx(idx); setEditingQ(q); if (isMobile || isTablet) setShowQuestionsPanel(false); }} style={{ padding: '20px', borderRadius: '20px', border: `1px solid ${selectedQIdx === idx ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`, background: selectedQIdx === idx ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div
+                  key={q.id}
+                  onClick={() => { setSelectedQIdx(idx); setEditingQ(q); if (appIsMobile || isTablet) setShowQuestionsPanel(false); }}
+                  style={{
+                    padding: '20px',
+                    borderRadius: '20px',
+                    border: `1px solid ${selectedQIdx === idx ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`,
+                    background: selectedQIdx === idx ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '15px'
+                  }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.15)', padding: '4px 10px', borderRadius: '8px' }}>#{idx + 1}</span>
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <Edit2 size={16} style={{ color: '#64748b', opacity: 0.6 }} />
-                      <Trash2 size={16} style={{ color: '#ef4444', opacity: 0.6, cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); if (window.confirm('¿ESTÁS SEGURO?')) { const updated = questions.filter((_, i) => i !== idx); setQuestions(updated); if (selectedQIdx >= updated.length) setSelectedQIdx(Math.max(0, updated.length - 1)); } }} />
+                      <Trash2
+                        size={16}
+                        style={{ color: '#ef4444', opacity: 0.6, cursor: 'pointer' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm('¿ESTÁS SEGURO?')) {
+                            const updated = questions.filter((_, i) => i !== idx);
+                            setQuestions(updated);
+                            if (selectedQIdx >= updated.length) setSelectedQIdx(Math.max(0, updated.length - 1));
+                            notify.success('Pregunta eliminada');
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                   <p style={{ fontSize: '0.9rem', color: selectedQIdx === idx ? 'white' : '#94a3b8', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{q.question || "Sin enunciado..."}</p>
                 </div>
               ))}
             </div>
-          </aside>
+          </Sidebar>
 
           <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #0a0a1a, #050510)', overflowY: 'auto', padding: isMobile ? '20px' : '40px' }}>
             <div style={{ maxWidth: '900px', width: '100%', margin: '0 auto' }}>
@@ -437,46 +501,32 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             </div>
           </main>
 
-          <aside style={{
-            width: showSettingsPanel ? (isMobile ? '100%' : '350px') : '0px',
-            minWidth: showSettingsPanel ? (isMobile ? '100%' : '350px') : '0px',
-            background: '#0a0a1a',
-            borderLeft: '1px solid rgba(255,255,255,0.05)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            position: (isMobile || isTablet) ? 'absolute' : 'relative',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            zIndex: 500,
-            boxShadow: (isMobile || isTablet) && showSettingsPanel ? '-20px 0 50px rgba(0,0,0,0.5)' : 'none'
-          }}>
-            <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-              <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2.5px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}><Settings size={18} /> Ajustes</div>
-                {(isMobile || isTablet) && <button onClick={() => setShowSettingsPanel(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>}
-              </h3>
-
+          <Sidebar
+            isOpen={showSettingsPanel}
+            onClose={() => setShowSettingsPanel(false)}
+            title="AJUSTES"
+            width="350px"
+            isMobile={appIsMobile || isTablet}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div>
                   <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre</label>
                   <div style={{ position: 'relative' }}>
                     <input className="premium-input" value={projectLocal?.name || ''} readOnly={!isEditingProjectName} onChange={(e) => { setProjectLocal({ ...projectLocal, name: e.target.value }); setHasUnsavedNameChanges(true); }} />
-                    <button onClick={async () => { if (isEditingProjectName && hasUnsavedNameChanges) { await supabase.from('projects').update({ name: projectLocal.name }).eq('id', project.id); setHasUnsavedNameChanges(false); } setIsEditingProjectName(!isEditingProjectName); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}</button>
+                    <button onClick={async () => { if (isEditingProjectName && hasUnsavedNameChanges) { await dbService.updateProject(project.id, { name: projectLocal.name }); setHasUnsavedNameChanges(false); notify.success('Nombre actualizado'); } setIsEditingProjectName(!isEditingProjectName); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}</button>
                   </div>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Clave Acceso</label>
                   <div style={{ position: 'relative' }}>
                     <input className="premium-input" value={localAccessCode} readOnly={!isEditingAccessCode} onChange={(e) => { setLocalAccessCode(e.target.value); setHasUnsavedCodeChanges(true); }} />
-                    <button onClick={async () => { if (isEditingAccessCode && hasUnsavedCodeChanges) { await supabase.from('projects').update({ access_code: localAccessCode }).eq('id', project.id); setHasUnsavedCodeChanges(false); } setIsEditingAccessCode(!isEditingAccessCode); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}</button>
+                    <button onClick={async () => { if (isEditingAccessCode && hasUnsavedCodeChanges) { await dbService.updateProject(project.id, { access_code: localAccessCode }); setHasUnsavedCodeChanges(false); notify.success('Clave actualizada'); } setIsEditingAccessCode(!isEditingAccessCode); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}</button>
                   </div>
                 </div>
               </div>
             </div>
-          </aside>
+          </Sidebar>
         </div>
       </div>
 
@@ -598,6 +648,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 }
 
 function AdminForm({ initialData, onSave, onCancel, isMobile }) {
+  const { notify } = useApp();
   const [formData, setFormData] = useState({ question: '', type: 'text', mediaUrl: '', videoStart: 0, videoEnd: 0, options: ['', '', '', ''], correctAnswer: 0 });
   const [uploading, setUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved
@@ -610,11 +661,13 @@ function AdminForm({ initialData, onSave, onCancel, isMobile }) {
     setUploading(true);
     try {
       const fileName = `quiz/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-      const { error } = await supabase.storage.from('media').upload(fileName, file);
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
+      await dbService.uploadFile('media', fileName, file);
+      const publicUrl = dbService.getPublicUrl('media', fileName);
       setFormData({ ...formData, mediaUrl: publicUrl });
-    } catch (error) { alert('Error: ' + error.message); }
+      notify.success('Archivo subido');
+    } catch (error) {
+      notify.error('Error: ' + error.message);
+    }
     setUploading(false);
   };
 

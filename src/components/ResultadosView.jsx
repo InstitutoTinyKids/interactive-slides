@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
 import { User, Layers, Trash2, ChevronLeft, ChevronRight, Activity, Calendar, Clock, BarChart2 } from 'lucide-react';
+import { dbService } from '../services/db';
+import { useApp } from '../context/AppContext';
+import { Header } from './common/Header';
 
 export default function ResultadosView({ project, onBack }) {
+    const { notify } = useApp();
     const [interactions, setInteractions] = useState([]);
     const [students, setStudents] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -18,21 +21,13 @@ export default function ResultadosView({ project, onBack }) {
     const loadData = async () => {
         setLoading(true);
         try {
-            const { data: slideData } = await supabase
-                .from('slides')
-                .select('*')
-                .eq('project_id', project.id)
-                .order('order_index');
+            const slideData = await dbService.getSlides(project.id);
 
             if (slideData) {
                 setSlides(slideData);
 
                 const slideIds = slideData.map(s => s.id);
-                const { data: interactionData } = await supabase
-                    .from('interactions')
-                    .select('*')
-                    .in('slide_id', slideIds)
-                    .order('created_at', { ascending: false });
+                const interactionData = await dbService.getInteractions(slideIds);
 
                 if (interactionData) {
                     setInteractions(interactionData);
@@ -41,9 +36,9 @@ export default function ResultadosView({ project, onBack }) {
                     if (uniqueStudents.length > 0) setSelectedStudent(uniqueStudents[0]);
                 }
             }
-
         } catch (err) {
             console.error('Error loading results:', err);
+            notify.error('Error al cargar resultados');
         }
         setLoading(false);
     };
@@ -102,30 +97,39 @@ export default function ResultadosView({ project, onBack }) {
 
     const handleDeleteAll = async () => {
         if (!confirm('¿Seguro que quieres borrar todos los resultados de este proyecto?')) return;
-        const slideIds = slides.map(s => s.id);
-        const { error } = await supabase.from('interactions').delete().in('slide_id', slideIds);
-        if (!error) {
+        setLoading(true);
+        try {
+            const slideIds = slides.map(s => s.id);
+            await dbService.deleteInteractions(slideIds);
             setInteractions([]);
             setStudents([]);
             setSelectedStudent(null);
+            notify.success('Resultados borrados');
+        } catch (err) {
+            notify.error('Error al borrar: ' + err.message);
         }
+        setLoading(false);
     };
 
     return (
         <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {/* Header */}
-            <header style={{ padding: '20px 40px', background: 'rgba(10,10,30,0.8)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <button onClick={onBack} className="btn-outline" style={{ padding: '10px' }}><ChevronLeft size={24} /></button>
-                    <div>
-                        <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white' }}>Resultados: {project.name}</h1>
-                        <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Visualización de interacciones de alumnos</p>
-                    </div>
+            <Header
+                title={`Resultados: ${project.name}`}
+                onBack={onBack}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: 0, fontWeight: 700 }}>{students.length} Estudiantes</p>
+                    <p style={{ fontSize: '0.7rem', color: '#a78bfa', margin: 0, fontWeight: 700 }}>{interactions.length} Interacciones</p>
                 </div>
-                <button onClick={handleDeleteAll} className="btn-outline" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Trash2 size={20} /> Borrar Todo
+                <button
+                    onClick={handleDeleteAll}
+                    className="btn-outline"
+                    style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}
+                >
+                    <Trash2 size={18} /> Borrar Todo
                 </button>
-            </header>
+            </Header>
 
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
                 {/* Panel Alumnos */}

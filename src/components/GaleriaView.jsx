@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
 import {
     Plus, Folder, ChevronLeft, LayoutGrid, HelpCircle,
     ShieldCheck, Key, Copy, Move, Trash2, GripVertical,
@@ -7,8 +6,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { dbService } from '../services/db';
+import { useApp } from '../context/AppContext';
+import { Header } from './common/Header';
 
 export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview }) {
+    const { notify } = useApp();
     const [projects, setProjects] = useState([]);
     const [folders, setFolders] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -71,17 +74,15 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
     const loadProjects = async () => {
         setLoading(true);
         try {
-            const { data: folderData, error: fError } = await supabase.from('folders').select('*').order('order_index', { ascending: true });
-            if (!fError) setFolders(folderData || []);
-
-            let { data: projectData, error: pError } = await supabase.from('projects').select('*').order('order_index', { ascending: true });
-            if (pError) {
-                const { data: fallbackData } = await supabase.from('projects').select('*').order('name');
-                projectData = fallbackData;
-            }
-            if (projectData) setProjects(projectData);
+            const [pData, fData] = await Promise.all([
+                dbService.getProjects(),
+                dbService.getFolders()
+            ]);
+            setProjects(pData || []);
+            setFolders(fData || []);
         } catch (err) {
             console.error('Error loading projects:', err);
+            notify.error('Error al cargar galería');
         }
         setSelectedProjects([]);
         setLoading(false);
@@ -89,42 +90,48 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
 
     const handleCreateProject = async () => {
         if (!newProjectName.trim()) return;
+        setLoading(true);
 
-        if (addType === 'folder') {
-            if (editingFolderId) {
-                await supabase.from('folders').update({ name: newProjectName.trim() }).eq('id', editingFolderId);
-            } else {
-                await supabase.from('folders').insert({
-                    name: newProjectName.trim(),
-                    order_index: folders.length + projects.filter(p => !p.folder_id).length
-                });
+        try {
+            if (addType === 'folder') {
+                if (editingFolderId) {
+                    await dbService.updateFolder(editingFolderId, { name: newProjectName.trim() });
+                    notify.success('Carpeta actualizada');
+                } else {
+                    await dbService.createFolder({
+                        name: newProjectName.trim(),
+                        order_index: folders.length + projects.filter(p => !p.folder_id).length
+                    });
+                    notify.success('Carpeta creada');
+                }
+                setNewProjectName('');
+                setEditingFolderId(null);
+                setShowAddModal(false);
+                loadProjects();
+                return;
             }
-            setNewProjectName('');
-            setEditingFolderId(null);
-            setShowAddModal(false);
-            loadProjects();
-            return;
-        }
 
-        const projectType = addType;
-        const newProject = {
-            id: projectType === 'quiz' ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID(),
-            name: newProjectName.trim(),
-            is_active: false,
-            access_code: '',
-            questions: [],
-            folder_id: currentFolderId,
-            order_index: projects.filter(p => p.folder_id === currentFolderId).length
-        };
+            const projectType = addType;
+            const newProject = {
+                id: projectType === 'quiz' ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID(),
+                name: newProjectName.trim(),
+                is_active: false,
+                access_code: '',
+                questions: [],
+                folder_id: currentFolderId,
+                order_index: projects.filter(p => p.folder_id === currentFolderId).length,
+                type: projectType // Ensure type is saved
+            };
 
-        const { error } = await supabase.from('projects').insert(newProject);
-        if (error) {
-            alert('Error al agregar: ' + error.message);
-        } else {
+            await dbService.createProject(newProject);
+            notify.success(projectType === 'quiz' ? 'Quiz creado' : 'Guía creada');
             setNewProjectName('');
             setShowAddModal(false);
             loadProjects();
+        } catch (error) {
+            notify.error('Error: ' + error.message);
         }
+        setLoading(false);
     };
 
     const toggleSortMode = async () => {
@@ -132,18 +139,19 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
             setLoading(true);
             try {
                 for (let i = 0; i < tempFolders.length; i++) {
-                    await supabase.from('folders').update({ order_index: i }).eq('id', tempFolders[i].id);
+                    await dbService.updateFolder(tempFolders[i].id, { order_index: i });
                 }
                 for (let i = 0; i < tempProjects.length; i++) {
-                    await supabase.from('projects').update({
+                    await dbService.updateProject(tempProjects[i].id, {
                         order_index: i,
                         folder_id: tempProjects[i].folder_id
-                    }).eq('id', tempProjects[i].id);
+                    });
                 }
                 await loadProjects();
                 confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 } });
+                notify.success('Orden guardado');
             } catch (err) {
-                alert('Error al guardar orden: ' + err.message);
+                notify.error('Error al guardar orden: ' + err.message);
             }
             setLoading(false);
         } else {
@@ -161,20 +169,18 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
             const newName = `${project.name} (Copia)`;
 
             if (!isQuiz) {
-                const { data: slidesToClone } = await supabase.from('slides').select('*').eq('project_id', project.id);
+                const slidesToClone = await dbService.getSlides(project.id);
                 if (slidesToClone) {
                     const clonedSlides = slidesToClone.map(s => ({
                         ...s,
                         id: crypto.randomUUID(),
                         project_id: newId
                     }));
-                    if (clonedSlides.length > 0) {
-                        await supabase.from('slides').insert(clonedSlides);
-                    }
+                    await dbService.saveSlides(newId, clonedSlides);
                 }
             }
 
-            const { error: pError } = await supabase.from('projects').insert({
+            await dbService.createProject({
                 ...project,
                 id: newId,
                 name: newName,
@@ -182,14 +188,13 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                 folder_id: targetFolderId || project.folder_id,
                 order_index: projects.filter(p => p.folder_id === (targetFolderId || project.folder_id)).length
             });
-            if (pError) throw pError;
 
             if (!silent) {
                 loadProjects();
-                alert('✅ Proyecto duplicado correctamente');
+                notify.success('Proyecto duplicado correctamente');
             }
         } catch (err) {
-            if (!silent) alert('Error al duplicar: ' + err.message);
+            if (!silent) notify.error('Error al duplicar: ' + err.message);
             else throw err;
         } finally {
             if (!silent) setLoading(false);
@@ -203,18 +208,19 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
             const folderId = targetFolderForMove === 'root' ? null : targetFolderForMove;
             for (const id of selectedProjects) {
                 const targetProjects = projects.filter(p => p.folder_id === folderId);
-                await supabase.from('projects').update({
+                await dbService.updateProject(id, {
                     folder_id: folderId,
                     order_index: targetProjects.length
-                }).eq('id', id);
+                });
             }
             setSelectedProjects([]);
             setShowMoveModal(false);
             setTargetFolderForMove('');
             loadProjects();
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            notify.success('Elementos movidos');
         } catch (err) {
-            alert('Error al mover selección: ' + err.message);
+            notify.error('Error al mover selección: ' + err.message);
         }
         setLoading(false);
     };
@@ -229,9 +235,9 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
             }
             setSelectedProjects([]);
             loadProjects();
-            alert(`✅ ${selectedProjects.length} proyectos duplicados`);
+            notify.success(`${selectedProjects.length} proyectos duplicados`);
         } catch (err) {
-            alert('Error al duplicar: ' + err.message);
+            notify.error('Error al duplicar: ' + err.message);
         }
         setLoading(false);
     };
@@ -242,11 +248,13 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
         setLoading(true);
         try {
             for (const id of selectedProjects) {
-                await supabase.from('projects').delete().eq('id', id);
+                await dbService.deleteProject(id);
             }
+            setSelectedProjects([]);
             loadProjects();
+            notify.success('Proyectos eliminados');
         } catch (err) {
-            alert('Error: ' + err.message);
+            notify.error('Error: ' + err.message);
         }
         setLoading(false);
     };
@@ -258,38 +266,32 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
     };
 
     return (
-        <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'auto', padding: isMobile ? '20px' : isTablet ? '30px' : '40px' }}>
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '20px' : '30px', gap: '15px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    {currentFolderId && (
-                        <button onClick={() => setCurrentFolderId(null)} className="btn-outline" style={{ padding: '8px' }}>
-                            <ChevronLeft size={20} />
-                        </button>
-                    )}
-                    <div>
-                        <h1 style={{ fontSize: isMobile ? '1.5rem' : isTablet ? '1.8rem' : '2rem', fontWeight: 900, color: 'white', marginBottom: '2px' }}>
-                            {currentFolderId ? folders.find(f => f.id === currentFolderId)?.name : 'Galería'}
-                        </h1>
-                        <div style={{ display: 'flex', gap: '15px', marginTop: '5px' }}>
-                            {['all', 'guias', 'quiz'].map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setGalleryTab(tab)}
-                                    style={{
-                                        background: 'none', border: 'none',
-                                        color: galleryTab === tab ? (tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed') : '#475569',
-                                        fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer',
-                                        borderBottom: galleryTab === tab ? `2px solid ${tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed'}` : '2px solid transparent',
-                                        paddingBottom: '3px'
-                                    }}
-                                >
-                                    {tab.toUpperCase() === 'ALL' ? 'TODAS' : tab.toUpperCase() === 'GUIAS' ? 'GUIAS' : 'QUIZZES'}
-                                </button>
-                            ))}
-                        </div>
+        <div style={{ height: '100vh', width: '100vw', background: '#050510', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <Header
+                title={currentFolderId ? folders.find(f => f.id === currentFolderId)?.name : 'Galería'}
+                onBack={currentFolderId ? () => setCurrentFolderId(null) : onExit}
+            >
+                {!isMobile && (
+                    <div style={{ display: 'flex', gap: '15px', marginRight: '20px' }}>
+                        {['all', 'guias', 'quiz'].map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setGalleryTab(tab)}
+                                style={{
+                                    background: 'none', border: 'none',
+                                    color: galleryTab === tab ? (tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed') : '#475569',
+                                    fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer',
+                                    borderBottom: galleryTab === tab ? `2px solid ${tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed'}` : '2px solid transparent',
+                                    paddingBottom: '3px'
+                                }}
+                            >
+                                {tab.toUpperCase() === 'ALL' ? 'TODAS' : tab.toUpperCase() === 'GUIAS' ? 'GUIAS' : 'QUIZZES'}
+                            </button>
+                        ))}
                     </div>
-                </div>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
+                )}
+
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     {selectedProjects.length > 0 && (
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <button onClick={handleDuplicateSelected} className="btn-outline" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.8rem' }}><Copy size={16} /> Duplicar</button>
@@ -297,7 +299,6 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                             <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.8rem' }}><Trash2 size={16} /> Eliminar</button>
                         </div>
                     )}
-                    <button onClick={onExit} className="btn-outline" style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}><ChevronLeft size={16} /> Home</button>
                     <button onClick={toggleSortMode} className="btn-outline" style={{ padding: '10px 18px', background: isSortMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)', color: isSortMode ? '#10b981' : 'white', borderColor: isSortMode ? '#10b981' : 'rgba(255,255,255,0.1)', fontWeight: 800, fontSize: '0.8rem' }}>{isSortMode ? 'Listo' : 'Ordenar'}</button>
                     <div style={{ position: 'relative' }}>
                         <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowTypeDropdown(!showTypeDropdown); }} className="btn-premium" style={{ padding: '10px 18px', fontSize: '0.8rem' }}><Plus size={16} /> Agregar</button>
@@ -310,120 +311,144 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                         )}
                     </div>
                 </div>
-            </div>
+            </Header>
 
-            <div style={{ flex: 1 }}>
-                {loading && <div style={{ textAlign: 'center', color: '#a78bfa', padding: '40px', fontWeight: 900 }}>Cargando proyectos...</div>}
+            {isMobile && (
+                <div style={{ display: 'flex', gap: '15px', padding: '0 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    {['all', 'guias', 'quiz'].map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setGalleryTab(tab)}
+                            style={{
+                                background: 'none', border: 'none',
+                                color: galleryTab === tab ? (tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed') : '#475569',
+                                fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer',
+                                borderBottom: galleryTab === tab ? `2px solid ${tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed'}` : '2px solid transparent',
+                                paddingBottom: '3px'
+                            }}
+                        >
+                            {tab.toUpperCase() === 'ALL' ? 'TODAS' : tab.toUpperCase() === 'GUIAS' ? 'GUIAS' : 'QUIZZES'}
+                        </button>
+                    ))}
+                </div>
+            )}
 
-                <AnimatePresence>
-                    <Reorder.Group
-                        axis="y"
-                        values={isSortMode ? tempFolders : folders}
-                        onReorder={setTempFolders}
-                        style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '100%' : '280px'}, 1fr))`, gap: '20px', listStyle: 'none', padding: 0 }}
-                    >
-                        {!currentFolderId && (isSortMode ? tempFolders : folders).map(f => (
-                            <Reorder.Item
-                                key={f.id}
-                                value={f}
-                                drag={isSortMode}
-                                className={`glass project-card ${hoveredFolderId === f.id ? 'folder-highlight' : ''}`}
-                                style={{
-                                    padding: '20px',
-                                    cursor: isSortMode ? 'grab' : 'pointer',
-                                    border: hoveredFolderId === f.id ? '2px solid #10b981' : '1px solid rgba(255,255,255,0.05)',
-                                    position: 'relative',
-                                    backgroundColor: hoveredFolderId === f.id ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                                    boxShadow: hoveredFolderId === f.id ? '0 0 20px rgba(16, 185, 129, 0.2)' : 'none'
-                                }}
-                                onClick={() => !isSortMode && setCurrentFolderId(f.id)}
-                                ref={el => folderRefs.current[f.id] = el}
-                            >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                    <div style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '12px', borderRadius: '14px' }}>
-                                        {isSortMode ? <GripVertical size={24} /> : <Folder size={30} fill="currentColor" />}
+            <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '20px' : '30px 40px' }}>
+                {loading && !isSortMode ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
+                        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                ) : (
+                    <AnimatePresence>
+                        <Reorder.Group
+                            axis="y"
+                            values={isSortMode ? tempFolders : folders}
+                            onReorder={setTempFolders}
+                            style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '100%' : '280px'}, 1fr))`, gap: '20px', listStyle: 'none', padding: 0 }}
+                        >
+                            {!currentFolderId && (isSortMode ? tempFolders : folders).map(f => (
+                                <Reorder.Item
+                                    key={f.id}
+                                    value={f}
+                                    drag={isSortMode}
+                                    className={`glass project-card ${hoveredFolderId === f.id ? 'folder-highlight' : ''}`}
+                                    style={{
+                                        padding: '20px',
+                                        cursor: isSortMode ? 'grab' : 'pointer',
+                                        border: hoveredFolderId === f.id ? '2px solid #10b981' : '1px solid rgba(255,255,255,0.05)',
+                                        position: 'relative',
+                                        backgroundColor: hoveredFolderId === f.id ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                                        boxShadow: hoveredFolderId === f.id ? '0 0 20px rgba(16, 185, 129, 0.2)' : 'none'
+                                    }}
+                                    onClick={() => !isSortMode && setCurrentFolderId(f.id)}
+                                    ref={el => folderRefs.current[f.id] = el}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                        <div style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '12px', borderRadius: '14px' }}>
+                                            {isSortMode ? <GripVertical size={24} /> : <Folder size={30} fill="currentColor" />}
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                            <button onClick={(e) => { e.stopPropagation(); setAddType('folder'); setEditingFolderId(f.id); setNewProjectName(f.name); setShowAddModal(true); }} className="btn-outline" style={{ padding: '6px' }}><Edit2 size={12} /></button>
+                                            <button onClick={async (e) => { e.stopPropagation(); if (confirm("¿Eliminar carpeta? Los proyectos quedarán sin carpeta.")) { await dbService.deleteFolder(f.id); notify.success('Carpeta eliminada'); loadProjects(); } }} className="btn-outline" style={{ padding: '6px', color: '#ef4444' }}><Trash2 size={12} /></button>
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '6px' }}>
-                                        <button onClick={(e) => { e.stopPropagation(); setAddType('folder'); setEditingFolderId(f.id); setNewProjectName(f.name); setShowAddModal(true); }} className="btn-outline" style={{ padding: '6px' }}><Edit2 size={12} /></button>
-                                        <button onClick={async (e) => { e.stopPropagation(); if (confirm("¿Eliminar carpeta? Los proyectos quedarán sin carpeta.")) await supabase.from('folders').delete().eq('id', f.id); loadProjects(); }} className="btn-outline" style={{ padding: '6px', color: '#ef4444' }}><Trash2 size={12} /></button>
-                                    </div>
-                                </div>
-                                <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 900 }}>{f.name}</h3>
-                                <p style={{ color: '#94a3b8', marginTop: '6px', fontSize: '0.8rem' }}>{projects.filter(p => p.folder_id === f.id).length} elementos</p>
-                            </Reorder.Item>
-                        ))}
-                    </Reorder.Group>
+                                    <h3 style={{ fontSize: '1.3rem', color: 'white', fontWeight: 900 }}>{f.name}</h3>
+                                    <p style={{ color: '#94a3b8', marginTop: '6px', fontSize: '0.8rem' }}>{projects.filter(p => p.folder_id === f.id).length} elementos</p>
+                                </Reorder.Item>
+                            ))}
+                        </Reorder.Group>
 
-                    <Reorder.Group
-                        axis="y"
-                        values={(isSortMode ? tempProjects : projects).filter(p => p.folder_id === currentFolderId)}
-                        onReorder={(newOrder) => {
-                            const otherProjects = (isSortMode ? tempProjects : projects).filter(p => p.folder_id !== currentFolderId);
-                            if (isSortMode) setTempProjects([...otherProjects, ...newOrder]);
-                        }}
-                        style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '100%' : '280px'}, 1fr))`, gap: '20px', listStyle: 'none', padding: 0, marginTop: '20px' }}
-                    >
-                        {(isSortMode ? tempProjects : projects)
-                            .filter(p => {
-                                if (p.folder_id !== currentFolderId) return false;
-                                if (isSortMode) return true;
-                                if (galleryTab === 'guias') return !p.id.startsWith('quiz-');
-                                if (galleryTab === 'quiz') return p.id.startsWith('quiz-');
-                                return true;
-                            })
-                            .map(p => {
-                                const isQuiz = p.id.startsWith('quiz-');
-                                return (
-                                    <Reorder.Item
-                                        key={p.id}
-                                        value={p}
-                                        drag={isSortMode}
-                                        onDragStart={() => setDraggingProjectId(p.id)}
-                                        onDrag={handleDrag}
-                                        onDragEnd={() => handleDragEnd(p.id)}
-                                        className={`glass project-card ${selectedProjects.includes(p.id) ? 'selected' : ''}`}
-                                        style={{
-                                            padding: '20px',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '15px',
-                                            border: selectedProjects.includes(p.id) ? '2px solid #3b82f6' : '1px solid rgba(255,255,255,0.05)',
-                                            position: 'relative',
-                                            cursor: isSortMode ? 'grab' : 'default',
-                                            zIndex: draggingProjectId === p.id ? 1000 : 1
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                            <div style={{ padding: '12px', background: isQuiz ? 'rgba(59, 130, 246, 0.12)' : 'rgba(124, 58, 237, 0.12)', borderRadius: '14px', color: isQuiz ? '#3b82f6' : '#a78bfa' }}>
-                                                {isSortMode ? <GripVertical size={24} /> : (isQuiz ? <HelpCircle size={28} /> : <ShieldCheck size={28} />)}
+                        <Reorder.Group
+                            axis="y"
+                            values={(isSortMode ? tempProjects : projects).filter(p => p.folder_id === currentFolderId)}
+                            onReorder={(newOrder) => {
+                                const otherProjects = (isSortMode ? tempProjects : projects).filter(p => p.folder_id !== currentFolderId);
+                                if (isSortMode) setTempProjects([...otherProjects, ...newOrder]);
+                            }}
+                            style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '100%' : '280px'}, 1fr))`, gap: '20px', listStyle: 'none', padding: 0, marginTop: '20px' }}
+                        >
+                            {(isSortMode ? tempProjects : projects)
+                                .filter(p => {
+                                    if (p.folder_id !== currentFolderId) return false;
+                                    if (isSortMode) return true;
+                                    if (galleryTab === 'guias') return !p.id.startsWith('quiz-');
+                                    if (galleryTab === 'quiz') return p.id.startsWith('quiz-');
+                                    return true;
+                                })
+                                .map(p => {
+                                    const isQuiz = p.id.startsWith('quiz-');
+                                    return (
+                                        <Reorder.Item
+                                            key={p.id}
+                                            value={p}
+                                            drag={isSortMode}
+                                            onDragStart={() => setDraggingProjectId(p.id)}
+                                            onDrag={handleDrag}
+                                            onDragEnd={() => handleDragEnd(p.id)}
+                                            className={`glass project-card ${selectedProjects.includes(p.id) ? 'selected' : ''}`}
+                                            style={{
+                                                padding: '20px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '15px',
+                                                border: selectedProjects.includes(p.id) ? '2px solid #3b82f6' : '1px solid rgba(255,255,255,0.05)',
+                                                position: 'relative',
+                                                cursor: isSortMode ? 'grab' : 'default',
+                                                zIndex: draggingProjectId === p.id ? 1000 : 1
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                                <div style={{ padding: '12px', background: isQuiz ? 'rgba(59, 130, 246, 0.12)' : 'rgba(124, 58, 237, 0.12)', borderRadius: '14px', color: isQuiz ? '#3b82f6' : '#a78bfa' }}>
+                                                    {isSortMode ? <GripVertical size={24} /> : (isQuiz ? <HelpCircle size={28} /> : <ShieldCheck size={28} />)}
+                                                </div>
+                                                {!isSortMode && (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <div style={{ fontSize: '0.65rem', fontWeight: 900, padding: '4px 12px', borderRadius: '100px', background: isQuiz ? '#1e3a8a' : '#3b1e8a', color: 'white', textTransform: 'uppercase' }}>{isQuiz ? 'QUIZ' : 'GUIA'}</div>
+                                                            <input type="checkbox" checked={selectedProjects.includes(p.id)} onChange={() => toggleProjectSelection(p.id)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
+                                                        </div>
+                                                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: p.is_active ? '#10b981' : '#64748b' }}>{p.is_active ? 'Activo' : 'Pausado'}</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h3 style={{ fontSize: '1.3rem', color: 'white', marginBottom: '12px', fontWeight: 900 }}>{p.name}</h3>
+                                                {!isSortMode && (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', background: 'rgba(0,0,0,0.4)', padding: '10px 16px', borderRadius: '14px', width: 'fit-content', fontSize: '0.8rem' }}><Key size={16} /><span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span></div>
+                                                )}
                                             </div>
                                             {!isSortMode && (
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <div style={{ fontSize: '0.65rem', fontWeight: 900, padding: '4px 12px', borderRadius: '100px', background: isQuiz ? '#1e3a8a' : '#3b1e8a', color: 'white', textTransform: 'uppercase' }}>{isQuiz ? 'QUIZ' : 'GUIA'}</div>
-                                                        <input type="checkbox" checked={selectedProjects.includes(p.id)} onChange={() => toggleProjectSelection(p.id)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
-                                                    </div>
-                                                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: p.is_active ? '#10b981' : '#64748b' }}>{p.is_active ? 'Activo' : 'Pausado'}</div>
+                                                <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                                                    <button onClick={() => isQuiz ? onOpenQuiz(p) : onOpenGuide(p)} className="btn-premium" style={{ flex: 1, padding: '12px', fontSize: '1rem', fontWeight: 900, borderRadius: '15px' }}>Editar</button>
+                                                    <button onClick={() => onPreview(p, true)} className="btn-outline" style={{ flex: 1, padding: '12px', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', fontSize: '1rem', fontWeight: 700, borderRadius: '15px' }}>Preview</button>
                                                 </div>
                                             )}
-                                        </div>
-                                        <div>
-                                            <h3 style={{ fontSize: '1.3rem', color: 'white', marginBottom: '12px', fontWeight: 900 }}>{p.name}</h3>
-                                            {!isSortMode && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', background: 'rgba(0,0,0,0.4)', padding: '10px 16px', borderRadius: '14px', width: 'fit-content', fontSize: '0.8rem' }}><Key size={16} /><span>Clave: <strong style={{ color: 'white' }}>{p.access_code || '---'}</strong></span></div>
-                                            )}
-                                        </div>
-                                        {!isSortMode && (
-                                            <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
-                                                <button onClick={() => isQuiz ? onOpenQuiz(p) : onOpenGuide(p)} className="btn-premium" style={{ flex: 1, padding: '12px', fontSize: '1rem', fontWeight: 900, borderRadius: '15px' }}>Editar</button>
-                                                <button onClick={() => onPreview(p, true)} className="btn-outline" style={{ flex: 1, padding: '12px', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', fontSize: '1rem', fontWeight: 700, borderRadius: '15px' }}>Preview</button>
-                                            </div>
-                                        )}
-                                    </Reorder.Item>
-                                );
-                            })}
-                    </Reorder.Group>
-                </AnimatePresence>
+                                        </Reorder.Item>
+                                    );
+                                })}
+                        </Reorder.Group>
+                    </AnimatePresence>
+                )}
             </div>
 
             {showAddModal && (

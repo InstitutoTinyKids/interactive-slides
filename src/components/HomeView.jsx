@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, Settings, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Folder, ChevronLeft } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { dbService } from '../services/db';
+import { useApp } from '../context/AppContext';
 
 export default function HomeView({ onEnter, onAdmin, onTeacher }) {
+    const { notify } = useApp();
     const [view, setView] = useState('role_selection'); // role_selection, admin_login, teacher_login, student_alias, project_selection, project_pass
     const [alias, setAlias] = useState('');
     const [pass, setPass] = useState('');
@@ -19,19 +21,15 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
 
     const loadProjects = async () => {
         try {
-            const { data: folderData, error: fError } = await supabase.from('folders').select('*').order('order_index');
-            if (!fError) setFolders(folderData || []);
-
-            let { data: projectData, error: pError } = await supabase.from('projects').select('*').order('order_index');
-
-            if (pError) {
-                const { data: fallbackData } = await supabase.from('projects').select('*').order('name');
-                projectData = fallbackData;
-            }
-
-            setProjects(projectData || []);
+            const [pData, fData] = await Promise.all([
+                dbService.getProjects(),
+                dbService.getFolders()
+            ]);
+            setFolders(fData || []);
+            setProjects(pData || []);
         } catch (err) {
             console.error('Error loading selection projects:', err);
+            notify.error('Error al cargar proyectos');
         }
     };
 
