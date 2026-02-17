@@ -50,7 +50,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   const [hasUnsavedCodeChanges, setHasUnsavedCodeChanges] = useState(false);
   const [showProjectDetails, setShowProjectDetails] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
   const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
   const [showQuestionsPanel, setShowQuestionsPanel] = useState(window.innerWidth >= 1200);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
@@ -63,7 +63,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     const handleResize = () => {
       const width = window.innerWidth;
       setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width < 1024);
+      setIsTablet(width >= 768 && width <= 1024);
       setIsCompact(width < 1200);
       setIsLandscape(width > window.innerHeight);
       if (width >= 1200) {
@@ -315,17 +315,28 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
               <h2 style={{ fontSize: isMobile ? '0.9rem' : '1.1rem', fontWeight: 900, color: 'white', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{projectLocal?.name || 'Cargando...'}</h2>
               <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Editor Quiz</span>
             </div>
-            {(isMobile || isTablet) && (
-              <button
-                onClick={() => setShowQuestionsPanel(!showQuestionsPanel)}
-                style={{ padding: '10px', background: showQuestionsPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.05)', borderRadius: '12px', border: 'none', color: 'white', cursor: 'pointer', flexShrink: 0 }}
-              >
-                <Layers size={20} />
-              </button>
-            )}
           </div>
 
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+            {isCompact && (
+              <button
+                onClick={() => setShowQuestionsPanel(!showQuestionsPanel)}
+                style={{
+                  padding: '10px',
+                  background: showQuestionsPanel ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  color: '#10b981',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Lista de Preguntas"
+              >
+                <Layers size={18} />
+              </button>
+            )}
             <button
               onClick={() => setShowSettingsPanel(!showSettingsPanel)}
               className="btn-outline"
