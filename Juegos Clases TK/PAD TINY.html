@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Audio Pad Pro - TINY</title>
+
+    <!-- Librerías Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+        :root {
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            overscroll-behavior: none;
+            user-select: none;
+            background: #0f172a;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .animate-pop-in {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .pt-safe {
+            padding-top: var(--safe-top);
+        }
+
+        .pb-safe {
+            padding-bottom: var(--safe-bottom);
+        }
+
+        .h-screen-safe {
+            height: 100dvh;
+        }
+
+        .min-h-screen-safe {
+            min-height: 100dvh;
+        }
+
+        .pad-btn {
+            background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.1) 100%);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pad-btn:active {
+            transform: scale(0.95);
+            filter: brightness(1.2);
+        }
+    </style>
+</head>
+
+<body class="text-slate-200 min-h-screen-safe w-full">
+
+    <div id="root" class="h-full w-full">
+        <div class="flex h-full w-full items-center justify-center bg-slate-900 text-indigo-400">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-current"></div>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+        const SUPABASE_URL = "https://qbuoonnwtkjitfyzeufc.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_6MQUgygham4m6ko_Yo244w_z0xBNcRW";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const GAME_TYPE = "pad";
+        const GAME_VERSION = "TINY";
+        const STORAGE_BUCKET = "game-assets";
+
+        const Icons = {
+            Play: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>,
+            Pause: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>,
+            Square: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" /></svg>,
+            X: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            Settings: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>,
+            Trash: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>,
+            Loader: ({ className }) => <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>,
+            ArrowUp: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>,
+            ArrowDown: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        };
+
+        const AdminPanel = ({ isOpen, onClose, data, onRefresh, session }) => {
+            const [loginEmail, setLoginEmail] = useState("");
+            const [loginPassword, setLoginPassword] = useState("");
+            const [isUploading, setIsUploading] = useState(false);
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                const { error } = await supabaseClient.auth.signInWithPassword({
+                    email: loginEmail,
+                    password: loginPassword,
+                });
+                if (error) alert("Error: " + error.message);
+            };
+            const handleFileUpload = async (e) => {
+                const files = e.target.files; if (!files || files.length === 0) return; setIsUploading(true);
+                try {
+                    for (const file of files) {
+                        const fileName = file.name; const cleanName = fileName.split('.')[0].replace(/_/g, ' ').toUpperCase();
+                        const fileExt = fileName.split('.').pop(); const path = `${GAME_TYPE}/${GAME_VERSION}/${Date.now()}_${fileName}`;
+                        const isAudio = ['mp3', 'wav', 'm4a'].includes(fileExt.toLowerCase());
+
+                        const { data: existing } = await supabaseClient.from('game_content').select('*').eq('game_type', GAME_TYPE).eq('version', GAME_VERSION).eq('text', cleanName).single();
+
+                        if (existing) {
+                            const oldUrl = isAudio ? existing.audio_url : existing.image_url;
+                            if (oldUrl) {
+                                const oldPath = oldUrl.split(`${STORAGE_BUCKET}/`)[1];
+                                if (oldPath) await supabaseClient.storage.from(STORAGE_BUCKET).remove([oldPath]);
+                            }
+                        }
+
+                        const { data: uploadData, error: uploadError } = await supabaseClient.storage.from(STORAGE_BUCKET).upload(path, file);
+                        if (uploadError) {
+                            if (uploadError.message.includes('not found')) throw new Error("BUCKET NO ENCONTRADO: Crea un Bucket llamado 'game-assets' en Supabase Storage y hazlo PUBLICO.");
+                            throw uploadError;
+                        }
+
+                        const { data: { publicUrl } } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+                        if (existing) await supabaseClient.from('game_content').update({ [isAudio ? 'audio_url' : 'image_url']: publicUrl }).eq('id', existing.id);
+                        else await supabaseClient.from('game_content').insert([{ game_type: GAME_TYPE, version: GAME_VERSION, text: cleanName, [isAudio ? 'audio_url' : 'image_url']: publicUrl }]);
+                    }
+                    alert("Carga completada"); onRefresh();
+                } catch (err) { alert("Error: " + err.message); } finally { setIsUploading(false); }
+            };
+
+            const handleUpdateText = async (id) => {
+                try {
+                    const { error } = await supabaseClient.from('game_content').update({ text: editText }).eq('id', id);
+                    if (error) throw error;
+                    setEditingId(null);
+                    onRefresh();
+                } catch (err) { alert("Error al actualizar: " + err.message); }
+            };
+
+            const handleMove = async (item, direction) => {
+                const index = data.findIndex(i => i.id === item.id);
+                if (direction === 'up' && index === 0) return;
+                if (direction === 'down' && index === data.length - 1) return;
+
+                const neighbor = direction === 'up' ? data[index - 1] : data[index + 1];
+
+                try {
+                    // Swap created_at timestamps to change order
+                    const tempDate = item.created_at;
+                    const { error: err1 } = await supabaseClient.from('game_content').update({ created_at: neighbor.created_at }).eq('id', item.id);
+                    const { error: err2 } = await supabaseClient.from('game_content').update({ created_at: tempDate }).eq('id', neighbor.id);
+
+                    if (err1 || err2) throw (err1 || err2);
+                    onRefresh();
+                } catch (err) { alert("Error al mover: " + err.message); }
+            };
+
+            const handleDelete = async (item) => {
+                if (!confirm(`¿Eliminar ${item.text}?`)) return;
+                try {
+                    if (item.audio_url) {
+                        const audPath = item.audio_url.split(`${STORAGE_BUCKET}/`)[1];
+                        if (audPath) await supabaseClient.storage.from(STORAGE_BUCKET).remove([audPath]);
+                    }
+                    await supabaseClient.from('game_content').delete().eq('id', item.id);
+                    onRefresh();
+                } catch (err) { alert("Error al eliminar: " + err.message); }
+            };
+
+            const handleDeleteAll = async () => {
+                if (!confirm("⚠️ ¿BORRAR TODO? Esta acción borrará todos los audios del servidor para este pad.")) return;
+                try {
+                    const { data: files } = await supabaseClient.storage.from(STORAGE_BUCKET).list(`${GAME_TYPE}/${GAME_VERSION}`);
+                    if (files && files.length > 0) {
+                        const paths = files.map(f => `${GAME_TYPE}/${GAME_VERSION}/${f.name}`);
+                        await supabaseClient.storage.from(STORAGE_BUCKET).remove(paths);
+                    }
+                    await supabaseClient.from('game_content').delete().eq('game_type', GAME_TYPE).eq('version', GAME_VERSION);
+                    alert("Todos los audios han sido borrados.");
+                    onRefresh();
+                } catch (err) { alert("Error al borrar todo: " + err.message); }
+            };
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-slate-900 text-slate-200 rounded-3xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700">
+                        <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800"><h2 className="font-black uppercase tracking-widest text-indigo-400">Pad Admin</h2><button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-full"><Icons.X className="w-5 h-5" /></button></div>
+                        {!session ? (
+                            <form onSubmit={handleLogin} className="p-8 flex flex-col items-center gap-4">
+                                <p className="font-bold text-slate-500">Acceso Administrador</p>
+                                <input type="email" placeholder="Email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="border-2 border-slate-200 rounded-xl px-4 py-2 w-full max-w-xs focus:border-indigo-400 outline-none" />
+                                <input type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="border-2 border-slate-200 rounded-xl px-4 py-2 w-full max-w-xs focus:border-indigo-400 outline-none" />
+                                <button type="submit" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">ENTRAR</button>
+                            </form>
+                        ) : (
+                            <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
+                                <div className="flex justify-between items-center mb-4 px-2">
+                                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sesión Activa: {session.user.email}</span>
+                                    <button onClick={() => supabaseClient.auth.signOut()} className="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Cerrar Sesión</button>
+                                </div>
+                                <div className="flex gap-2 mb-6">
+                                    <label className="flex-1 border-2 border-dashed border-indigo-500/50 rounded-2xl p-6 text-center cursor-pointer hover:bg-indigo-500/10 transition-colors">
+                                        <input type="file" multiple onChange={handleFileUpload} className="hidden" accept="audio/*" />
+                                        {isUploading ? <Icons.Loader className="mx-auto w-8 h-8 text-indigo-400" /> : <div className="text-indigo-400 font-bold">+ CARGAR AUDIOS</div>}
+                                    </label>
+                                    <button onClick={handleDeleteAll} className="bg-red-500/10 text-red-500 p-4 rounded-2xl hover:bg-red-500/20 flex items-center justify-center transition-colors border border-red-500/20" title="BORRAR TODO">
+                                        <Icons.Trash className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                <div className="space-y-3">
+                                    {data.map((item, idx) => (
+                                        <div key={item.id} className="flex items-center gap-3 bg-slate-800 p-3 rounded-2xl border border-slate-700">
+                                            <div className="flex flex-col gap-1">
+                                                <button
+                                                    onClick={() => handleMove(item, 'up')}
+                                                    disabled={idx === 0}
+                                                    className={`p-1 rounded-md hover:bg-slate-700 transition-colors ${idx === 0 ? 'opacity-20' : 'text-indigo-400'}`}
+                                                >
+                                                    <Icons.ArrowUp className="w-3 h-3" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMove(item, 'down')}
+                                                    disabled={idx === data.length - 1}
+                                                    className={`p-1 rounded-md hover:bg-slate-700 transition-colors ${idx === data.length - 1 ? 'opacity-20' : 'text-indigo-400'}`}
+                                                >
+                                                    <Icons.ArrowDown className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                {editingId === item.id ? (
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            autoFocus
+                                                            type="text"
+                                                            value={editText}
+                                                            onChange={(e) => setEditText(e.target.value)}
+                                                            onBlur={() => handleUpdateText(item.id)}
+                                                            onKeyDown={(e) => e.key === 'Enter' && handleUpdateText(item.id)}
+                                                            className="flex-1 bg-slate-700 border border-indigo-500 rounded-lg px-2 py-1 text-sm text-white outline-none"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <p
+                                                        className="font-bold text-sm truncate cursor-pointer hover:text-indigo-400 transition-colors"
+                                                        onClick={() => { setEditingId(item.id); setEditText(item.text); }}
+                                                    >
+                                                        {item.text}
+                                                    </p>
+                                                )}
+                                                <div className="flex gap-2">
+                                                    <span className={`text-[10px] ${item.audio_url ? 'text-green-500 font-bold' : 'text-slate-500'}`}>AUDIO OK</span>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => handleDelete(item)} className="p-2 text-red-400 hover:bg-red-500/10 rounded-full">
+                                                <Icons.Trash className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const SoundButton = ({ item, isLoop, onStopAll }) => {
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [isLoading, setIsLoading] = useState(true);
+            const [progress, setProgress] = useState(0);
+            const audioRef = useRef(null);
+            const radius = 35;
+            const circumference = radius * 2 * Math.PI;
+
+            useEffect(() => {
+                const audio = new Audio(item.audio_url);
+                audio.preload = "auto";
+                audioRef.current = audio;
+
+                const handleCanPlay = () => setIsLoading(false);
+                const handleTimeUpdate = () => {
+                    const p = (audio.currentTime / (audio.duration || 1)) * 100;
+                    setProgress(p);
+                };
+                const handleEnded = () => {
+                    setIsPlaying(false);
+                    setProgress(0);
+                };
+                const handleStopAll = () => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    setIsPlaying(false);
+                    setProgress(0);
+                };
+
+                audio.addEventListener('canplaythrough', handleCanPlay);
+                audio.addEventListener('loadeddata', handleCanPlay);
+                audio.addEventListener('timeupdate', handleTimeUpdate);
+                audio.addEventListener('ended', handleEnded);
+                window.addEventListener('stopAllSounds', handleStopAll);
+
+                if (audio.readyState >= 2) setIsLoading(false);
+
+                return () => {
+                    audio.pause();
+                    audio.removeEventListener('canplaythrough', handleCanPlay);
+                    audio.removeEventListener('loadeddata', handleCanPlay);
+                    audio.removeEventListener('timeupdate', handleTimeUpdate);
+                    audio.removeEventListener('ended', handleEnded);
+                    window.removeEventListener('stopAllSounds', handleStopAll);
+                };
+            }, [item.audio_url]);
+
+            useEffect(() => {
+                if (audioRef.current) audioRef.current.loop = isLoop;
+            }, [isLoop]);
+
+            const togglePlay = () => {
+                if (isLoading) return;
+                if (isPlaying) {
+                    audioRef.current.pause();
+                    audioRef.current.currentTime = 0;
+                    setIsPlaying(false);
+                    setProgress(0);
+                } else {
+                    onStopAll();
+                    audioRef.current.play().catch(console.error);
+                    setIsPlaying(true);
+                }
+            };
+
+            const colors = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316'];
+            const color = colors[item.id % colors.length];
+
+            return (
+                <button onClick={togglePlay} className={`pad-btn relative w-full aspect-square rounded-[2rem] flex flex-col items-center justify-center p-4 overflow-hidden border border-white/5 transition-all group shadow-lg ${isLoading ? 'opacity-50 cursor-wait' : 'active:scale-95'}`} style={{ backgroundColor: color }}>
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
+                        <circle cx="50" cy="50" r={radius} fill="none" stroke="white" strokeWidth="6" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference - (progress / 100) * circumference} />
+                    </svg>
+                    <div className="z-10 group-hover:scale-110 transition-transform">
+                        {isLoading ? (
+                            <div className="animate-spin"><Icons.Loader className="w-10 h-10 text-white opacity-50" /></div>
+                        ) : isPlaying ? (
+                            <Icons.Pause className="w-10 h-10 text-white drop-shadow-lg" />
+                        ) : (
+                            <Icons.Play className="w-10 h-10 text-white drop-shadow-lg" />
+                        )}
+                    </div>
+                    <span className="z-10 mt-2 text-[10px] md:text-xs font-black text-white uppercase tracking-wider text-center drop-shadow-md truncate w-full px-1">
+                        {isLoading ? 'LOADING...' : item.text}
+                    </span>
+                </button>
+            );
+        };
+
+        const App = () => {
+            const [dbData, setDbData] = useState([]);
+            const [isLoop, setIsLoop] = useState(false);
+            const [isAdminOpen, setIsAdminOpen] = useState(false);
+            const [session, setSession] = useState(null);
+
+            const fetchData = useCallback(async () => {
+                try {
+                    const { data, error } = await supabaseClient.from('game_content').select('*').eq('game_type', GAME_TYPE).eq('version', GAME_VERSION).order('created_at', { ascending: true });
+                    if (error) throw error;
+                    if (data) setDbData(data);
+                } catch (e) {
+                    console.error("Error fetching data:", e);
+                }
+            }, []);
+
+            useEffect(() => {
+                fetchData();
+                supabaseClient.auth.getSession().then(({ data: { session } }) => setSession(session));
+                const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => setSession(session));
+                return () => subscription.unsubscribe();
+            }, [fetchData]);
+
+            const stopAll = () => {
+                document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; });
+                window.dispatchEvent(new CustomEvent('stopAllSounds'));
+            };
+
+            return (
+                <div className="w-full min-h-screen-safe bg-[#0f172a] relative pt-safe pb-safe flex flex-col">
+                    <header className="p-6 flex justify-between items-center z-20">
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-2xl font-black text-indigo-400 italic tracking-tighter">AUDIO PAD</h1>
+                            <button onClick={() => setIsLoop(!isLoop)} className={`px-5 py-2.5 rounded-full text-[10px] font-black tracking-widest transition-all border-2 ${isLoop ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/50' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>LOOP</button>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={stopAll} className="bg-red-500/20 text-red-500 px-5 py-2.5 rounded-full font-black text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all border-2 border-red-500/20 active:scale-95">STOP</button>
+                            <button onClick={() => setIsAdminOpen(true)} className="px-3 py-2.5 bg-slate-800 text-slate-400 rounded-full border-2 border-slate-700 hover:text-indigo-400 transition-colors flex items-center justify-center">
+                                <Icons.Settings className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 overflow-y-auto px-6 pb-24 no-scrollbar">
+                        {dbData.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center opacity-30 text-center"><div className="text-6xl mb-4">🎵</div><p className="font-bold">No audios loaded.</p><p className="text-sm">Use Admin Panel to add some.</p></div>
+                        ) : (
+                            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+                                {dbData.map(item => (
+                                    <SoundButton key={item.id} item={item} isLoop={isLoop} onStopAll={stopAll} />
+                                ))}
+                            </div>
+                        )}
+                    </main>
+
+                    <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} data={dbData} onRefresh={fetchData} session={session} />
+                </div>
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

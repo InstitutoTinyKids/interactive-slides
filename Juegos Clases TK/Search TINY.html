@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Word Search - Search TINY</title>
+
+    <!-- Librerías Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+        :root {
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            overscroll-behavior: none;
+            user-select: none;
+            background: #f8fafc;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .animate-pop-in {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        .animate-found {
+            animation: pulse-green 1s ease-out;
+        }
+
+        .pt-safe {
+            padding-top: var(--safe-top);
+        }
+
+        .pb-safe {
+            padding-bottom: var(--safe-bottom);
+        }
+
+        .h-screen-safe {
+            height: 100dvh;
+        }
+
+        .min-h-screen-safe {
+            min-height: 100dvh;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 min-h-screen-safe w-full">
+
+    <div id="root" class="h-full w-full">
+        <div class="flex h-full w-full items-center justify-center bg-slate-50 text-cyan-600">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-current"></div>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback } = React;
+
+        const SUPABASE_URL = "https://qbuoonnwtkjitfyzeufc.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_6MQUgygham4m6ko_Yo244w_z0xBNcRW";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const GAME_TYPE = "search";
+        const GAME_VERSION = "TINY";
+        const STORAGE_BUCKET = "game-assets";
+        const GRID_SIZE = 11;
+        const MAX_WORDS = 8;
+
+        const Icons = {
+            Play: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>,
+            Volume: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>,
+            Home: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>,
+            Refresh: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>,
+            Check: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>,
+            X: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            Grid: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>,
+            Settings: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>,
+            Trash: ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>,
+            Loader: ({ className }) => <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+        };
+
+        const shuffle = (array) => [...array].sort(() => Math.random() - 0.5);
+
+        const AdminPanel = ({ isOpen, onClose, data, onRefresh, session }) => {
+            const [loginEmail, setLoginEmail] = useState("");
+            const [loginPassword, setLoginPassword] = useState("");
+            const [isUploading, setIsUploading] = useState(false);
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                const { error } = await supabaseClient.auth.signInWithPassword({
+                    email: loginEmail,
+                    password: loginPassword,
+                });
+                if (error) alert("Error: " + error.message);
+            };
+            const handleFileUpload = async (e) => {
+                const files = e.target.files; if (!files || files.length === 0) return; setIsUploading(true);
+                try {
+                    for (const file of files) {
+                        const fileName = file.name; const cleanName = fileName.split('.')[0].replace(/_/g, ' ').toUpperCase();
+                        const fileExt = fileName.split('.').pop(); const path = `${GAME_TYPE}/${GAME_VERSION}/${Date.now()}_${fileName}`;
+                        const isAudio = ['mp3', 'wav', 'm4a'].includes(fileExt.toLowerCase());
+
+                        const { data: existing } = await supabaseClient.from('game_content').select('*').eq('game_type', GAME_TYPE).eq('version', GAME_VERSION).eq('text', cleanName).single();
+
+                        if (existing) {
+                            const oldUrl = isAudio ? existing.audio_url : existing.image_url;
+                            if (oldUrl) {
+                                const oldPath = oldUrl.split(`${STORAGE_BUCKET}/`)[1];
+                                if (oldPath) await supabaseClient.storage.from(STORAGE_BUCKET).remove([oldPath]);
+                            }
+                        }
+
+                        const { data: uploadData, error: uploadError } = await supabaseClient.storage.from(STORAGE_BUCKET).upload(path, file); if (uploadError) throw uploadError;
+                        const { data: { publicUrl } } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+
+                        if (existing) await supabaseClient.from('game_content').update({ [isAudio ? 'audio_url' : 'image_url']: publicUrl }).eq('id', existing.id);
+                        else await supabaseClient.from('game_content').insert([{ game_type: GAME_TYPE, version: GAME_VERSION, text: cleanName, [isAudio ? 'audio_url' : 'image_url']: publicUrl }]);
+                    }
+                    alert("Carga completada"); onRefresh();
+                } catch (err) { alert("Error: " + err.message); } finally { setIsUploading(false); }
+            };
+            const handleDelete = async (item) => {
+                if (!confirm(`¿Eliminar ${item.text}?`)) return;
+                try {
+                    const filesToRemove = [];
+                    if (item.image_url) {
+                        const imgPath = item.image_url.split(`${STORAGE_BUCKET}/`)[1];
+                        if (imgPath) filesToRemove.push(imgPath);
+                    }
+                    if (item.audio_url) {
+                        const audPath = item.audio_url.split(`${STORAGE_BUCKET}/`)[1];
+                        if (audPath) filesToRemove.push(audPath);
+                    }
+                    if (filesToRemove.length > 0) {
+                        await supabaseClient.storage.from(STORAGE_BUCKET).remove(filesToRemove);
+                    }
+                    await supabaseClient.from('game_content').delete().eq('id', item.id);
+                    onRefresh();
+                } catch (err) { alert("Error al eliminar: " + err.message); }
+            };
+
+            const handleDeleteAll = async () => {
+                if (!confirm("⚠️ ¿BORRAR TODO? Esta acción no se puede deshacer y borrará todos los archivos del servidor para este juego.")) return;
+                try {
+                    const { data: files } = await supabaseClient.storage.from(STORAGE_BUCKET).list(`${GAME_TYPE}/${GAME_VERSION}`);
+                    if (files && files.length > 0) {
+                        const paths = files.map(f => `${GAME_TYPE}/${GAME_VERSION}/${f.name}`);
+                        await supabaseClient.storage.from(STORAGE_BUCKET).remove(paths);
+                    }
+                    await supabaseClient.from('game_content').delete().eq('game_type', GAME_TYPE).eq('version', GAME_VERSION);
+                    alert("Todos los datos han sido borrados.");
+                    onRefresh();
+                } catch (err) { alert("Error al borrar todo: " + err.message); }
+            };
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden shadow-2xl">
+                        <div className="p-4 border-b flex justify-between items-center bg-slate-50"><h2 className="font-black text-slate-700 uppercase">Admin - {GAME_TYPE} {GAME_VERSION}</h2><button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full"><Icons.X className="w-5 h-5" /></button></div>
+                        {!session ? (
+                            <form onSubmit={handleLogin} className="p-8 flex flex-col items-center gap-4">
+                                <p className="font-bold text-slate-500">Acceso Administrador</p>
+                                <input type="email" placeholder="Email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="border-2 border-slate-200 rounded-xl px-4 py-2 w-full max-w-xs focus:border-indigo-400 outline-none" />
+                                <input type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="border-2 border-slate-200 rounded-xl px-4 py-2 w-full max-w-xs focus:border-indigo-400 outline-none" />
+                                <button type="submit" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">ENTRAR</button>
+                            </form>
+                        ) : (
+                            <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
+                                <div className="flex justify-between items-center mb-4 px-2">
+                                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sesión Activa: {session.user.email}</span>
+                                    <button onClick={() => supabaseClient.auth.signOut()} className="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Cerrar Sesión</button>
+                                </div>
+                                <div className="flex gap-2 mb-6">
+                                    <label className="flex-1 border-2 border-dashed border-cyan-200 rounded-2xl p-6 text-center cursor-pointer hover:bg-cyan-50 transition-colors">
+                                        <input type="file" multiple onChange={handleFileUpload} className="hidden" accept="image/*,audio/*" />
+                                        {isUploading ? <Icons.Loader className="mx-auto w-8 h-8 text-cyan-600" /> : <div className="text-cyan-600 font-bold">+ CARGAR ARCHIVOS</div>}
+                                    </label>
+                                    <button onClick={handleDeleteAll} className="bg-red-50 text-red-500 p-4 rounded-2xl hover:bg-red-100 flex items-center justify-center transition-colors border border-red-100" title="BORRAR TODO">
+                                        <Icons.Trash className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                <div className="space-y-2">{data.map(item => (<div key={item.id} className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100"><div className="w-12 h-12 bg-white rounded-lg overflow-hidden flex-shrink-0">{item.image_url && <img src={item.image_url} className="w-full h-full object-contain p-1" />}</div><div className="flex-1 min-w-0"><p className="font-bold text-sm truncate">{item.text}</p><div className="flex gap-2"><span className={`text-[10px] ${item.image_url ? 'text-green-500 font-bold' : 'text-slate-300'}`}>IMG</span><span className={`text-[10px] ${item.audio_url ? 'text-green-500 font-bold' : 'text-slate-300'}`}>AUD</span></div></div><button onClick={() => handleDelete(item)} className="p-2 text-red-400 hover:bg-red-50 rounded-full"><Icons.Trash className="w-4 h-4" /></button></div>))}</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const generateGrid = (allWords, size) => {
+            let grid = Array(size).fill().map(() => Array(size).fill(''));
+            let placedWords = [];
+            const shuffledBank = shuffle([...allWords]);
+            const selectedWords = shuffledBank.slice(0, MAX_WORDS);
+            const wordsToPlace = selectedWords.sort((a, b) => b.text.length - a.text.length);
+            const dirs = [{ dr: 0, dc: 1 }, { dr: 1, dc: 0 }, { dr: 1, dc: 1 }];
+            wordsToPlace.forEach(item => {
+                const word = item.text.toUpperCase().replace(/\s/g, '');
+                let placed = false; let atts = 0;
+                while (!placed && atts < 300) {
+                    const r = Math.floor(Math.random() * size); const c = Math.floor(Math.random() * size); const d = dirs[Math.floor(Math.random() * dirs.length)];
+                    let path = []; let ok = true;
+                    for (let i = 0; i < word.length; i++) {
+                        let rr = r + i * d.dr; let cc = c + i * d.dc;
+                        if (rr < 0 || rr >= size || cc < 0 || cc >= size || (grid[rr][cc] !== '' && grid[rr][cc] !== word[i])) { ok = false; break; }
+                        path.push({ r: rr, c: cc });
+                    }
+                    if (ok) {
+                        path.forEach((p, i) => grid[p.r][p.c] = word[i]);
+                        placedWords.push({ ...item, path }); placed = true;
+                    }
+                    atts++;
+                }
+            });
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) if (grid[r][c] === '') grid[r][c] = letters.charAt(Math.floor(Math.random() * letters.length));
+            return { grid, placedWords, selectedWords };
+        };
+
+        const MenuScreen = ({ onStart, onReview, onAdmin }) => (
+            <div className="flex flex-col items-center justify-center h-full p-4 animate-pop-in pt-safe pb-safe">
+                <button onClick={onAdmin} className="absolute top-4 right-4 p-3 text-slate-300 hover:text-slate-500 transition-colors"><Icons.Settings className="w-6 h-6" /></button>
+                <div className="glass-card p-6 rounded-[2rem] shadow-xl text-center max-w-md w-full relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500"></div>
+                    <h1 className="text-2xl md:text-4xl font-black text-slate-800 mb-2 tracking-tight uppercase">WORD SEARCH</h1>
+                    <p className="text-slate-500 font-bold mb-6 text-base">Find the hidden words!</p>
+                    <div className="space-y-4">
+                        <button onClick={onStart} className="w-full bg-slate-800 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 flex items-center justify-center gap-3 hover:bg-slate-900 group">
+                            <div className="bg-white/20 p-1 rounded-full group-hover:rotate-12 transition-transform"><Icons.Play /></div> START
+                        </button>
+                        <button onClick={onReview} className="w-full bg-white text-slate-600 border-2 border-slate-100 font-bold py-4 rounded-2xl shadow-sm active:scale-95 flex items-center justify-center gap-3 hover:bg-slate-50">
+                            <Icons.Grid className="w-5 h-5 text-cyan-500" /> REVIEW LIST
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const GameScreen = ({ onFinish, onExit, data }) => {
+            const [game, setGame] = useState({ grid: [], placedWords: [], selectedWords: [] });
+            const [found, setFound] = useState([]);
+            const [selection, setSelection] = useState([]);
+            const [isDragging, setIsDragging] = useState(false);
+            const [timer, setTimer] = useState(0);
+
+            useEffect(() => { if (data.length > 0) setGame(generateGrid(data, GRID_SIZE)); }, [data]);
+            useEffect(() => { const interval = setInterval(() => setTimer(t => t + 1), 1000); return () => clearInterval(interval); }, []);
+
+            const checkSelection = (path) => {
+                const pStr = JSON.stringify(path); const pStrRev = JSON.stringify([...path].reverse());
+                const hit = game.placedWords.find(w => {
+                    if (found.includes(w.id)) return false;
+                    const wStr = JSON.stringify(w.path); return wStr === pStr || wStr === pStrRev;
+                });
+                if (hit) {
+                    setFound(f => [...f, hit.id]);
+                    if (hit.audio_url) new Audio(hit.audio_url).play().catch(() => { });
+                    if (found.length + 1 === game.placedWords.length) setTimeout(() => onFinish({ time: timer }), 1000);
+                } else if (path.length > 1) new Audio('https://static.wixstatic.com/mp3/8985b1_ec1fb38bd5694e8791066c2ad23f0abf.wav').play().catch(() => { });
+            };
+
+            const handlePointerDown = (r, c) => { setIsDragging(true); setSelection([{ r, c }]); };
+            const handlePointerMove = (e) => {
+                if (!isDragging) return;
+                const el = document.elementFromPoint(e.clientX, e.clientY);
+                if (el) {
+                    const cell = el.closest('[data-r]');
+                    if (cell) {
+                        const r = parseInt(cell.dataset.r); const c = parseInt(cell.dataset.c);
+                        const start = selection[0];
+                        const dR = r - start.r; const dC = c - start.c; const steps = Math.max(Math.abs(dR), Math.abs(dC));
+                        if (steps === 0) return;
+                        const path = []; for (let i = 0; i <= steps; i++) path.push({ r: Math.round(start.r + (dR * i) / steps), c: Math.round(start.c + (dC * i) / steps) });
+                        setSelection(path);
+                    }
+                }
+            };
+            const handlePointerUp = () => { if (isDragging) { setIsDragging(false); checkSelection(selection); setSelection([]); } };
+
+            useEffect(() => { window.addEventListener('pointerup', handlePointerUp); return () => window.removeEventListener('pointerup', handlePointerUp); }, [isDragging, selection]);
+
+            if (game.grid.length === 0) return null;
+
+            return (
+                <div className="h-full flex flex-col w-full max-w-4xl mx-auto pt-safe pb-safe overflow-hidden" onPointerMove={handlePointerMove}>
+                    <div className="px-4 py-3 flex justify-between items-center bg-white/50 backdrop-blur-sm z-20">
+                        <button onClick={onExit} className="p-3 bg-white rounded-2xl text-slate-400 border"><Icons.Home className="w-6 h-6" /></button>
+                        <div className="bg-white px-4 py-2 rounded-2xl font-black text-cyan-600 border shadow-sm">{found.length} / {game.placedWords.length}</div>
+                        <div className="px-4 py-2 bg-cyan-600 text-white rounded-2xl font-black shadow-lg">{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</div>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center justify-start p-4 gap-4 overflow-y-auto no-scrollbar">
+                        <div className="bg-white p-2 rounded-2xl shadow-xl border-4 border-slate-200 select-none touch-none shrink-0">
+                            <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}>
+                                {game.grid.map((row, r) => row.map((l, c) => {
+                                    const isFound = game.placedWords.some(w => found.includes(w.id) && w.path.some(p => p.r === r && p.c === c));
+                                    const isSel = selection.some(p => p.r === r && p.c === c);
+                                    return <div key={`${r}-${c}`} data-r={r} data-c={c} onPointerDown={() => handlePointerDown(r, c)} className={`w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center font-black rounded-lg transition-all ${isFound ? 'bg-green-500 text-white' : isSel ? 'bg-cyan-500 text-white scale-110 shadow-lg' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{l}</div>;
+                                }))}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-4 md:grid-cols-6 gap-2 w-full">
+                            {game.selectedWords.map(w => (
+                                <div key={w.id} onClick={() => w.audio_url && new Audio(w.audio_url).play().catch(() => { })} className={`bg-white rounded-xl p-2 border-2 flex flex-col items-center gap-1 transition-all ${found.includes(w.id) ? 'border-green-400 opacity-50 grayscale' : 'border-white shadow-sm'}`}>
+                                    <img src={w.image_url} className="w-12 h-12 object-contain" />
+                                    <span className="text-[10px] font-black uppercase text-slate-500 text-center truncate w-full">{w.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = useState('menu');
+            const [dbData, setDbData] = useState([]);
+            const [isAdminOpen, setIsAdminOpen] = useState(false);
+            const [session, setSession] = useState(null);
+            const [stats, setStats] = useState({ time: 0 });
+            const fetchData = useCallback(async () => {
+                const { data } = await supabaseClient.from('game_content').select('*').eq('game_type', GAME_TYPE).eq('version', GAME_VERSION).order('created_at', { ascending: false });
+                if (data) setDbData(data);
+            }, []);
+            useEffect(() => {
+                fetchData();
+                supabaseClient.auth.getSession().then(({ data: { session } }) => setSession(session));
+                const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => setSession(session));
+                return () => subscription.unsubscribe();
+            }, [fetchData]);
+            return (
+                <div className="w-full min-h-screen-safe bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-100 relative">
+                    {view === 'menu' && <MenuScreen onStart={() => setView('game')} onReview={() => setView('review')} onAdmin={() => setIsAdminOpen(true)} />}
+                    {view === 'game' && <GameScreen data={dbData} onExit={() => setView('menu')} onFinish={(s) => { setStats(s); setView('result'); }} />}
+                    {view === 'review' && (
+                        <div className="h-full flex flex-col w-full max-w-4xl mx-auto pt-safe pb-safe">
+                            <div className="px-6 py-4 flex items-center justify-between glass-card mb-4 sticky top-0 z-10 mx-4 mt-4 rounded-2xl">
+                                <button onClick={() => setView('menu')} className="p-2 bg-white rounded-xl text-slate-500 shadow-sm font-bold flex items-center gap-2 text-sm border"><Icons.Home className="w-4 h-4" /> BACK</button>
+                                <h2 className="text-lg font-black text-cyan-600 uppercase tracking-widest">Vocabulary</h2>
+                                <div className="w-20"></div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4 no-scrollbar pb-12">
+                                <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                                    {dbData.map((item) => (<div key={item.id} onClick={() => item.audio_url && new Audio(item.audio_url).play().catch(() => { })} className="bg-white rounded-2xl p-2 shadow-sm border-2 transition-all active:scale-95 flex flex-col items-center gap-1 hover:border-cyan-200 cursor-pointer"><img src={item.image_url} className="w-16 h-16 object-contain rounded-lg p-1" /><h3 className="font-black text-[10px] uppercase text-slate-500 text-center">{item.text}</h3></div>))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {view === 'result' && (
+                        <div className="h-full flex flex-col items-center justify-center p-6 animate-pop-in">
+                            <div className="glass-card rounded-[3rem] shadow-2xl p-10 max-w-sm w-full text-center">
+                                <h1 className="text-4xl font-black text-slate-800 mb-2 italic">WINNER!</h1>
+                                <p className="text-slate-500 font-bold mb-8 uppercase tracking-widest text-sm">Search Master</p>
+                                <div className="bg-cyan-50 p-6 rounded-3xl border-2 border-cyan-100 mb-8"><p className="text-cyan-400 text-xs font-black uppercase mb-1">Time</p><p className="text-3xl font-black text-cyan-700">{Math.floor(stats.time / 60)}:{String(stats.time % 60).padStart(2, '0')}</p></div>
+                                <button onClick={() => setView('game')} className="w-full bg-cyan-600 text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-all mb-4 flex items-center justify-center gap-3"><Icons.Refresh /> PLAY AGAIN</button>
+                                <button onClick={() => setView('menu')} className="w-full bg-white text-slate-500 border-2 border-slate-100 font-black py-4 rounded-2xl">BACK HOME</button>
+                            </div>
+                        </div>
+                    )}
+                    <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} data={dbData} onRefresh={fetchData} session={session} />
+                </div>
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

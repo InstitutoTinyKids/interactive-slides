@@ -6,6 +6,7 @@ import SlideEditor from './components/GuiaEditor';
 import ResultadosView from './components/ResultadosView';
 import QuizView from './components/QuizView';
 import GaleriaView from './components/GaleriaView';
+import ExtrasView from './components/ExtrasView';
 import { dbService } from './services/db';
 import confetti from 'canvas-confetti';
 
@@ -114,6 +115,11 @@ function AppRoot() {
         setView('gallery');
     };
 
+    const handleEnterAsExtra = () => {
+        setRole('extra');
+        setView('extras');
+    };
+
     const toggleActive = async () => {
         if (!selectedProject) return;
         const newState = !isActive;
@@ -179,6 +185,7 @@ function AppRoot() {
                     onEnter={handleEnterAsStudent}
                     onAdmin={handleEnterAsAdmin}
                     onTeacher={handleEnterAsTeacher}
+                    onExtra={handleEnterAsExtra}
                 />
             )}
 
@@ -297,6 +304,12 @@ function AppRoot() {
                         }
                         setPreviewMode(true);
                     }}
+                />
+            )}
+
+            {view === 'extras' && (
+                <ExtrasView
+                    onExit={() => setView('entry')}
                 />
             )}
 

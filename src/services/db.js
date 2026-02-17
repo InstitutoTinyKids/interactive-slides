@@ -99,5 +99,53 @@ export const dbService = {
     getPublicUrl(bucket, fileName) {
         const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName);
         return publicUrl;
+    },
+
+    // Extras
+    async getExtras() {
+        const { data, error } = await supabase.from('extras').select('*').order('order_index', { ascending: true });
+        if (error) throw error;
+        return data || [];
+    },
+
+    async createExtra(extra) {
+        const { data, error } = await supabase.from('extras').insert(extra);
+        if (error) throw error;
+        return data;
+    },
+
+    async updateExtra(id, updates) {
+        const { data, error } = await supabase.from('extras').update(updates).eq('id', id);
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteExtra(id) {
+        const { error } = await supabase.from('extras').delete().eq('id', id);
+        if (error) throw error;
+    },
+
+    // Extra Folders
+    async getExtraFolders() {
+        const { data, error } = await supabase.from('extra_folders').select('*').order('order_index', { ascending: true });
+        if (error) throw error;
+        return data || [];
+    },
+
+    async createExtraFolder(folder) {
+        const { data, error } = await supabase.from('extra_folders').insert(folder);
+        if (error) throw error;
+        return data;
+    },
+
+    async updateExtraFolder(id, updates) {
+        const { data, error } = await supabase.from('extra_folders').update(updates).eq('id', id);
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteExtraFolder(id) {
+        const { error } = await supabase.from('extra_folders').delete().eq('id', id);
+        if (error) throw error;
     }
 };

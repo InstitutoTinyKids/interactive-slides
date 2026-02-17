@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { User, Settings, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Folder, ChevronLeft } from 'lucide-react';
+import { User, Settings, ArrowRight, Play, Lock, X, GraduationCap, ChevronRight, Key, Folder, ChevronLeft, Star } from 'lucide-react';
 import { dbService } from '../services/db';
 import { useApp } from '../context/AppContext';
 
-export default function HomeView({ onEnter, onAdmin, onTeacher }) {
+export default function HomeView({ onEnter, onAdmin, onTeacher, onExtra }) {
     const { notify } = useApp();
     const [view, setView] = useState('role_selection'); // role_selection, admin_login, teacher_login, student_alias, project_selection, project_pass
     const [alias, setAlias] = useState('');
@@ -49,6 +49,15 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
             // Role will be set when selecting project
         } else {
             alert('Contraseña de Teacher incorrecta');
+        }
+    };
+
+    const handleExtraSubmit = (e) => {
+        e.preventDefault();
+        if (pass === '3232**') {
+            if (onExtra) onExtra();
+        } else {
+            alert('Contraseña de Extra incorrecta');
         }
     };
 
@@ -129,6 +138,19 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
                         <h3 style={{ fontWeight: 800, color: 'white', margin: 0 }}>Admin</h3>
                     </div>
                     <ChevronRight size={22} color="#10b981" />
+                </button>
+
+                <button
+                    onClick={() => { setView('extra_login'); setPass(''); }}
+                    className="role-btn glass"
+                >
+                    <div className="role-btn-icon" style={{ background: 'rgba(249, 115, 22, 0.1)', color: '#f97316' }}>
+                        <Star size={24} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <h3 style={{ fontWeight: 800, color: 'white', margin: 0 }}>Extra</h3>
+                    </div>
+                    <ChevronRight size={22} color="#f97316" />
                 </button>
             </div>
         </div>
@@ -263,6 +285,37 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
                             <button type="submit" className="btn-premium" style={{ padding: '20px', fontSize: '1rem', borderRadius: '16px', width: '100%' }}>
                                 Acceder al Panel
                                 <Lock size={20} />
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {view === 'extra_login' && (
+                    <div className="responsive-grid">
+                        <div className="responsive-header">
+                            <div className="logo-container" style={{ width: '100px', height: '100px', marginBottom: '20px' }}>
+                                <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <button type="button" onClick={() => setView('role_selection')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '8px', borderRadius: '10px' }}><ChevronLeft size={20} /></button>
+                                <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'white', margin: 0 }}>Extra</h2>
+                            </div>
+                            <p className="role-subtitle" style={{ fontSize: '0.9rem', marginTop: '5px' }}>Acceso a recursos adicionales</p>
+                        </div>
+                        <form onSubmit={handleExtraSubmit} className="responsive-content" style={{ gap: '35px', width: '100%' }}>
+                            <input
+                                className="premium-input text-center"
+                                type="password"
+                                placeholder="Ingresa Contraseña..."
+                                value={pass}
+                                onChange={(e) => setPass(e.target.value)}
+                                autoFocus
+                                required
+                                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '65px', fontSize: '1.1rem', background: 'rgba(255,255,255,0.03)' }}
+                            />
+                            <button type="submit" className="btn-premium" style={{ padding: '20px', fontSize: '1rem', borderRadius: '16px', background: 'linear-gradient(135deg, #f97316, #ea580c)', width: '100%' }}>
+                                Acceder a Extra
+                                <Star size={20} />
                             </button>
                         </form>
                     </div>
