@@ -110,8 +110,9 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
 
             await dbService.saveSlides(currentProject.id, toInsert);
 
+            if (onSave) onSave(localSlides);
+
             if (!isSilent) {
-                if (onSave) onSave(); // Sync with parent
                 setSaveStatus('saved');
                 setTimeout(() => setSaveStatus('idle'), 1000);
                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -323,8 +324,8 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 {!isMobile && (
                     <button
                         onClick={async () => {
-                            const saved = await handleSaveAll(false);
-                            if (saved) onPreview(currentProject, false);
+                            await handleSaveAll(true);
+                            onPreview(currentProject, false);
                         }}
                         className="btn-outline"
                         style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}
@@ -371,6 +372,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     side="left"
                     width="240px"
                     isMobile={appIsMobile || isTablet}
+                    hideClose={!(appIsMobile || isTablet)}
                 >
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
                         <button

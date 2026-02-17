@@ -304,7 +304,10 @@ function AppRoot() {
                 <SlideEditor
                     slides={slides}
                     isActive={isActive}
-                    onSave={() => loadProjectSlides(selectedProject.id)}
+                    onSave={(updatedSlides) => {
+                        if (updatedSlides) setSlides(updatedSlides);
+                        else loadProjectSlides(selectedProject.id);
+                    }}
                     onExit={() => {
                         if (role === 'admin') {
                             setView('gallery');
@@ -319,10 +322,9 @@ function AppRoot() {
                     }}
                     selectedProject={selectedProject}
                     onGoToGallery={() => setView('gallery')}
-                    onPreview={async (p) => {
+                    onPreview={(p) => {
                         setLastView('editor');
                         setCameFromGallery(false);
-                        if (!p.id.startsWith('quiz-')) await loadProjectSlides(p.id);
                         setView(p.id.startsWith('quiz-') ? 'preview_quiz' : 'preview_viewer');
                         setCurrentSlideIdx(0);
                         setPreviewMode(true);
