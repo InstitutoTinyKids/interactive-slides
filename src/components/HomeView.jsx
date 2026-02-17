@@ -241,7 +241,7 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'admin_login' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header" style={{ marginBottom: '15px' }}>
+                        <div className="responsive-header">
                             <div className="logo-container" style={{ width: '100px', height: '100px', marginBottom: '20px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>
@@ -272,7 +272,7 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'teacher_login' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header" style={{ marginBottom: '15px' }}>
+                        <div className="responsive-header">
                             <div className="logo-container" style={{ width: '100px', height: '100px', marginBottom: '20px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>
@@ -303,7 +303,7 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'student_alias' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header" style={{ marginBottom: '15px' }}>
+                        <div className="responsive-header">
                             <div className="logo-container" style={{ width: '100px', height: '100px', marginBottom: '20px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>
@@ -352,7 +352,7 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
 
                 {view === 'project_pass' && (
                     <div className="responsive-grid">
-                        <div className="responsive-header" style={{ marginBottom: '15px' }}>
+                        <div className="responsive-header">
                             <div className="logo-container" style={{ width: '100px', height: '100px', marginBottom: '20px' }}>
                                 <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo" />
                             </div>

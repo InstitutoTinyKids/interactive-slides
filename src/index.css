@@ -276,12 +276,14 @@ h3 {
   display: flex;
   flex-direction: column;
   width: 100%;
+  gap: 20px;
 }
 
 .responsive-header {
   display: flex;
   flex-direction: column;
   width: 100%;
+  gap: 10px;
 }
 
 .responsive-content {
