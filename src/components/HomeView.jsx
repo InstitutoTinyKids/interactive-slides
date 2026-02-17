@@ -142,20 +142,19 @@ export default function HomeView({ onEnter, onAdmin, onTeacher }) {
 
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button
-                        onClick={() => {
-                            if (currentFolderId) setCurrentFolderId(null);
-                            else setView(alias ? 'student_alias' : 'role_selection');
-                        }}
-                        style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
-                    >
-                        <ChevronLeft size={24} />
-                    </button>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>
-                        {currentFolderId ? folders.find(f => f.id === currentFolderId)?.name : 'Selecciona Programa'}
-                    </h2>
-                </div>
+                {currentFolderId && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                        <button
+                            onClick={() => setCurrentFolderId(null)}
+                            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        >
+                            <ChevronLeft size={24} />
+                        </button>
+                        <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white' }}>
+                            {folders.find(f => f.id === currentFolderId)?.name}
+                        </h2>
+                    </div>
+                )}
 
                 <div className="project-list-container" style={{ display: 'grid', gap: '10px', maxHeight: '400px', overflowY: 'auto', paddingRight: '5px' }}>
                     {currentFolders.map(folder => (
