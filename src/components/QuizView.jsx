@@ -49,13 +49,23 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   const [isEditingAccessCode, setIsEditingAccessCode] = useState(false);
   const [hasUnsavedCodeChanges, setHasUnsavedCodeChanges] = useState(false);
   const [showProjectDetails, setShowProjectDetails] = useState(false);
-  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
-
-  const timerRef = useRef(null);
-  const autoSaveTimerRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+  const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
+  const [showQuestionsPanel, setShowQuestionsPanel] = useState(window.innerWidth >= 1200);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1024);
+      setIsCompact(width < 1200);
+      setIsLandscape(width > window.innerHeight);
+      if (width >= 1200) {
+        setShowQuestionsPanel(true);
+      }
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -284,44 +294,87 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     return (
       <div style={{ height: '100vh', width: '100vw', display: 'flex', background: '#050510', overflow: 'hidden', flexDirection: 'column' }}>
         <header style={{
-          height: '75px',
-          padding: '0 30px',
+          height: (isMobile || isTablet) ? 'auto' : '75px',
+          padding: (isMobile || isTablet) ? '15px' : '0 30px',
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: (isMobile || isTablet) ? 'column' : 'row',
+          alignItems: (isMobile || isTablet) ? 'flex-start' : 'center',
           justifyContent: 'space-between',
+          gap: '15px',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           background: 'rgba(10,10,25,0.9)',
           backdropFilter: 'blur(20px)',
-          zIndex: 100
+          zIndex: 1000
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', width: '100%' }}>
             <button onClick={onExit} style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '15px', color: '#3b82f6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LayoutGrid size={24} /></button>
-            <div>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white', lineHeight: 1.1 }}>{projectLocal?.name || 'Cargando...'}</h2>
-              <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Panel de Administración</span>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 900, color: 'white', lineHeight: 1.1 }}>{projectLocal?.name || 'Cargando...'}</h2>
+              <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Editor Quiz</span>
             </div>
+            {(isMobile || isTablet) && (
+              <button
+                onClick={() => setShowQuestionsPanel(!showQuestionsPanel)}
+                style={{ padding: '10px', background: showQuestionsPanel ? 'rgba(124, 58, 237, 0.2)' : 'rgba(255,255,255,0.05)', borderRadius: '12px', border: 'none', color: 'white', cursor: 'pointer' }}
+              >
+                <Layers size={20} />
+              </button>
+            )}
           </div>
 
-          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem' }}><Eye size={18} /> Resultados</button>
-            <button onClick={async () => { const saved = await handleSaveQuiz(questions, false); if (saved && onPreview) onPreview(projectLocal); }} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }} disabled={loading}><Play size={18} /> Preview</button>
-            <button onClick={onToggleActive} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', borderRadius: '14px', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', background: isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: isActive ? '#ef4444' : '#10b981', border: `1px solid ${isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}` }}>{isActive ? <Pause size={18} /> : <Play size={18} />} {isActive ? 'Suspender' : 'Activar'}</button>
-            <button onClick={() => handleSaveQuiz(questions)} className="btn-premium" style={{ padding: '12px 25px', borderRadius: '14px', fontSize: '0.85rem' }} disabled={loading}><Save size={18} /> Guardar Cambios</button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', width: (isMobile || isTablet) ? '100%' : 'auto', justifyContent: (isMobile || isTablet) ? 'space-between' : 'flex-end', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowSettingsPanel(!showSettingsPanel)}
+              className="btn-outline"
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 18px', borderRadius: '14px', fontSize: '0.8rem', background: showSettingsPanel ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)' }}
+            >
+              <Settings size={18} /> {!(isMobile || isTablet) && 'Ajustes'}
+            </button>
+            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 18px', borderRadius: '14px', fontSize: '0.8rem' }}>
+              <Eye size={18} /> {!(isMobile || isTablet) && 'Resultados'}
+            </button>
+            <button onClick={async () => { const saved = await handleSaveQuiz(questions, false); if (saved && onPreview) onPreview(projectLocal); }} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', borderRadius: '14px', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }} disabled={loading}>
+              <Play size={18} /> {!(isMobile || isCompact) && 'Preview'}
+            </button>
+            <button onClick={onToggleActive} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 18px', borderRadius: '14px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', background: isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: isActive ? '#ef4444' : '#10b981', border: `1px solid ${isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}` }}>
+              {isActive ? <Pause size={18} /> : <Play size={18} />} {!(isMobile || isCompact) && (isActive ? 'Suspender' : 'Activar')}
+            </button>
+            <button onClick={() => handleSaveQuiz(questions)} className="btn-premium" style={{ padding: '10px 22px', borderRadius: '14px', fontSize: '0.8rem' }} disabled={loading}>
+              <Save size={18} /> GUARDAR
+            </button>
           </div>
         </header>
 
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-          <aside style={{ width: '380px', minWidth: '380px', borderRight: '1px solid rgba(255,255,255,0.05)', background: '#0a0a1a', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+          <aside style={{
+            width: showQuestionsPanel ? (isMobile ? '100%' : '380px') : '0px',
+            minWidth: showQuestionsPanel ? (isMobile ? '100%' : '380px') : '0px',
+            borderRight: '1px solid rgba(255,255,255,0.05)',
+            background: '#0a0a1a',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            position: (isMobile || isTablet) ? 'absolute' : 'relative',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 500,
+            boxShadow: (isMobile || isTablet) && showQuestionsPanel ? '20px 0 50px rgba(0,0,0,0.5)' : 'none'
+          }}>
             <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'white' }}>Preguntas</h3>
                 <p style={{ fontSize: '0.7rem', color: '#64748b' }}>{questions.length} preguntas creadas</p>
               </div>
-              <button onClick={() => setEditingQ({ id: Date.now(), question: '', options: ['', '', '', ''], correctAnswer: 0, isNew: true })} style={{ background: '#7c3aed', border: 'none', color: 'white', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px rgba(124, 58, 237, 0.3)' }}><Plus size={20} /></button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => { setEditingQ({ id: Date.now(), question: '', options: ['', '', '', ''], correctAnswer: 0, isNew: true }); if (isMobile || isTablet) setShowQuestionsPanel(false); }} style={{ background: '#7c3aed', border: 'none', color: 'white', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px rgba(124, 58, 237, 0.3)' }}><Plus size={20} /></button>
+                {(isMobile || isTablet) && <button onClick={() => setShowQuestionsPanel(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={20} /></button>}
+              </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {questions.map((q, idx) => (
-                <div key={q.id} onClick={() => { setSelectedQIdx(idx); setEditingQ(q); }} style={{ padding: '20px', borderRadius: '20px', border: `1px solid ${selectedQIdx === idx ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`, background: selectedQIdx === idx ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div key={q.id} onClick={() => { setSelectedQIdx(idx); setEditingQ(q); if (isMobile || isTablet) setShowQuestionsPanel(false); }} style={{ padding: '20px', borderRadius: '20px', border: `1px solid ${selectedQIdx === idx ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`, background: selectedQIdx === idx ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.15)', padding: '4px 10px', borderRadius: '8px' }}>#{idx + 1}</span>
                     <div style={{ display: 'flex', gap: '12px' }}>
@@ -335,11 +388,11 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             </div>
           </aside>
 
-          <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #0a0a1a, #050510)', overflowY: 'auto', padding: '40px' }}>
+          <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at top right, #0a0a1a, #050510)', overflowY: 'auto', padding: isMobile ? '20px' : '40px' }}>
             <div style={{ maxWidth: '900px', width: '100%', margin: '0 auto' }}>
               {currentEditingQ ? (
-                <div className="glass" style={{ padding: '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'white', marginBottom: '30px' }}>{currentEditingQ.isNew ? 'Nueva Pregunta' : 'Editar Pregunta'}</h2>
+                <div className="glass" style={{ padding: isMobile ? '25px' : '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <h2 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 900, color: 'white', marginBottom: '30px' }}>{currentEditingQ.isNew ? 'Nueva Pregunta' : 'Editar Pregunta'}</h2>
                   <AdminForm
                     initialData={currentEditingQ}
                     onSave={(q) => {
@@ -354,46 +407,61 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                       setEditingQ(null);
                     }}
                     onCancel={() => setEditingQ(null)}
+                    isMobile={isMobile}
                   />
                 </div>
               ) : (
                 <div style={{ height: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
                   <HelpCircle size={80} color="white" strokeWidth={1} />
-                  <p style={{ marginTop: '20px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px' }}>Selecciona o crea una pregunta</p>
+                  <p style={{ marginTop: '20px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', textAlign: 'center' }}>Selecciona o crea una pregunta</p>
                 </div>
               )}
             </div>
           </main>
 
-          <aside style={{ width: '350px', minWidth: '350px', background: '#0a0a1a', borderLeft: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <aside style={{
+            width: showSettingsPanel ? (isMobile ? '100%' : '350px') : '0px',
+            minWidth: showSettingsPanel ? (isMobile ? '100%' : '350px') : '0px',
+            background: '#0a0a1a',
+            borderLeft: '1px solid rgba(255,255,255,0.05)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            position: (isMobile || isTablet) ? 'absolute' : 'relative',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 500,
+            boxShadow: (isMobile || isTablet) && showSettingsPanel ? '-20px 0 50px rgba(0,0,0,0.5)' : 'none'
+          }}>
             <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
               <h3 style={{ color: 'white', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2.5px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}><Settings size={18} /> Ajustes</div>
-                <button onClick={() => setShowProjectDetails(!showProjectDetails)} className="btn-outline" style={{ fontSize: '0.6rem', padding: '4px 8px' }}>{showProjectDetails ? 'OCULTAR' : 'VER MÁS'}</button>
+                {(isMobile || isTablet) && <button onClick={() => setShowSettingsPanel(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>}
               </h3>
 
-              {showProjectDetails && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre</label>
-                    <div style={{ position: 'relative' }}>
-                      <input className="premium-input" value={projectLocal?.name || ''} readOnly={!isEditingProjectName} onChange={(e) => { setProjectLocal({ ...projectLocal, name: e.target.value }); setHasUnsavedNameChanges(true); }} />
-                      <button onClick={async () => { if (isEditingProjectName && hasUnsavedNameChanges) { await supabase.from('projects').update({ name: projectLocal.name }).eq('id', project.id); setHasUnsavedNameChanges(false); } setIsEditingProjectName(!isEditingProjectName); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}</button>
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Clave Acceso</label>
-                    <div style={{ position: 'relative' }}>
-                      <input className="premium-input" value={localAccessCode} readOnly={!isEditingAccessCode} onChange={(e) => { setLocalAccessCode(e.target.value); setHasUnsavedCodeChanges(true); }} />
-                      <button onClick={async () => { if (isEditingAccessCode && hasUnsavedCodeChanges) { await supabase.from('projects').update({ access_code: localAccessCode }).eq('id', project.id); setHasUnsavedCodeChanges(false); } setIsEditingAccessCode(!isEditingAccessCode); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}</button>
-                    </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre</label>
+                  <div style={{ position: 'relative' }}>
+                    <input className="premium-input" value={projectLocal?.name || ''} readOnly={!isEditingProjectName} onChange={(e) => { setProjectLocal({ ...projectLocal, name: e.target.value }); setHasUnsavedNameChanges(true); }} />
+                    <button onClick={async () => { if (isEditingProjectName && hasUnsavedNameChanges) { await supabase.from('projects').update({ name: projectLocal.name }).eq('id', project.id); setHasUnsavedNameChanges(false); } setIsEditingProjectName(!isEditingProjectName); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingProjectName ? <Save size={18} /> : <Edit2 size={18} />}</button>
                   </div>
                 </div>
-              )}
+                <div>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Clave Acceso</label>
+                  <div style={{ position: 'relative' }}>
+                    <input className="premium-input" value={localAccessCode} readOnly={!isEditingAccessCode} onChange={(e) => { setLocalAccessCode(e.target.value); setHasUnsavedCodeChanges(true); }} />
+                    <button onClick={async () => { if (isEditingAccessCode && hasUnsavedCodeChanges) { await supabase.from('projects').update({ access_code: localAccessCode }).eq('id', project.id); setHasUnsavedCodeChanges(false); } setIsEditingAccessCode(!isEditingAccessCode); }} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>{isEditingAccessCode ? <Save size={18} /> : <Edit2 size={18} />}</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </aside>
         </div>
       </div>
+
     );
   }
 
@@ -511,9 +579,10 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   return null;
 }
 
-function AdminForm({ initialData, onSave, onCancel }) {
+function AdminForm({ initialData, onSave, onCancel, isMobile }) {
   const [formData, setFormData] = useState({ question: '', type: 'text', mediaUrl: '', videoStart: 0, videoEnd: 0, options: ['', '', '', ''], correctAnswer: 0 });
   const [uploading, setUploading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved
 
   useEffect(() => { if (initialData) setFormData({ ...formData, ...initialData }); }, [initialData]);
 
@@ -531,11 +600,21 @@ function AdminForm({ initialData, onSave, onCancel }) {
     setUploading(false);
   };
 
-  const handleSubmit = (e) => { e.preventDefault(); onSave(formData); };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaveStatus('saving');
+    try {
+      await onSave(formData);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (err) {
+      setSaveStatus('idle');
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '10px' }}>
         {[{ id: 'text', label: 'Pregunta', Icon: HelpCircle, color: '#a78bfa' }, { id: 'audio', label: 'Audio', Icon: Music, color: '#3b82f6' }, { id: 'video', label: 'Video', Icon: Play, color: '#ef4444' }, { id: 'image', label: 'Imagen', Icon: ImageIcon, color: '#10b981' }].map(t => (
           <button key={t.id} type="button" onClick={() => setFormData({ ...formData, type: t.id })} style={{ padding: '12px', borderRadius: '12px', background: formData.type === t.id ? `${t.color}20` : 'rgba(255,255,255,0.03)', border: `1px solid ${formData.type === t.id ? t.color : 'rgba(255,255,255,0.1)'}`, color: formData.type === t.id ? t.color : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 700 }}><t.Icon size={16} /> {t.label}</button>
         ))}
@@ -557,7 +636,7 @@ function AdminForm({ initialData, onSave, onCancel }) {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
         {formData.options.map((opt, idx) => (
           <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${formData.correctAnswer === idx ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <input type="radio" checked={formData.correctAnswer === idx} onChange={() => setFormData({ ...formData, correctAnswer: idx })} style={{ cursor: 'pointer' }} />
@@ -567,8 +646,20 @@ function AdminForm({ initialData, onSave, onCancel }) {
       </div>
 
       <div style={{ display: 'flex', gap: '15px' }}>
-        <button type="submit" className="btn-premium" style={{ flex: 1 }}><Save size={20} /> Guardar Pregunta</button>
-        <button type="button" onClick={onCancel} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
+        <button
+          type="submit"
+          className="btn-premium"
+          style={{
+            flex: 1,
+            background: saveStatus === 'saved' ? 'linear-gradient(135deg, #10b981, #059669)' : undefined,
+            boxShadow: saveStatus === 'saved' ? '0 10px 20px -5px rgba(16, 185, 129, 0.4)' : undefined
+          }}
+          disabled={saveStatus === 'saving'}
+        >
+          {saveStatus === 'saved' ? <ShieldCheck size={20} /> : <Save size={20} />}
+          {saveStatus === 'saving' ? 'GUARDANDO...' : (saveStatus === 'saved' ? '¡GUARDADO!' : 'GUARDAR')}
+        </button>
+        <button type="button" onClick={onCancel} className="btn-outline" style={{ flex: 1 }}>CANCELAR</button>
       </div>
     </form>
   );
