@@ -412,6 +412,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             side="left"
             width="380px"
             isMobile={appIsMobile || isTablet}
+            hideClose={!isCompact}
           >
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
               <button
@@ -471,7 +472,9 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             <div style={{ maxWidth: '900px', width: '100%', margin: '0 auto' }}>
               {currentEditingQ ? (
                 <div className="glass" style={{ padding: isMobile ? '25px' : '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <h2 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 900, color: 'white', marginBottom: '30px' }}>{currentEditingQ.isNew ? 'Nueva Pregunta' : 'Editar Pregunta'}</h2>
+                  <h2 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 900, color: 'white', marginBottom: '30px' }}>
+                    {currentEditingQ.isNew ? 'Nueva Pregunta' : `Editar Pregunta #${selectedQIdx + 1}`}
+                  </h2>
                   <AdminForm
                     initialData={currentEditingQ}
                     onSave={(q) => {

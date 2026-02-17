@@ -436,7 +436,7 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                 </Sidebar>
 
                 <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at center, #0a0a20, #050510)', overflow: 'auto', position: 'relative' }} onClick={() => setSelectedElementId(null)}>
-                    {currentSlide && (
+                    {currentSlide ? (
                         <div ref={canvasContainerRef} style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'center', transition: 'transform 0.1s ease-out', width: currentSlide?.format === '1/1' ? (isMobile ? '300px' : '700px') : (isMobile ? '340px' : '900px'), aspectRatio: currentSlide?.format === '1/1' ? '1/1' : '16/9', background: '#000', borderRadius: '12px', position: 'relative', overflow: 'hidden', boxShadow: '0 40px 100px -20px black', border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
                             {currentSlide.image_url ? <img src={currentSlide.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} /> : (
                                 <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexDirection: isMobile ? 'column' : 'row', padding: '20px' }}>
@@ -482,6 +482,15 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                                     {['text', 'stamp'].includes(el.type) && <div onMouseDown={(e) => { e.stopPropagation(); setResizingElementId(el.id); }} style={{ position: 'absolute', bottom: '-5px', right: '-5px', width: '15px', height: '15px', background: '#7c3aed', borderRadius: '50%', cursor: 'nwse-resize' }} />}
                                 </div>
                             ))}
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', opacity: 0.5 }}>
+                            <Layers size={80} color="white" strokeWidth={1} style={{ marginBottom: '20px' }} />
+                            <h2 style={{ color: 'white', fontWeight: 900 }}>No hay láminas</h2>
+                            <p style={{ color: '#94a3b8', marginBottom: '30px' }}>Crea tu primera diapositiva para empezar</p>
+                            <button onClick={addSlide} className="btn-premium" style={{ padding: '15px 30px' }}>
+                                <Plus size={20} /> Crear Primera Lámina
+                            </button>
                         </div>
                     )}
                 </main>
@@ -600,6 +609,6 @@ export default function SlideEditor({ slides, onSave, onExit, isActive, onToggle
                     </div>
                 </Sidebar>
             </div>
-        </div>
+        </div >
     );
 }

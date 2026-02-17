@@ -66,6 +66,7 @@ function AppRoot() {
 
     const loadProjectSlides = async (projectId) => {
         setLoading(true);
+        setSlides([]);
         try {
             const slidesData = await dbService.getSlides(projectId);
 

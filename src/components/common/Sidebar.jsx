@@ -9,7 +9,8 @@ export const Sidebar = ({
     children,
     side = 'right',
     width = '350px',
-    isMobile = false
+    isMobile = false,
+    hideClose = false
 }) => {
     return (
         <AnimatePresence>
@@ -60,9 +61,11 @@ export const Sidebar = ({
                             borderBottom: '1px solid rgba(255,255,255,0.05)'
                         }}>
                             <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'white', margin: 0 }}>{title}</h2>
-                            <button onClick={onClose} className="btn-outline" style={{ padding: '8px' }}>
-                                <X size={20} />
-                            </button>
+                            {!hideClose && (
+                                <button onClick={onClose} className="btn-outline" style={{ padding: '8px' }}>
+                                    <X size={20} />
+                                </button>
+                            )}
                         </div>
 
                         <div style={{ flex: 1, overflowY: 'auto', padding: '25px' }}>
