@@ -185,7 +185,7 @@ export default function App() {
                 <QuizView
                     onExit={() => {
                         if (role === 'admin') {
-                            setView('editor');
+                            setView('gallery');
                             setSelectedProject(null);
                         } else {
                             window.location.href = 'https://central.institutotinykids.com/';
