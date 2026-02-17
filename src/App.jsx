@@ -270,13 +270,13 @@ function AppRoot() {
 
             {view === 'gallery' && (
                 <GaleriaView
-                    onOpenGuide={(p) => {
+                    onOpenGuide={async (p) => {
                         setSelectedProject(p);
                         setIsActive(p.is_active);
-                        loadProjectSlides(p.id);
+                        await loadProjectSlides(p.id);
                         setView('editor');
                     }}
-                    onOpenQuiz={(p) => {
+                    onOpenQuiz={async (p) => {
                         setSelectedProject(p);
                         setIsActive(p.is_active);
                         setView('quiz');

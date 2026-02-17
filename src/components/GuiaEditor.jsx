@@ -3,7 +3,7 @@ import {
     Settings as SettingsIcon, Play, X, Key, Plus, Eye, Save,
     Layers, Trash2, Edit2, Copy, Move, ChevronLeft,
     GripVertical, Music, Paintbrush, Type, Upload, ZoomIn, ZoomOut,
-    Image as ImageIcon, Pause, ShieldCheck
+    Image as ImageIcon, Pause, ShieldCheck, LayoutGrid, Target
 } from 'lucide-react';
 import { Header } from './common/Header';
 import { Sidebar } from './common/Sidebar';
