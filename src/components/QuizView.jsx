@@ -330,12 +330,13 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             <button
               onClick={() => setShowSettingsPanel(!showSettingsPanel)}
               className="btn-outline"
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 18px', borderRadius: '14px', fontSize: '0.8rem', background: showSettingsPanel ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '14px', background: showSettingsPanel ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)' }}
+              title="Ajustes"
             >
-              <Settings size={18} /> {!(isMobile || isTablet) && 'Ajustes'}
+              <Settings size={20} />
             </button>
-            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 18px', borderRadius: '14px', fontSize: '0.8rem' }}>
-              <Eye size={18} /> {!(isMobile || isTablet) && 'Resultados'}
+            <button onClick={onViewResults} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '14px' }} title="Resultados">
+              <Eye size={20} />
             </button>
             <button onClick={async () => { const saved = await handleSaveQuiz(questions, false); if (saved && onPreview) onPreview(projectLocal); }} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', borderRadius: '14px', fontSize: '0.8rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }} disabled={loading}>
               <Play size={18} /> {!(isMobile || isCompact) && 'Preview'}
