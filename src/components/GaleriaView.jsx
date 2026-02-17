@@ -106,15 +106,12 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
             return;
         }
 
-        const accessCode = prompt(`Define la Clave de Acceso para ${newProjectName}:`, '123');
-        if (!accessCode) return;
-
         const projectType = addType;
         const newProject = {
             id: projectType === 'quiz' ? `quiz-${crypto.randomUUID()}` : crypto.randomUUID(),
             name: newProjectName.trim(),
             is_active: false,
-            access_code: accessCode,
+            access_code: '',
             questions: [],
             folder_id: currentFolderId,
             order_index: projects.filter(p => p.folder_id === currentFolderId).length
