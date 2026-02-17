@@ -406,7 +406,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                         newQuestions = [...questions, qData];
                         setQuestions(newQuestions);
                         // Cuando es nueva, la cerramos para volver a la lista
-                        setTimeout(() => setEditingQ(null), 1500);
+                        setTimeout(() => setEditingQ(null), 1000);
                       } else {
                         newQuestions = questions.map(item => item.id === q.id ? q : item);
                         setQuestions(newQuestions);
@@ -613,7 +613,7 @@ function AdminForm({ initialData, onSave, onCancel, isMobile }) {
     try {
       await onSave(formData);
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      setTimeout(() => setSaveStatus('idle'), 1000);
     } catch (err) {
       setSaveStatus('idle');
     }
