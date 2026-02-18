@@ -724,30 +724,37 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             </div>
           </div>
 
-          {/* Barra colapsable flotante â€” esquina inferior derecha */}
-          <div style={{ position: 'absolute', bottom: 0, right: 0, zIndex: 50 }}>
-            {/* PestaÃ±a toggle */}
-            <button
-              onClick={() => setShowLifelines(prev => !prev)}
-              style={{
-                position: 'absolute', bottom: showLifelines ? '72px' : 0, right: '8px',
-                background: 'rgba(30,30,50,0.95)', border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: '10px 10px 0 0', padding: '4px 12px', color: '#94a3b8',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
-                fontSize: '0.6rem', fontWeight: 700, transition: 'bottom 0.25s ease', zIndex: 51
-              }}>
-              <ChevronUp size={12} style={{ transform: showLifelines ? 'rotate(180deg)' : 'none', transition: '0.25s' }} />
-              Ayudas
-            </button>
-            {/* Panel */}
+          {/* Drawer ayudas landscape - siempre visible */}
+          <div style={{
+            position: 'absolute', bottom: 0, right: 0, zIndex: 50,
+            display: 'flex', flexDirection: 'column', alignItems: 'flex-end'
+          }}>
             <div style={{
-              background: 'rgba(10,10,20,0.97)', borderTop: '1px solid rgba(255,255,255,0.1)',
-              borderLeft: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px 0 0 0',
-              padding: '10px 16px', transform: showLifelines ? 'translateY(0)' : 'translateY(100%)',
-              transition: 'transform 0.25s ease', maxWidth: '220px'
+              background: 'rgba(10,10,20,0.97)',
+              borderTop: '1px solid rgba(255,255,255,0.1)',
+              borderLeft: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '12px 0 0 0',
+              padding: showLifelines ? '10px 16px' : '0 16px',
+              maxHeight: showLifelines ? '120px' : '0px',
+              overflow: 'hidden',
+              transition: 'max-height 0.25s ease, padding 0.25s ease',
+              maxWidth: '240px'
             }}>
               {lifelineBar}
             </div>
+            <button
+              onClick={() => setShowLifelines(prev => !prev)}
+              style={{
+                background: 'rgba(30,30,50,0.97)', border: '1px solid rgba(255,255,255,0.15)',
+                borderBottom: 'none', borderRadius: '10px 10px 0 0',
+                padding: '4px 14px', color: '#94a3b8',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                fontSize: '0.62rem', fontWeight: 700, marginRight: '8px'
+              }}
+            >
+              <ChevronUp size={12} style={{ transform: showLifelines ? 'rotate(180deg)' : 'none', transition: '0.25s' }} />
+              Ayudas
+            </button>
           </div>
         </div>
       );
