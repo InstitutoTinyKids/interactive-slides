@@ -540,20 +540,72 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     const currentQ = questions[currentQIndex];
     if (!currentQ) return null;
 
+    const isTextQ = currentQ.type === 'text';
+    const LETTER_COLORS = ['#a78bfa', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#ec4899'];
+
+    // Columnas de opciones según tipo y pantalla
+    const optCols = isMobile
+      ? '1fr'
+      : currentQ.options.length <= 2 ? '1fr' : '1fr 1fr';
+
     return (
-      <div style={{ height: '100vh', width: '100vw', background: '#000', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '10px 25px', borderRadius: '100px', border: '1px solid rgba(59, 130, 246, 0.3)', fontSize: '0.9rem', fontWeight: 700, color: '#93c5fd' }}>Pregunta {currentQIndex + 1} / {questions.length}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem', fontWeight: 900 }}><Clock size={24} color="#3b82f6" /> {formatTime(timer)}</div>
+      <div style={{ height: '100vh', width: '100vw', background: '#000', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '12px' : '20px', position: 'relative', overflow: 'hidden' }}>
+
+        {/* ── BARRA SUPERIOR ── */}
+        <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '10px' : '16px', flexShrink: 0 }}>
+          <div style={{ background: 'rgba(59,130,246,0.15)', padding: isMobile ? '7px 16px' : '10px 25px', borderRadius: '100px', border: '1px solid rgba(59,130,246,0.3)', fontSize: isMobile ? '0.75rem' : '0.9rem', fontWeight: 700, color: '#93c5fd' }}>
+            Pregunta {currentQIndex + 1} / {questions.length}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '1.1rem' : '1.4rem', fontWeight: 900 }}>
+            <Clock size={isMobile ? 18 : 24} color="#3b82f6" /> {formatTime(timer)}
+          </div>
         </div>
 
-        <div style={{ flex: 1, width: '100%', maxWidth: '1200px', display: 'flex', flexDirection: isLandscape ? 'row' : 'column', alignItems: 'center', gap: '40px', overflow: 'hidden', padding: '20px' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center', gap: '20px', minWidth: '40%' }}>
-            <h2 style={{ fontSize: (currentQ.type === 'image' || currentQ.type === 'video') ? '1.5rem' : '2.5rem', fontWeight: 900 }}>{currentQ.question}</h2>
-            {currentQ.type === 'image' && currentQ.mediaUrl && <img src={currentQ.mediaUrl} onClick={() => setFullImage(currentQ.mediaUrl)} style={{ width: '100%', maxHeight: '40vh', objectFit: 'contain', borderRadius: '15px' }} />}
-            {currentQ.type === 'audio' && currentQ.mediaUrl && <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />}
+        {/* ── CUERPO PRINCIPAL ── */}
+        <div style={{
+          flex: 1,
+          width: '100%',
+          maxWidth: '1100px',
+          display: 'flex',
+          // Texto en landscape → lado a lado. Media siempre columna para dar espacio al media.
+          flexDirection: isTextQ && isLandscape && !isMobile ? 'row' : 'column',
+          alignItems: 'center',
+          gap: isMobile ? '12px' : '24px',
+          overflow: 'hidden',
+          minHeight: 0,
+        }}>
+
+          {/* ── PREGUNTA + MEDIA ── */}
+          <div style={{
+            flex: isTextQ && isLandscape && !isMobile ? '0 0 40%' : '0 0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            textAlign: 'center',
+            gap: '12px',
+            width: '100%',
+          }}>
+            <h2 style={{
+              fontSize: isTextQ
+                ? (isMobile ? '1.25rem' : isTablet ? '1.6rem' : '2rem')
+                : (isMobile ? '1rem' : '1.3rem'),
+              fontWeight: 900,
+              lineHeight: 1.3,
+              margin: 0,
+            }}>
+              {currentQ.question}
+            </h2>
+
+            {currentQ.type === 'image' && currentQ.mediaUrl && (
+              <img src={currentQ.mediaUrl} onClick={() => setFullImage(currentQ.mediaUrl)}
+                style={{ width: '100%', maxHeight: isMobile ? '26vh' : '36vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
+            )}
+            {currentQ.type === 'audio' && currentQ.mediaUrl && (
+              <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />
+            )}
             {currentQ.type === 'video' && currentQ.mediaUrl && (
-              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '40vh', borderRadius: '15px', overflow: 'hidden' }}>
+              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: isMobile ? '26vh' : '36vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
                 {(() => {
                   const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
                   const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${currentQ.videoStart || 0}${currentQ.videoEnd ? `&end=${currentQ.videoEnd}` : ''}&autoplay=1&enablejsapi=1`;
@@ -563,39 +615,170 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             )}
           </div>
 
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: currentQ.options.length > 2 ? '1fr 1fr' : '1fr', gap: '15px', width: '100%' }}>
+          {/* ── OPCIONES ── */}
+          <div style={{
+            flex: 1,
+            width: '100%',
+            display: 'grid',
+            gridTemplateColumns: optCols,
+            gap: isTextQ ? (isMobile ? '10px' : '14px') : (isMobile ? '8px' : '10px'),
+            alignContent: 'center',
+            minHeight: 0,
+            overflowY: 'auto',
+          }}>
             {currentQ.options.map((opt, idx) => {
-              if (hiddenOptions.includes(idx)) return <div key={idx} style={{ opacity: 0 }} />;
-              let color = 'rgba(255,255,255,0.05)';
-              let border = 'rgba(255,255,255,0.1)';
-              if (feedback) {
-                if (idx === currentQ.correctAnswer) { color = 'rgba(16, 185, 129, 0.2)'; border = '#10b981'; }
-                else if (idx === selectedOption) { color = 'rgba(239, 68, 68, 0.2)'; border = '#ef4444'; }
+              if (hiddenOptions.includes(idx)) {
+                return <div key={idx} style={{ opacity: 0, minHeight: isTextQ ? (isMobile ? '70px' : '100px') : '46px' }} />;
               }
-              return (
-                <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null} style={{ padding: '25px', borderRadius: '15px', background: color, border: `1px solid ${border}`, color: 'white', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', transition: '0.2s', fontSize: '1.1rem', fontWeight: 700 }}>
-                  <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: feedback && idx === currentQ.correctAnswer ? '#10b981' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {feedback && idx === currentQ.correctAnswer ? <Check size={16} /> : (feedback && idx === selectedOption ? <X size={16} /> : String.fromCharCode(65 + idx))}
-                  </div>
-                  {opt}
-                </button>
-              );
+
+              const isCorrectOpt = !!feedback && idx === currentQ.correctAnswer;
+              const isWrongOpt = !!feedback && idx === selectedOption && idx !== currentQ.correctAnswer;
+              const letterColor = LETTER_COLORS[idx] || '#a78bfa';
+
+              let bgColor = 'rgba(255,255,255,0.04)';
+              let borderColor = 'rgba(255,255,255,0.1)';
+              let glowStyle = {};
+              if (isCorrectOpt) { bgColor = 'rgba(16,185,129,0.18)'; borderColor = '#10b981'; glowStyle = { boxShadow: '0 0 22px rgba(16,185,129,0.4)' }; }
+              else if (isWrongOpt) { bgColor = 'rgba(239,68,68,0.18)'; borderColor = '#ef4444'; glowStyle = { boxShadow: '0 0 22px rgba(239,68,68,0.4)' }; }
+
+              if (isTextQ) {
+                /* ── TARJETA GRANDE: solo preguntas de texto ── */
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswer(idx)}
+                    disabled={feedback !== null}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: isMobile ? '7px' : '11px',
+                      padding: isMobile ? '14px 10px' : isTablet ? '18px 14px' : '22px 18px',
+                      minHeight: isMobile ? '80px' : isTablet ? '100px' : '115px',
+                      borderRadius: '20px',
+                      background: bgColor,
+                      border: `2px solid ${borderColor}`,
+                      color: 'white',
+                      cursor: feedback !== null ? 'default' : 'pointer',
+                      transition: 'all 0.22s ease',
+                      textAlign: 'center',
+                      ...glowStyle,
+                    }}
+                    onMouseEnter={e => {
+                      if (!feedback) {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.09)';
+                        e.currentTarget.style.borderColor = letterColor;
+                        e.currentTarget.style.transform = 'translateY(-3px)';
+                        e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.4)`;
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!feedback) {
+                        e.currentTarget.style.background = bgColor;
+                        e.currentTarget.style.borderColor = borderColor;
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = glowStyle.boxShadow || 'none';
+                      }
+                    }}
+                  >
+                    {/* Badge letra */}
+                    <div style={{
+                      width: isMobile ? '30px' : '38px',
+                      height: isMobile ? '30px' : '38px',
+                      borderRadius: '10px',
+                      background: isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : `${letterColor}22`,
+                      border: `2px solid ${isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : letterColor}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                      color: isCorrectOpt || isWrongOpt ? 'white' : letterColor,
+                      fontWeight: 900,
+                      fontSize: isMobile ? '0.8rem' : '1rem',
+                    }}>
+                      {isCorrectOpt ? <Check size={isMobile ? 14 : 18} /> : isWrongOpt ? <X size={isMobile ? 14 : 18} /> : String.fromCharCode(65 + idx)}
+                    </div>
+                    {/* Texto opción */}
+                    <span style={{
+                      fontSize: isMobile ? '0.8rem' : isTablet ? '0.9rem' : '1rem',
+                      fontWeight: 700,
+                      lineHeight: 1.35,
+                      wordBreak: 'break-word',
+                      overflowWrap: 'anywhere',
+                    }}>
+                      {opt}
+                    </span>
+                  </button>
+                );
+              } else {
+                /* ── FILA COMPACTA: imagen / audio / video ── */
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleAnswer(idx)}
+                    disabled={feedback !== null}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: isMobile ? '10px 14px' : '13px 18px',
+                      borderRadius: '14px',
+                      background: bgColor,
+                      border: `1px solid ${borderColor}`,
+                      color: 'white',
+                      cursor: feedback !== null ? 'default' : 'pointer',
+                      transition: 'all 0.2s ease',
+                      textAlign: 'left',
+                      ...glowStyle,
+                    }}
+                    onMouseEnter={e => { if (!feedback) { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.borderColor = letterColor; } }}
+                    onMouseLeave={e => { if (!feedback) { e.currentTarget.style.background = bgColor; e.currentTarget.style.borderColor = borderColor; } }}
+                  >
+                    <div style={{
+                      width: isMobile ? '28px' : '32px',
+                      height: isMobile ? '28px' : '32px',
+                      borderRadius: '8px', flexShrink: 0,
+                      background: isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : `${letterColor}22`,
+                      border: `1px solid ${isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : letterColor}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 900, fontSize: '0.85rem',
+                      color: isCorrectOpt || isWrongOpt ? 'white' : letterColor,
+                    }}>
+                      {isCorrectOpt ? <Check size={14} /> : isWrongOpt ? <X size={14} /> : String.fromCharCode(65 + idx)}
+                    </div>
+                    <span style={{
+                      fontSize: isMobile ? '0.8rem' : '0.95rem',
+                      fontWeight: 700,
+                      lineHeight: 1.3,
+                      wordBreak: 'break-word',
+                      overflowWrap: 'anywhere',
+                    }}>
+                      {opt}
+                    </span>
+                  </button>
+                );
+              }
             })}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '30px', margin: '20px 0' }}>
+        {/* ── AYUDAS ── */}
+        <div style={{ display: 'flex', gap: '30px', margin: isMobile ? '10px 0 4px' : '16px 0 6px', flexShrink: 0 }}>
           <div style={{ textAlign: 'center' }}>
-            <button onClick={handleFiftyFifty} disabled={feedback || hiddenOptions.length > 0} style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.2)', border: '2px solid #3b82f6', color: '#3b82f6', fontWeight: 900, cursor: 'pointer', opacity: (feedback || hiddenOptions.length > 0) ? 0.3 : 1 }}>50:50</button>
-            <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#3b82f6', marginTop: '5px' }}>+10s</p>
+            <button onClick={handleFiftyFifty} disabled={feedback || hiddenOptions.length > 0}
+              style={{ width: isMobile ? '56px' : '70px', height: isMobile ? '56px' : '70px', borderRadius: '50%', background: 'rgba(59,130,246,0.2)', border: '2px solid #3b82f6', color: '#3b82f6', fontWeight: 900, cursor: 'pointer', opacity: (feedback || hiddenOptions.length > 0) ? 0.3 : 1, fontSize: isMobile ? '0.75rem' : '1rem' }}>50:50</button>
+            <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#3b82f6', marginTop: '4px' }}>+10s</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <button onClick={handlePass} disabled={feedback} style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(124, 58, 237, 0.2)', border: '2px solid #7c3aed', color: '#a78bfa', cursor: 'pointer', opacity: feedback ? 0.3 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SkipForward size={24} /></button>
-            <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#a78bfa', marginTop: '5px' }}>Pasar (+30s)</p>
+            <button onClick={handlePass} disabled={feedback}
+              style={{ width: isMobile ? '56px' : '70px', height: isMobile ? '56px' : '70px', borderRadius: '50%', background: 'rgba(124,58,237,0.2)', border: '2px solid #7c3aed', color: '#a78bfa', cursor: 'pointer', opacity: feedback ? 0.3 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <SkipForward size={isMobile ? 20 : 24} />
+            </button>
+            <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#a78bfa', marginTop: '4px' }}>Pasar (+30s)</p>
           </div>
         </div>
 
-        <button onClick={() => { if (window.confirm('¿Cancelar juego?')) { onExit(); } }} style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6 }}>Cancelar Juego</button>
+        <button onClick={() => { if (window.confirm('¿Cancelar juego?')) { onExit(); } }}
+          style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6, flexShrink: 0 }}>Cancelar Juego</button>
 
         {fullImage && (
           <div onClick={() => setFullImage(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, cursor: 'zoom-out' }}>
