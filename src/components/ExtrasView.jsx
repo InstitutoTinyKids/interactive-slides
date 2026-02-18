@@ -79,18 +79,24 @@ export default function ExtrasView({ onExit, onOpenBook }) {
 
             let finalExtras = eData || [];
 
-            // Auto-create Reading Club if it doesn't exist
-            if (!finalExtras.find(e => e.type === 'book')) {
+            // Check if Reading Club exists (either by type or content marker)
+            const bookExists = finalExtras.some(e => e.type === 'book' || e.content === 'INTERNAL_BOOK');
+
+            if (!bookExists) {
                 const newBook = {
                     title: 'BOOK / RC',
-                    type: 'book',
-                    content: 'INTERNAL_BOOK',
+                    type: 'link', // Use a valid type from DB constraint
+                    content: 'INTERNAL_BOOK', // Marker to identify it's the Reading Club
                     folder_id: null,
                     is_active: true,
-                    order_index: -1 // High priority
+                    order_index: -1
                 };
-                await dbService.createExtra(newBook);
-                finalExtras = await dbService.getExtras();
+                try {
+                    await dbService.createExtra(newBook);
+                    finalExtras = await dbService.getExtras();
+                } catch (createErr) {
+                    console.error('Failed to auto-create book, might already exist or DB issue:', createErr);
+                }
             }
 
             setExtras(finalExtras);
@@ -156,10 +162,11 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 }
             } else {
+                const isBook = modalType === 'book' || editingExtra?.content === 'INTERNAL_BOOK';
                 const extraData = {
                     title: formData.title.trim(),
-                    type: modalType,
-                    content: modalType === 'book' ? 'INTERNAL_BOOK' : formData.content.trim(),
+                    type: isBook ? 'link' : modalType, // Ensure 'link' for books
+                    content: isBook ? 'INTERNAL_BOOK' : formData.content.trim(),
                     folder_id: currentFolderId,
                     is_active: formData.is_active
                 };
@@ -220,12 +227,13 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const handleOpen = (extra) => {
-        if (extra.type === 'link') {
+        const isBook = extra.type === 'book' || extra.content === 'INTERNAL_BOOK';
+        if (isBook) {
+            onOpenBook();
+        } else if (extra.type === 'link') {
             window.open(extra.content, '_blank');
         } else if (extra.type === 'game') {
             window.open(`/games/${extra.content}`, '_blank');
-        } else if (extra.type === 'book') {
-            onOpenBook();
         }
     };
 
@@ -485,29 +493,29 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                                     ) : (
                                                         <div style={{
                                                             padding: '12px',
-                                                            background: extra.type === 'link' ? 'rgba(59, 130, 246, 0.1)' :
-                                                                extra.type === 'book' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.4))' :
+                                                            background: (extra.type === 'link' && extra.content !== 'INTERNAL_BOOK') ? 'rgba(59, 130, 246, 0.1)' :
+                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.4))' :
                                                                     'rgba(249, 115, 22, 0.1)',
                                                             borderRadius: '12px',
-                                                            color: extra.type === 'link' ? '#3b82f6' :
-                                                                extra.type === 'book' ? '#f59e0b' :
+                                                            color: (extra.type === 'link' && extra.content !== 'INTERNAL_BOOK') ? '#3b82f6' :
+                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '#f59e0b' :
                                                                     '#f97316',
-                                                            boxShadow: extra.type === 'book' ? '0 0 15px rgba(245, 158, 11, 0.3)' : 'none'
+                                                            boxShadow: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '0 0 15px rgba(245, 158, 11, 0.3)' : 'none'
                                                         }}>
-                                                            {extra.type === 'link' ? <LinkIcon size={24} /> :
-                                                                extra.type === 'book' ? <BookOpen size={24} /> :
+                                                            {(extra.type === 'link' && extra.content !== 'INTERNAL_BOOK') ? <LinkIcon size={24} /> :
+                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? <BookOpen size={24} /> :
                                                                     <Gamepad2 size={24} />}
                                                         </div>
                                                     )}
                                                     <div style={{ flex: 1 }}>
-                                                        <h3 style={{ fontSize: extra.type === 'book' ? '1.3rem' : '1.1rem', fontWeight: 800, color: 'white', margin: 0, letterSpacing: extra.type === 'book' ? '0.02em' : 'normal' }}>
+                                                        <h3 style={{ fontSize: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '1.3rem' : '1.1rem', fontWeight: 800, color: 'white', margin: 0, letterSpacing: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '0.02em' : 'normal' }}>
                                                             {extra.title}
                                                         </h3>
-                                                        <p style={{ fontSize: '0.7rem', color: extra.type === 'book' ? '#f59e0b' : '#94a3b8', margin: 0, textTransform: 'uppercase', fontWeight: 700 }}>
-                                                            {extra.type === 'link' ? 'Enlace' : extra.type === 'book' ? '⭐ Sección Especial' : 'Juego'}
+                                                        <p style={{ fontSize: '0.7rem', color: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '#f59e0b' : '#94a3b8', margin: 0, textTransform: 'uppercase', fontWeight: 700 }}>
+                                                            {extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' ? 'Enlace' : (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '⭐ Sección Especial' : 'Juego'}
                                                         </p>
                                                     </div>
-                                                    {!isSortMode && extra.type !== 'book' && (
+                                                    {!isSortMode && extra.type !== 'book' && extra.content !== 'INTERNAL_BOOK' && (
                                                         <input type="checkbox" checked={selectedExtras.includes(extra.id)} onChange={() => toggleExtraSelection(extra.id)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
                                                     )}
                                                 </div>
@@ -561,7 +569,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                                             <button onClick={() => handleOpen(extra)} className="btn-premium" style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}>
                                                                 <ExternalLink size={14} /> Abrir
                                                             </button>
-                                                            {extra.type !== 'book' && (
+                                                            {extra.type !== 'book' && extra.content !== 'INTERNAL_BOOK' && (
                                                                 <button onClick={() => handleDelete(extra.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                                     <Trash2 size={14} />
                                                                 </button>
