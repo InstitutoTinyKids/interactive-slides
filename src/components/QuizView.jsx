@@ -417,7 +417,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
               <button
                 onClick={() => {
-                  setEditingQ({ id: Date.now(), question: '', options: ['', '', '', ''], correctAnswer: 0, isNew: true });
+                  setEditingQ({ id: Date.now(), question: '', options: ['', ''], correctAnswer: 0, isNew: true });
                   if (appIsMobile || isTablet) setShowQuestionsPanel(false);
                 }}
                 className="btn-premium"
@@ -652,7 +652,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 
 function AdminForm({ initialData, onSave, onCancel, isMobile }) {
   const { notify } = useApp();
-  const [formData, setFormData] = useState({ question: '', type: 'text', mediaUrl: '', videoStart: 0, videoEnd: 0, options: ['', '', '', ''], correctAnswer: 0 });
+  const [formData, setFormData] = useState({ question: '', type: 'text', mediaUrl: '', videoStart: 0, videoEnd: 0, options: ['', ''], correctAnswer: 0 });
   const [uploading, setUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved
 
@@ -710,13 +710,44 @@ function AdminForm({ initialData, onSave, onCancel, isMobile }) {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
-        {formData.options.map((opt, idx) => (
-          <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${formData.correctAnswer === idx ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <input type="radio" checked={formData.correctAnswer === idx} onChange={() => setFormData({ ...formData, correctAnswer: idx })} style={{ cursor: 'pointer' }} />
-            <input style={{ background: 'none', border: 'none', color: 'white', width: '100%', outline: 'none' }} value={opt} onChange={e => { const copy = [...formData.options]; copy[idx] = e.target.value; setFormData({ ...formData, options: copy }); }} placeholder={`Opción ${idx + 1}`} required />
-          </div>
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px' }}>
+          {formData.options.map((opt, idx) => (
+            <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${formData.correctAnswer === idx ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input type="radio" checked={formData.correctAnswer === idx} onChange={() => setFormData({ ...formData, correctAnswer: idx })} style={{ cursor: 'pointer', flexShrink: 0 }} />
+              <input style={{ background: 'none', border: 'none', color: 'white', width: '100%', outline: 'none', minWidth: 0 }} value={opt} onChange={e => { const copy = [...formData.options]; copy[idx] = e.target.value; setFormData({ ...formData, options: copy }); }} placeholder={`Opción ${idx + 1}`} required />
+              {formData.options.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const copy = formData.options.filter((_, i) => i !== idx);
+                    const newCorrect = formData.correctAnswer === idx
+                      ? 0
+                      : formData.correctAnswer > idx
+                        ? formData.correctAnswer - 1
+                        : formData.correctAnswer;
+                    setFormData({ ...formData, options: copy, correctAnswer: newCorrect });
+                  }}
+                  style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', flexShrink: 0, opacity: 0.7, display: 'flex', alignItems: 'center' }}
+                  title="Eliminar opción"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        {formData.options.length < 6 && (
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, options: [...formData.options, ''] })}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.2)', color: '#64748b', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, transition: '0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.5)'; e.currentTarget.style.color = '#a78bfa'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#64748b'; }}
+          >
+            <Plus size={16} /> Agregar Opción
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: '15px' }}>
