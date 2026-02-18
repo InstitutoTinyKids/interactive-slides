@@ -656,7 +656,48 @@ function AdminForm({ initialData, onSave, onCancel, isMobile }) {
   const [uploading, setUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved
 
-  useEffect(() => { if (initialData) setFormData({ ...formData, ...initialData }); }, [initialData]);
+  // --- Helpers para tiempo de video ---
+  // Convierte texto "M:SS" o "SS" a segundos (número)
+  const parseTimeInput = (val) => {
+    const str = String(val).trim();
+    if (str.includes(':')) {
+      const parts = str.split(':');
+      const mins = parseInt(parts[0]) || 0;
+      const secs = parseInt(parts[1]) || 0;
+      return mins * 60 + secs;
+    }
+    return parseInt(str) || 0;
+  };
+
+  // Convierte segundos a texto "M:SS" o "SS" para mostrar en el campo
+  const secsToDisplay = (secs) => {
+    const s = parseInt(secs) || 0;
+    if (s < 60) return String(s);
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${m}:${r < 10 ? '0' : ''}${r}`;
+  };
+
+  // Preview legible de un valor de campo (texto) → "1:30 (90 seg)"
+  const timePreview = (val) => {
+    const s = parseTimeInput(val);
+    if (s === 0) return null;
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m > 0 ? `${m}:${r < 10 ? '0' : ''}${r} (${s} seg)` : `${s} seg`;
+  };
+
+  // Estados de texto para los campos de tiempo
+  const [videoStartText, setVideoStartText] = useState('0');
+  const [videoEndText, setVideoEndText] = useState('0');
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData(prev => ({ ...prev, ...initialData }));
+      setVideoStartText(secsToDisplay(initialData.videoStart || 0));
+      setVideoEndText(secsToDisplay(initialData.videoEnd || 0));
+    }
+  }, [initialData]);
 
   const handleFileUpload = async (e, type) => {
     const file = e.target.files[0];
@@ -666,7 +707,7 @@ function AdminForm({ initialData, onSave, onCancel, isMobile }) {
       const fileName = `quiz/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
       await dbService.uploadFile('media', fileName, file);
       const publicUrl = dbService.getPublicUrl('media', fileName);
-      setFormData({ ...formData, mediaUrl: publicUrl });
+      setFormData(prev => ({ ...prev, mediaUrl: publicUrl }));
       notify.success('Archivo subido');
     } catch (error) {
       notify.error('Error: ' + error.message);
@@ -702,13 +743,48 @@ function AdminForm({ initialData, onSave, onCancel, isMobile }) {
 
       {formData.type === 'video' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input className="premium-input" placeholder="URL de Youtube" value={formData.mediaUrl} onChange={e => setFormData({ ...formData, mediaUrl: e.target.value })} />
+          <input className="premium-input" placeholder="URL de Youtube" value={formData.mediaUrl} onChange={e => setFormData(prev => ({ ...prev, mediaUrl: e.target.value }))} />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-            <input className="premium-input" placeholder="Inicio (seg)" type="number" value={formData.videoStart} onChange={e => setFormData({ ...formData, videoStart: parseInt(e.target.value) || 0 })} />
-            <input className="premium-input" placeholder="Fin (seg)" type="number" value={formData.videoEnd} onChange={e => setFormData({ ...formData, videoEnd: parseInt(e.target.value) || 0 })} />
+            {/* Campo Inicio */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <input
+                className="premium-input"
+                placeholder="Inicio (ej: 50 ó 1:30)"
+                type="text"
+                value={videoStartText}
+                onChange={e => {
+                  setVideoStartText(e.target.value);
+                  setFormData(prev => ({ ...prev, videoStart: parseTimeInput(e.target.value) }));
+                }}
+              />
+              {timePreview(videoStartText) && (
+                <span style={{ fontSize: '0.72rem', color: '#a78bfa', fontWeight: 700, paddingLeft: '4px' }}>
+                  ▶ {timePreview(videoStartText)}
+                </span>
+              )}
+            </div>
+            {/* Campo Fin */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <input
+                className="premium-input"
+                placeholder="Fin (ej: 55 ó 2:00)"
+                type="text"
+                value={videoEndText}
+                onChange={e => {
+                  setVideoEndText(e.target.value);
+                  setFormData(prev => ({ ...prev, videoEnd: parseTimeInput(e.target.value) }));
+                }}
+              />
+              {timePreview(videoEndText) && (
+                <span style={{ fontSize: '0.72rem', color: '#a78bfa', fontWeight: 700, paddingLeft: '4px' }}>
+                  ▶ {timePreview(videoEndText)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
+
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px' }}>
