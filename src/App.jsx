@@ -53,6 +53,17 @@ function AppRoot() {
         };
     }, []);
 
+    // Disable Pull-to-refresh except in Home view
+    useEffect(() => {
+        if (view === 'entry') {
+            document.documentElement.style.overscrollBehaviorY = 'auto';
+            document.body.style.overscrollBehaviorY = 'auto';
+        } else {
+            document.documentElement.style.overscrollBehaviorY = 'none';
+            document.body.style.overscrollBehaviorY = 'none';
+        }
+    }, [view]);
+
     // Preload Slide Assets
     useEffect(() => {
         if (slides.length > 0 && view === 'viewer') {
