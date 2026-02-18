@@ -566,24 +566,20 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
       else if (isWrongOpt) { bgColor = 'rgba(239,68,68,0.18)'; borderColor = '#ef4444'; glowStyle = { boxShadow: '0 0 22px rgba(239,68,68,0.4)' }; }
 
       if (isTextQ) {
-        /* â”€â”€ TARJETA GRANDE (texto) â”€â”€ */
-        const cardPad = isMobile
-          ? (isLandscape ? '7px 8px' : '11px 10px')
-          : isTablet ? '18px 14px' : '22px 18px';
-        const cardMinH = isMobile
-          ? (isLandscape ? '44px' : '68px')
-          : isTablet ? '100px' : '115px';
-        const badgeSize = isMobile ? (isLandscape ? '22px' : '26px') : '38px';
+        /* -- FILA: badge izquierda + texto derecha -- */
+        const badgeSize = isMobile ? (isLandscape ? '22px' : '26px') : '34px';
         const textSize = isMobile ? (isLandscape ? '0.68rem' : '0.76rem') : isTablet ? '0.9rem' : '1rem';
+        const cardPad = isMobile ? (isLandscape ? '6px 10px' : '9px 12px') : isTablet ? '14px 16px' : '16px 20px';
+        const cardMinH = isMobile ? (isLandscape ? '40px' : '52px') : isTablet ? '64px' : '72px';
         return (
           <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null}
             style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: isMobile ? (isLandscape ? '3px' : '6px') : '11px',
-              padding: cardPad, minHeight: cardMinH, borderRadius: '16px',
+              display: 'flex', flexDirection: 'row', alignItems: 'center',
+              gap: isMobile ? '10px' : '14px',
+              padding: cardPad, minHeight: cardMinH, borderRadius: '14px',
               background: bgColor, border: `2px solid ${borderColor}`, color: 'white',
               cursor: feedback !== null ? 'default' : 'pointer', transition: 'all 0.22s ease',
-              textAlign: 'center', ...glowStyle
+              textAlign: 'left', width: '100%', ...glowStyle
             }}
             onMouseEnter={e => { if (!feedback) { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.borderColor = letterColor; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
             onMouseLeave={e => { if (!feedback) { e.currentTarget.style.background = bgColor; e.currentTarget.style.borderColor = borderColor; e.currentTarget.style.transform = 'translateY(0)'; } }}
@@ -596,9 +592,9 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
               color: isCorrectOpt || isWrongOpt ? 'white' : letterColor, fontWeight: 900,
               fontSize: isMobile ? '0.65rem' : '1rem'
             }}>
-              {isCorrectOpt ? <Check size={isMobile ? 12 : 18} /> : isWrongOpt ? <X size={isMobile ? 12 : 18} /> : String.fromCharCode(65 + idx)}
+              {isCorrectOpt ? <Check size={isMobile ? 12 : 16} /> : isWrongOpt ? <X size={isMobile ? 12 : 16} /> : String.fromCharCode(65 + idx)}
             </div>
-            <span style={{ fontSize: textSize, fontWeight: 700, lineHeight: 1.25, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{opt}</span>
+            <span style={{ fontSize: textSize, fontWeight: 700, lineHeight: 1.3, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{opt}</span>
           </button>
         );
       } else {
@@ -948,7 +944,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#a78bfa', marginTop: '4px' }}>Pasar (+30s)</p>
           </div>
         </div>
-        <button onClick={() => { if (window.confirm('Â¿Cancelar juego?')) { onExit(); } }}
+        <button onClick={() => { if (window.confirm('¿Cancelar juego?')) { onExit(); } }}
           style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6, flexShrink: 0 }}>
           Cancelar Juego
         </button>
@@ -961,49 +957,46 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
         )}
       </div>
     );
+  }
 
+  if (view === 'results') {
+    const correct = answersLog.filter(a => a.isCorrect).length;
+    const incorrect = answersLog.filter(a => !a.isCorrect && !a.isSkipped).length;
+    const skipped = answersLog.filter(a => a.isSkipped).length;
 
-    if (view === 'results') {
-      const correct = answersLog.filter(a => a.isCorrect).length;
-      const incorrect = answersLog.filter(a => !a.isCorrect && !a.isSkipped).length;
-      const skipped = answersLog.filter(a => a.isSkipped).length;
+    return (
+      <div style={{ height: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div className="glass anim-up" style={{ padding: '40px', maxWidth: '800px', width: '100%', textAlign: 'center' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🏆</div>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px' }}>¡Juego Terminado!</h2>
+          <p style={{ color: '#94a3b8', marginBottom: '40px' }}>Estadísticas de la partida</p>
 
-      return (
-        <div style={{ height: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass anim-up" style={{ padding: '40px', maxWidth: '800px', width: '100%', textAlign: 'center' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '20px' }}>†</div>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px' }}>Â¡Juego Terminado!</h2>
-            <p style={{ color: '#94a3b8', marginBottom: '40px' }}>EstadÃ­sticas de la partida</p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '15px' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{formatTime(timer)}</div>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Tiempo</div>
-              </div>
-              <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '20px', borderRadius: '15px', color: '#10b981' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{correct}</div>
-                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Correctas</div>
-              </div>
-              <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '20px', borderRadius: '15px', color: '#ef4444' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{incorrect}</div>
-                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Incorrectas</div>
-              </div>
-              <div style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '15px', color: '#a78bfa' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{skipped}</div>
-                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Saltadas</div>
-              </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '15px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{formatTime(timer)}</div>
+              <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Tiempo</div>
             </div>
-
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <button onClick={restartApp} className="btn-premium" style={{ flex: 1 }}>Reiniciar</button>
-              <button onClick={onExit} className="btn-outline" style={{ flex: 1 }}>Volver</button>
+            <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '20px', borderRadius: '15px', color: '#10b981' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{correct}</div>
+              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Correctas</div>
+            </div>
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '20px', borderRadius: '15px', color: '#ef4444' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{incorrect}</div>
+              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Incorrectas</div>
+            </div>
+            <div style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '15px', color: '#a78bfa' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{skipped}</div>
+              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Saltadas</div>
             </div>
           </div>
-        </div>
-      );
-    }
 
-    return null;
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <button onClick={restartApp} className="btn-premium" style={{ flex: 1 }}>Reiniciar</button>
+            <button onClick={onExit} className="btn-outline" style={{ flex: 1 }}>Volver</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   function AdminForm({ initialData, onSave, onCancel, isMobile }) {
@@ -1116,7 +1109,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <input
                   className="premium-input"
-                  placeholder="Inicio (ej: 50 Ã³ 1:30)"
+                  placeholder="Inicio (ej: 50 ó 1:30)"
                   type="text"
                   value={videoStartText}
                   onChange={e => {
@@ -1134,7 +1127,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <input
                   className="premium-input"
-                  placeholder="Fin (ej: 55 Ã³ 2:00)"
+                  placeholder="Fin (ej: 55 ó 2:00)"
                   type="text"
                   value={videoEndText}
                   onChange={e => {
@@ -1158,7 +1151,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             {formData.options.map((opt, idx) => (
               <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${formData.correctAnswer === idx ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <input type="radio" checked={formData.correctAnswer === idx} onChange={() => setFormData({ ...formData, correctAnswer: idx })} style={{ cursor: 'pointer', flexShrink: 0 }} />
-                <input style={{ background: 'none', border: 'none', color: 'white', width: '100%', outline: 'none', minWidth: 0 }} value={opt} onChange={e => { const copy = [...formData.options]; copy[idx] = e.target.value; setFormData({ ...formData, options: copy }); }} placeholder={`OpciÃ³n ${idx + 1}`} required />
+                <input style={{ background: 'none', border: 'none', color: 'white', width: '100%', outline: 'none', minWidth: 0 }} value={opt} onChange={e => { const copy = [...formData.options]; copy[idx] = e.target.value; setFormData({ ...formData, options: copy }); }} placeholder={`Opción ${idx + 1}`} required />
                 {formData.options.length > 2 && (
                   <button
                     type="button"
@@ -1172,7 +1165,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                       setFormData({ ...formData, options: copy, correctAnswer: newCorrect });
                     }}
                     style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', flexShrink: 0, opacity: 0.7, display: 'flex', alignItems: 'center' }}
-                    title="Eliminar opciÃ³n"
+                    title="Eliminar opción"
                   >
                     <X size={16} />
                   </button>
@@ -1188,7 +1181,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.5)'; e.currentTarget.style.color = '#a78bfa'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#64748b'; }}
             >
-              <Plus size={16} /> Agregar OpciÃ³n
+              <Plus size={16} /> Agregar Opción
             </button>
           )}
         </div>
