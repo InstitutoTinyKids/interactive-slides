@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Plus, Edit2, ExternalLink, Gamepad2, Link as LinkIcon, Trash2, X, ChevronLeft,
-    Folder, FolderPlus, GripVertical, Move, Save, Play, Pause
+    Folder, FolderPlus, GripVertical, Move, Save, Play, Pause, BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -9,7 +9,7 @@ import { useApp } from '../context/AppContext';
 import { Header } from './common/Header';
 import { dbService } from '../services/db';
 
-export default function ExtrasView({ onExit }) {
+export default function ExtrasView({ onExit, onOpenBook }) {
     const { notify, isMobile: appIsMobile } = useApp();
     const [extras, setExtras] = useState([]);
     const [folders, setFolders] = useState([]);
@@ -90,7 +90,11 @@ export default function ExtrasView({ onExit }) {
         setModalType(type);
         setEditingExtra(null);
         setEditingFolderId(null);
-        setFormData({ title: '', content: '', is_active: true });
+        setFormData({
+            title: type === 'book' ? 'BOOK / RC' : '',
+            content: '',
+            is_active: true
+        });
         setShowModal(true);
     };
 
@@ -114,7 +118,7 @@ export default function ExtrasView({ onExit }) {
             return;
         }
 
-        if (modalType !== 'folder' && !formData.content.trim()) {
+        if (modalType !== 'folder' && modalType !== 'book' && !formData.content.trim()) {
             notify.error('Por favor completa todos los campos');
             return;
         }
@@ -138,7 +142,7 @@ export default function ExtrasView({ onExit }) {
                 const extraData = {
                     title: formData.title.trim(),
                     type: modalType,
-                    content: formData.content.trim(),
+                    content: modalType === 'book' ? 'INTERNAL_BOOK' : formData.content.trim(),
                     folder_id: currentFolderId,
                     is_active: formData.is_active
                 };
@@ -203,6 +207,8 @@ export default function ExtrasView({ onExit }) {
             window.open(extra.content, '_blank');
         } else if (extra.type === 'game') {
             window.open(`/games/${extra.content}`, '_blank');
+        } else if (extra.type === 'book') {
+            onOpenBook();
         }
     };
 
@@ -310,6 +316,9 @@ export default function ExtrasView({ onExit }) {
                         </button>
                         <button onClick={() => handleCreate('link')} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', border: 'none', color: 'white', cursor: 'pointer', transition: 'all 0.2s' }}>
                             <LinkIcon size={16} /> {!isMobile && 'Link'}
+                        </button>
+                        <button onClick={() => handleCreate('book')} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', border: 'none', color: 'white', cursor: 'pointer', transition: 'all 0.2s' }}>
+                            <BookOpen size={16} /> {!isMobile && 'Book'}
                         </button>
                         <button onClick={() => handleCreate('game')} className="btn-premium" style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>
                             <Gamepad2 size={16} /> {!isMobile && 'Juego'}
@@ -460,14 +469,25 @@ export default function ExtrasView({ onExit }) {
                                                     {isSortMode ? (
                                                         <GripVertical size={24} color="#64748b" />
                                                     ) : (
-                                                        <div style={{ padding: '12px', background: extra.type === 'link' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(249, 115, 22, 0.1)', borderRadius: '12px', color: extra.type === 'link' ? '#3b82f6' : '#f97316' }}>
-                                                            {extra.type === 'link' ? <LinkIcon size={24} /> : <Gamepad2 size={24} />}
+                                                        <div style={{
+                                                            padding: '12px',
+                                                            background: extra.type === 'link' ? 'rgba(59, 130, 246, 0.1)' :
+                                                                extra.type === 'book' ? 'rgba(245, 158, 11, 0.1)' :
+                                                                    'rgba(249, 115, 22, 0.1)',
+                                                            borderRadius: '12px',
+                                                            color: extra.type === 'link' ? '#3b82f6' :
+                                                                extra.type === 'book' ? '#f59e0b' :
+                                                                    '#f97316'
+                                                        }}>
+                                                            {extra.type === 'link' ? <LinkIcon size={24} /> :
+                                                                extra.type === 'book' ? <BookOpen size={24} /> :
+                                                                    <Gamepad2 size={24} />}
                                                         </div>
                                                     )}
                                                     <div style={{ flex: 1 }}>
                                                         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', margin: 0 }}>{extra.title}</h3>
                                                         <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: 0, textTransform: 'uppercase', fontWeight: 700 }}>
-                                                            {extra.type === 'link' ? 'Enlace' : 'Juego'}
+                                                            {extra.type === 'link' ? 'Enlace' : extra.type === 'book' ? 'Reading Club' : 'Juego'}
                                                         </p>
                                                     </div>
                                                     {!isSortMode && (
@@ -548,160 +568,164 @@ export default function ExtrasView({ onExit }) {
             </div>
 
             {/* Modal Create/Edit */}
-            {showModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)', padding: '20px' }}>
-                    <div className="glass anim-up" style={{ width: '100%', maxWidth: '500px', padding: '40px', background: '#0a0a1a', border: '1px solid rgba(167, 139, 250, 0.2)', borderRadius: '20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-                            <h2 style={{ fontSize: '1.8rem', color: 'white', margin: 0, fontWeight: 900 }}>
-                                {editingExtra || editingFolderId ? 'Editar' : 'Nuevo'} {modalType === 'link' ? 'Link' : modalType === 'game' ? 'Juego' : 'Carpeta'}
-                            </h2>
-                            <button onClick={() => setShowModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '8px', borderRadius: '8px', display: 'flex' }}>
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div>
-                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px' }}>
-                                    {modalType === 'folder' ? 'Nombre de la Carpeta' : 'Título'}
-                                </label>
-                                <input className="premium-input" placeholder="Nombre..." value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} autoFocus style={{ width: '100%' }} />
+            {
+                showModal && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)', padding: '20px' }}>
+                        <div className="glass anim-up" style={{ width: '100%', maxWidth: '500px', padding: '40px', background: '#0a0a1a', border: '1px solid rgba(167, 139, 250, 0.2)', borderRadius: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                                <h2 style={{ fontSize: '1.8rem', color: 'white', margin: 0, fontWeight: 900 }}>
+                                    {editingExtra || editingFolderId ? 'Editar' : 'Nuevo'} {modalType === 'link' ? 'Link' : modalType === 'game' ? 'Juego' : modalType === 'book' ? 'Libro' : 'Carpeta'}
+                                </h2>
+                                <button onClick={() => setShowModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '8px', borderRadius: '8px', display: 'flex' }}>
+                                    <X size={20} />
+                                </button>
                             </div>
 
-                            {modalType !== 'folder' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 <div>
                                     <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px' }}>
-                                        {modalType === 'link' ? 'URL' : 'Archivo del Juego'}
+                                        {modalType === 'folder' ? 'Nombre de la Carpeta' : 'Título'}
                                     </label>
-                                    {modalType === 'link' ? (
-                                        <input className="premium-input" type="url" placeholder="https://ejemplo.com" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} style={{ width: '100%' }} />
-                                    ) : (
-                                        <select className="premium-input" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', color: 'white' }}>
-                                            <option value="" style={{ color: '#000' }}>Selecciona un juego...</option>
-                                            <optgroup label="Listen" style={{ color: '#000' }}>
-                                                <option value="Listen BASE.html" style={{ color: '#000' }}>Listen BASE</option>
-                                                <option value="Listen BIG.html" style={{ color: '#000' }}>Listen BIG</option>
-                                                <option value="Listen MINI.html" style={{ color: '#000' }}>Listen MINI</option>
-                                                <option value="Listen TINY.html" style={{ color: '#000' }}>Listen TINY</option>
-                                            </optgroup>
-                                            <optgroup label="Match" style={{ color: '#000' }}>
-                                                <option value="Match BASE.html" style={{ color: '#000' }}>Match BASE</option>
-                                                <option value="Match BIG.html" style={{ color: '#000' }}>Match BIG</option>
-                                                <option value="Match MINI.html" style={{ color: '#000' }}>Match MINI</option>
-                                                <option value="Match TINY.html" style={{ color: '#000' }}>Match TINY</option>
-                                            </optgroup>
-                                            <optgroup label="Memoria" style={{ color: '#000' }}>
-                                                <option value="Memoria BASE.html" style={{ color: '#000' }}>Memoria BASE</option>
-                                                <option value="Memoria BIG.html" style={{ color: '#000' }}>Memoria BIG</option>
-                                                <option value="Memoria MINI.html" style={{ color: '#000' }}>Memoria MINI</option>
-                                                <option value="Memoria RC.html" style={{ color: '#000' }}>Memoria RC</option>
-                                                <option value="Memoria TINY.html" style={{ color: '#000' }}>Memoria TINY</option>
-                                            </optgroup>
-                                            <optgroup label="PAD" style={{ color: '#000' }}>
-                                                <option value="PAD BASE.html" style={{ color: '#000' }}>PAD BASE</option>
-                                                <option value="PAD BIG.html" style={{ color: '#000' }}>PAD BIG</option>
-                                                <option value="PAD MINI.html" style={{ color: '#000' }}>PAD MINI</option>
-                                                <option value="PAD TINY.html" style={{ color: '#000' }}>PAD TINY</option>
-                                            </optgroup>
-                                            <optgroup label="Search" style={{ color: '#000' }}>
-                                                <option value="Search BASE.html" style={{ color: '#000' }}>Search BASE</option>
-                                                <option value="Search BIG.html" style={{ color: '#000' }}>Search BIG</option>
-                                                <option value="Search MINI.html" style={{ color: '#000' }}>Search MINI</option>
-                                                <option value="Search TINY.html" style={{ color: '#000' }}>Search TINY</option>
-                                            </optgroup>
-                                            <optgroup label="Select" style={{ color: '#000' }}>
-                                                <option value="Select BASE.html" style={{ color: '#000' }}>Select BASE</option>
-                                                <option value="Select BIG.html" style={{ color: '#000' }}>Select BIG</option>
-                                                <option value="Select MINI.html" style={{ color: '#000' }}>Select MINI</option>
-                                                <option value="Select TINY.html" style={{ color: '#000' }}>Select TINY</option>
-                                            </optgroup>
-                                            <optgroup label="Spell" style={{ color: '#000' }}>
-                                                <option value="Spell BASE.html" style={{ color: '#000' }}>Spell BASE</option>
-                                                <option value="Spell BIG.html" style={{ color: '#000' }}>Spell BIG</option>
-                                                <option value="Spell MINI.html" style={{ color: '#000' }}>Spell MINI</option>
-                                                <option value="Spell TINY.html" style={{ color: '#000' }}>Spell TINY</option>
-                                            </optgroup>
-                                            <optgroup label="Otros" style={{ color: '#000' }}>
-                                                <option value="Simulador.html" style={{ color: '#000' }}>Simulador</option>
-                                            </optgroup>
-                                        </select>
-                                    )}
+                                    <input className="premium-input" placeholder="Nombre..." value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} autoFocus style={{ width: '100%' }} />
                                 </div>
-                            )}
 
-                            {/* Toggle Active/Pause en Modal */}
-                            {modalType !== 'folder' && (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        {formData.is_active ? (
-                                            <Play size={16} color="#10b981" />
+                                {modalType !== 'folder' && modalType !== 'book' && (
+                                    <div>
+                                        <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px' }}>
+                                            {modalType === 'link' ? 'URL' : 'Archivo del Juego'}
+                                        </label>
+                                        {modalType === 'link' ? (
+                                            <input className="premium-input" type="url" placeholder="https://ejemplo.com" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} style={{ width: '100%' }} />
                                         ) : (
-                                            <Pause size={16} color="#f59e0b" />
+                                            <select className="premium-input" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', color: 'white' }}>
+                                                <option value="" style={{ color: '#000' }}>Selecciona un juego...</option>
+                                                <optgroup label="Listen" style={{ color: '#000' }}>
+                                                    <option value="Listen BASE.html" style={{ color: '#000' }}>Listen BASE</option>
+                                                    <option value="Listen BIG.html" style={{ color: '#000' }}>Listen BIG</option>
+                                                    <option value="Listen MINI.html" style={{ color: '#000' }}>Listen MINI</option>
+                                                    <option value="Listen TINY.html" style={{ color: '#000' }}>Listen TINY</option>
+                                                </optgroup>
+                                                <optgroup label="Match" style={{ color: '#000' }}>
+                                                    <option value="Match BASE.html" style={{ color: '#000' }}>Match BASE</option>
+                                                    <option value="Match BIG.html" style={{ color: '#000' }}>Match BIG</option>
+                                                    <option value="Match MINI.html" style={{ color: '#000' }}>Match MINI</option>
+                                                    <option value="Match TINY.html" style={{ color: '#000' }}>Match TINY</option>
+                                                </optgroup>
+                                                <optgroup label="Memoria" style={{ color: '#000' }}>
+                                                    <option value="Memoria BASE.html" style={{ color: '#000' }}>Memoria BASE</option>
+                                                    <option value="Memoria BIG.html" style={{ color: '#000' }}>Memoria BIG</option>
+                                                    <option value="Memoria MINI.html" style={{ color: '#000' }}>Memoria MINI</option>
+                                                    <option value="Memoria RC.html" style={{ color: '#000' }}>Memoria RC</option>
+                                                    <option value="Memoria TINY.html" style={{ color: '#000' }}>Memoria TINY</option>
+                                                </optgroup>
+                                                <optgroup label="PAD" style={{ color: '#000' }}>
+                                                    <option value="PAD BASE.html" style={{ color: '#000' }}>PAD BASE</option>
+                                                    <option value="PAD BIG.html" style={{ color: '#000' }}>PAD BIG</option>
+                                                    <option value="PAD MINI.html" style={{ color: '#000' }}>PAD MINI</option>
+                                                    <option value="PAD TINY.html" style={{ color: '#000' }}>PAD TINY</option>
+                                                </optgroup>
+                                                <optgroup label="Search" style={{ color: '#000' }}>
+                                                    <option value="Search BASE.html" style={{ color: '#000' }}>Search BASE</option>
+                                                    <option value="Search BIG.html" style={{ color: '#000' }}>Search BIG</option>
+                                                    <option value="Search MINI.html" style={{ color: '#000' }}>Search MINI</option>
+                                                    <option value="Search TINY.html" style={{ color: '#000' }}>Search TINY</option>
+                                                </optgroup>
+                                                <optgroup label="Select" style={{ color: '#000' }}>
+                                                    <option value="Select BASE.html" style={{ color: '#000' }}>Select BASE</option>
+                                                    <option value="Select BIG.html" style={{ color: '#000' }}>Select BIG</option>
+                                                    <option value="Select MINI.html" style={{ color: '#000' }}>Select MINI</option>
+                                                    <option value="Select TINY.html" style={{ color: '#000' }}>Select TINY</option>
+                                                </optgroup>
+                                                <optgroup label="Spell" style={{ color: '#000' }}>
+                                                    <option value="Spell BASE.html" style={{ color: '#000' }}>Spell BASE</option>
+                                                    <option value="Spell BIG.html" style={{ color: '#000' }}>Spell BIG</option>
+                                                    <option value="Spell MINI.html" style={{ color: '#000' }}>Spell MINI</option>
+                                                    <option value="Spell TINY.html" style={{ color: '#000' }}>Spell TINY</option>
+                                                </optgroup>
+                                                <optgroup label="Otros" style={{ color: '#000' }}>
+                                                    <option value="Simulador.html" style={{ color: '#000' }}>Simulador</option>
+                                                </optgroup>
+                                            </select>
                                         )}
-                                        <div>
-                                            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'white' }}>
-                                                Estado del Extra
-                                            </div>
-                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                                                {formData.is_active ? 'Activo y visible' : 'Pausado y oculto'}
+                                    </div>
+                                )}
+
+                                {/* Toggle Active/Pause en Modal */}
+                                {modalType !== 'folder' && (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            {formData.is_active ? (
+                                                <Play size={16} color="#10b981" />
+                                            ) : (
+                                                <Pause size={16} color="#f59e0b" />
+                                            )}
+                                            <div>
+                                                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'white' }}>
+                                                    Estado del Extra
+                                                </div>
+                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                                                    {formData.is_active ? 'Activo y visible' : 'Pausado y oculto'}
+                                                </div>
                                             </div>
                                         </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
+                                            style={{
+                                                width: '52px',
+                                                height: '28px',
+                                                borderRadius: '14px',
+                                                border: 'none',
+                                                background: formData.is_active ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(255,255,255,0.1)',
+                                                position: 'relative',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s'
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '22px',
+                                                height: '22px',
+                                                borderRadius: '50%',
+                                                background: 'white',
+                                                position: 'absolute',
+                                                top: '3px',
+                                                left: formData.is_active ? '27px' : '3px',
+                                                transition: 'all 0.3s',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                            }} />
+                                        </button>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
-                                        style={{
-                                            width: '52px',
-                                            height: '28px',
-                                            borderRadius: '14px',
-                                            border: 'none',
-                                            background: formData.is_active ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(255,255,255,0.1)',
-                                            position: 'relative',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.3s'
-                                        }}
-                                    >
-                                        <div style={{
-                                            width: '22px',
-                                            height: '22px',
-                                            borderRadius: '50%',
-                                            background: 'white',
-                                            position: 'absolute',
-                                            top: '3px',
-                                            left: formData.is_active ? '27px' : '3px',
-                                            transition: 'all 0.3s',
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                                        }} />
-                                    </button>
-                                </div>
-                            )}
+                                )}
 
-                            <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                                <button onClick={() => setShowModal(false)} className="btn-outline" style={{ flex: 1, height: '55px' }}>Cancelar</button>
-                                <button onClick={handleSave} className="btn-premium" style={{ flex: 2, height: '55px' }}>{editingExtra || editingFolderId ? 'Actualizar' : 'Crear'}</button>
+                                <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                                    <button onClick={() => setShowModal(false)} className="btn-outline" style={{ flex: 1, height: '55px' }}>Cancelar</button>
+                                    <button onClick={handleSave} className="btn-premium" style={{ flex: 2, height: '55px' }}>{editingExtra || editingFolderId ? 'Actualizar' : 'Crear'}</button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Modal Move */}
-            {showMoveModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                    <div className="glass" style={{ width: '450px', padding: '40px', background: '#0a0a1a' }}>
-                        <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '20px' }}>Mover {selectedExtras.length} Extra{selectedExtras.length > 1 ? 's' : ''}</h2>
-                        <select className="premium-input" style={{ width: '100%', marginBottom: '20px', background: 'rgba(255,255,255,0.05)', color: 'white' }} value={targetFolderForMove} onChange={(e) => setTargetFolderForMove(e.target.value)}>
-                            <option value="" style={{ color: '#000' }}>Selecciona destino...</option>
-                            <option value="root" style={{ color: '#000' }}>Raíz (Principal)</option>
-                            {folders.map(f => <option key={f.id} value={f.id} style={{ color: '#000' }}>{f.name}</option>)}
-                        </select>
-                        <div style={{ display: 'flex', gap: '15px' }}>
-                            <button onClick={() => setShowMoveModal(false)} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
-                            <button onClick={handleMoveSelected} className="btn-premium" style={{ flex: 2 }}>Mover Ahora</button>
+            {
+                showMoveModal && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
+                        <div className="glass" style={{ width: '450px', padding: '40px', background: '#0a0a1a' }}>
+                            <h2 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '20px' }}>Mover {selectedExtras.length} Extra{selectedExtras.length > 1 ? 's' : ''}</h2>
+                            <select className="premium-input" style={{ width: '100%', marginBottom: '20px', background: 'rgba(255,255,255,0.05)', color: 'white' }} value={targetFolderForMove} onChange={(e) => setTargetFolderForMove(e.target.value)}>
+                                <option value="" style={{ color: '#000' }}>Selecciona destino...</option>
+                                <option value="root" style={{ color: '#000' }}>Raíz (Principal)</option>
+                                {folders.map(f => <option key={f.id} value={f.id} style={{ color: '#000' }}>{f.name}</option>)}
+                            </select>
+                            <div style={{ display: 'flex', gap: '15px' }}>
+                                <button onClick={() => setShowMoveModal(false)} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
+                                <button onClick={handleMoveSelected} className="btn-premium" style={{ flex: 2 }}>Mover Ahora</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

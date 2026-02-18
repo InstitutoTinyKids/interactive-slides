@@ -310,6 +310,7 @@ function AppRoot() {
             {view === 'extras' && (
                 <ExtrasView
                     onExit={() => setView('entry')}
+                    onOpenBook={() => setView('browser')}
                 />
             )}
 
@@ -435,6 +436,30 @@ function AppRoot() {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {view === 'browser' && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: '#000', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ height: '60px', background: '#111', display: 'flex', alignItems: 'center', px: '20px', borderBottom: '1px solid #222', justifyContent: 'space-between', padding: '0 20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444' }} />
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }} />
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10b981' }} />
+                            <span style={{ color: '#94a3b8', fontSize: '0.8rem', marginLeft: '10px', fontWeight: 600 }}>Reading Club</span>
+                        </div>
+                        <button
+                            onClick={() => setView('extras')}
+                            style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}
+                        >
+                            Cerrar Libro
+                        </button>
+                    </div>
+                    <iframe
+                        src="https://institutotinykids.github.io/Reading-Club/"
+                        style={{ flex: 1, border: 'none', width: '100%', height: 'calc(100% - 60px)' }}
+                        title="Reading Club Book"
+                    />
                 </div>
             )}
 
