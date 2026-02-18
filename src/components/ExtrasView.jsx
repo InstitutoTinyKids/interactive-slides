@@ -76,7 +76,24 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                 dbService.getExtras(),
                 dbService.getExtraFolders()
             ]);
-            setExtras(eData || []);
+
+            let finalExtras = eData || [];
+
+            // Auto-create Reading Club if it doesn't exist
+            if (!finalExtras.find(e => e.type === 'book')) {
+                const newBook = {
+                    title: 'BOOK / RC',
+                    type: 'book',
+                    content: 'INTERNAL_BOOK',
+                    folder_id: null,
+                    is_active: true,
+                    order_index: -1 // High priority
+                };
+                await dbService.createExtra(newBook);
+                finalExtras = await dbService.getExtras();
+            }
+
+            setExtras(finalExtras);
             setFolders(fData || []);
         } catch (err) {
             console.error('Error loading extras:', err);
@@ -317,9 +334,6 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                         <button onClick={() => handleCreate('link')} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', border: 'none', color: 'white', cursor: 'pointer', transition: 'all 0.2s' }}>
                             <LinkIcon size={16} /> {!isMobile && 'Link'}
                         </button>
-                        <button onClick={() => handleCreate('book')} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', border: 'none', color: 'white', cursor: 'pointer', transition: 'all 0.2s' }}>
-                            <BookOpen size={16} /> {!isMobile && 'Book'}
-                        </button>
                         <button onClick={() => handleCreate('game')} className="btn-premium" style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>
                             <Gamepad2 size={16} /> {!isMobile && 'Juego'}
                         </button>
@@ -472,12 +486,13 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                                         <div style={{
                                                             padding: '12px',
                                                             background: extra.type === 'link' ? 'rgba(59, 130, 246, 0.1)' :
-                                                                extra.type === 'book' ? 'rgba(245, 158, 11, 0.1)' :
+                                                                extra.type === 'book' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.4))' :
                                                                     'rgba(249, 115, 22, 0.1)',
                                                             borderRadius: '12px',
                                                             color: extra.type === 'link' ? '#3b82f6' :
                                                                 extra.type === 'book' ? '#f59e0b' :
-                                                                    '#f97316'
+                                                                    '#f97316',
+                                                            boxShadow: extra.type === 'book' ? '0 0 15px rgba(245, 158, 11, 0.3)' : 'none'
                                                         }}>
                                                             {extra.type === 'link' ? <LinkIcon size={24} /> :
                                                                 extra.type === 'book' ? <BookOpen size={24} /> :
@@ -485,12 +500,14 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                                         </div>
                                                     )}
                                                     <div style={{ flex: 1 }}>
-                                                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', margin: 0 }}>{extra.title}</h3>
-                                                        <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: 0, textTransform: 'uppercase', fontWeight: 700 }}>
-                                                            {extra.type === 'link' ? 'Enlace' : extra.type === 'book' ? 'Reading Club' : 'Juego'}
+                                                        <h3 style={{ fontSize: extra.type === 'book' ? '1.3rem' : '1.1rem', fontWeight: 800, color: 'white', margin: 0, letterSpacing: extra.type === 'book' ? '0.02em' : 'normal' }}>
+                                                            {extra.title}
+                                                        </h3>
+                                                        <p style={{ fontSize: '0.7rem', color: extra.type === 'book' ? '#f59e0b' : '#94a3b8', margin: 0, textTransform: 'uppercase', fontWeight: 700 }}>
+                                                            {extra.type === 'link' ? 'Enlace' : extra.type === 'book' ? '⭐ Sección Especial' : 'Juego'}
                                                         </p>
                                                     </div>
-                                                    {!isSortMode && (
+                                                    {!isSortMode && extra.type !== 'book' && (
                                                         <input type="checkbox" checked={selectedExtras.includes(extra.id)} onChange={() => toggleExtraSelection(extra.id)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
                                                     )}
                                                 </div>
@@ -544,9 +561,11 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                                             <button onClick={() => handleOpen(extra)} className="btn-premium" style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}>
                                                                 <ExternalLink size={14} /> Abrir
                                                             </button>
-                                                            <button onClick={() => handleDelete(extra.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                                <Trash2 size={14} />
-                                                            </button>
+                                                            {extra.type !== 'book' && (
+                                                                <button onClick={() => handleDelete(extra.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </>
                                                 )}
