@@ -56,8 +56,9 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   const [isEditingAccessCode, setIsEditingAccessCode] = useState(false);
   const [hasUnsavedCodeChanges, setHasUnsavedCodeChanges] = useState(false);
   const [showProjectDetails, setShowProjectDetails] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
+  // isMobile: ancho < 1024 O altura < 500px (landscape en telefono)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024 || window.innerHeight < 500);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024 && window.innerHeight >= 500);
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saved
   const [isCompact, setIsCompact] = useState(window.innerWidth < 1200);
   const [showQuestionsPanel, setShowQuestionsPanel] = useState(window.innerWidth >= 1200);
@@ -71,8 +72,8 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width <= 1024);
+      setIsMobile(width < 1024 || window.innerHeight < 500);
+      setIsTablet(width >= 768 && width <= 1024 && window.innerHeight >= 500);
       setIsCompact(width < 1200);
       setIsLandscape(width > window.innerHeight);
       if (width >= 1200) {
@@ -80,7 +81,11 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
       }
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
   }, []);
 
   // Iniciar juego automÃ¡ticamente si estamos en modo playing
