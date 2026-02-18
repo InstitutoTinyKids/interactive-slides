@@ -44,7 +44,8 @@ export default function HomeView({ onEnter, onAdmin, onTeacher, onExtra }) {
 
     const handleTeacherSubmit = (e) => {
         e.preventDefault();
-        if (pass === '2323**') {
+        // Permite entrar si la clave es correcta O si está vacía por ahora
+        if (pass === '2323**' || pass === '') {
             setView('project_selection');
             // Role will be set when selecting project
         } else {
@@ -54,7 +55,8 @@ export default function HomeView({ onEnter, onAdmin, onTeacher, onExtra }) {
 
     const handleExtraSubmit = (e) => {
         e.preventDefault();
-        if (pass === '3232**') {
+        // Permite entrar si la clave es correcta O si está vacía por ahora
+        if (pass === '3232**' || pass === '') {
             if (onExtra) onExtra();
         } else {
             alert('Contraseña de Extra incorrecta');
@@ -310,7 +312,6 @@ export default function HomeView({ onEnter, onAdmin, onTeacher, onExtra }) {
                                 value={pass}
                                 onChange={(e) => setPass(e.target.value)}
                                 autoFocus
-                                required
                                 style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '65px', fontSize: '1.1rem', background: 'rgba(255,255,255,0.03)' }}
                             />
                             <button type="submit" className="btn-premium" style={{ padding: '20px', fontSize: '1rem', borderRadius: '16px', background: 'linear-gradient(135deg, #f97316, #ea580c)', width: '100%' }}>
@@ -341,7 +342,6 @@ export default function HomeView({ onEnter, onAdmin, onTeacher, onExtra }) {
                                 value={pass}
                                 onChange={(e) => setPass(e.target.value)}
                                 autoFocus
-                                required
                                 style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10, height: '65px', fontSize: '1.1rem', background: 'rgba(255,255,255,0.03)' }}
                             />
                             <button type="submit" className="btn-premium" style={{ padding: '20px', fontSize: '1rem', borderRadius: '16px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', width: '100%' }}>
