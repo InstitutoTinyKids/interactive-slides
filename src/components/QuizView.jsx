@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings, Play, Clock, Check, X, HelpCircle, SkipForward,
   RotateCcw, Edit2, Trash2, Plus, Save, ArrowRight, Eye,
@@ -22,7 +22,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   // --- ESTADOS ---
   const { isMobile: appIsMobile, notify } = useApp();
   const isTeacher = role === 'teacher';
-  // Si es admin, vamos directo al panel de edición. Si no, a jugar.
+  // Si es admin, vamos directo al panel de ediciÃ³n. Si no, a jugar.
   const [view, setView] = useState(role === 'admin' && !previewMode ? 'admin' : 'playing');
   const [questions, setQuestions] = useState(INITIAL_QUESTIONS);
   const [selectedQIdx, setSelectedQIdx] = useState(0);
@@ -42,14 +42,14 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   const [fullImage, setFullImage] = useState(null);
 
   // Estados de Ayudas
-  const [hiddenOptions, setHiddenOptions] = useState([]); // Índices ocultos por 50/50
+  const [hiddenOptions, setHiddenOptions] = useState([]); // Ãndices ocultos por 50/50
 
   const [showReview, setShowReview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [previewModeLocal] = useState(project?.previewMode || false);
   const [localAccessCode, setLocalAccessCode] = useState(project?.access_code || '123');
 
-  // Estados para edición del nombre del proyecto
+  // Estados para ediciÃ³n del nombre del proyecto
   const [isEditingProjectName, setIsEditingProjectName] = useState(false);
   const [hasUnsavedNameChanges, setHasUnsavedNameChanges] = useState(false);
 
@@ -63,6 +63,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
   const [showQuestionsPanel, setShowQuestionsPanel] = useState(window.innerWidth >= 1200);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+  const [showLifelines, setShowLifelines] = useState(false); // Drawer de ayudas en móvil
 
   const timerRef = useRef(null);
   const autoSaveTimerRef = useRef(null);
@@ -82,7 +83,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Iniciar juego automáticamente si estamos en modo playing
+  // Iniciar juego automÃ¡ticamente si estamos en modo playing
   useEffect(() => {
     if (view === 'playing') {
       setIsRunning(true);
@@ -190,7 +191,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 1000);
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        notify.success('¡Quiz guardado con éxito!');
+        notify.success('Â¡Quiz guardado con Ã©xito!');
       }
       return true;
     } catch (err) {
@@ -397,7 +398,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             disabled={loading || saveStatus === 'saved'}
           >
             {saveStatus === 'saved' ? (
-              <><ShieldCheck size={16} /> ¡GUARDADO!</>
+              <><ShieldCheck size={16} /> Â¡GUARDADO!</>
             ) : (
               <><Save size={16} /> GUARDAR</>
             )}
@@ -452,7 +453,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                         style={{ color: '#ef4444', opacity: 0.6, cursor: 'pointer' }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (window.confirm('¿ESTÁS SEGURO?')) {
+                          if (window.confirm('Â¿ESTÃS SEGURO?')) {
                             const updated = questions.filter((_, i) => i !== idx);
                             setQuestions(updated);
                             if (selectedQIdx >= updated.length) setSelectedQIdx(Math.max(0, updated.length - 1));
@@ -488,7 +489,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                       } else {
                         newQuestions = questions.map(item => item.id === q.id ? q : item);
                         setQuestions(newQuestions);
-                        // Si es edición, NO cerramos para que vea el "¡GUARDADO!" en el botón
+                        // Si es ediciÃ³n, NO cerramos para que vea el "Â¡GUARDADO!" en el botÃ³n
                       }
                     }}
                     onCancel={() => setEditingQ(null)}
@@ -543,78 +544,263 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     const isTextQ = currentQ.type === 'text';
     const LETTER_COLORS = ['#a78bfa', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#ec4899'];
 
-    // Texto → siempre 1 columna (textos largos necesitan todo el ancho)
-    // Media → 2 columnas en pantallas grandes (opciones son cortas)
+    // Columnas de opciones
     const optCols = isTextQ
       ? '1fr'
       : isMobile
         ? '1fr'
         : currentQ.options.length <= 2 ? '1fr' : '1fr 1fr';
 
-    // En móvil landscape el contenido puede no caber → permitir scroll
-    const mobileScroll = isMobile && isLandscape;
+    // â”€â”€ Renderizado de una opciÃ³n (reutilizable) â”€â”€
+    const renderOption = (opt, idx) => {
+      if (hiddenOptions.includes(idx)) {
+        return <div key={idx} style={{ opacity: 0, minHeight: isTextQ ? (isLandscape && isMobile ? '44px' : '60px') : '38px' }} />;
+      }
+      const isCorrectOpt = !!feedback && idx === currentQ.correctAnswer;
+      const isWrongOpt = !!feedback && idx === selectedOption && idx !== currentQ.correctAnswer;
+      const letterColor = LETTER_COLORS[idx] || '#a78bfa';
+      let bgColor = 'rgba(255,255,255,0.04)';
+      let borderColor = 'rgba(255,255,255,0.1)';
+      let glowStyle = {};
+      if (isCorrectOpt) { bgColor = 'rgba(16,185,129,0.18)'; borderColor = '#10b981'; glowStyle = { boxShadow: '0 0 22px rgba(16,185,129,0.4)' }; }
+      else if (isWrongOpt) { bgColor = 'rgba(239,68,68,0.18)'; borderColor = '#ef4444'; glowStyle = { boxShadow: '0 0 22px rgba(239,68,68,0.4)' }; }
 
-    return (
-      <div style={{ height: '100vh', width: '100vw', background: '#000', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '10px 12px' : '20px', position: 'relative', overflowY: mobileScroll ? 'auto' : 'hidden', overflowX: 'hidden' }}>
+      if (isTextQ) {
+        /* â”€â”€ TARJETA GRANDE (texto) â”€â”€ */
+        const cardPad = isMobile
+          ? (isLandscape ? '7px 8px' : '11px 10px')
+          : isTablet ? '18px 14px' : '22px 18px';
+        const cardMinH = isMobile
+          ? (isLandscape ? '44px' : '68px')
+          : isTablet ? '100px' : '115px';
+        const badgeSize = isMobile ? (isLandscape ? '22px' : '26px') : '38px';
+        const textSize = isMobile ? (isLandscape ? '0.68rem' : '0.76rem') : isTablet ? '0.9rem' : '1rem';
+        return (
+          <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: isMobile ? (isLandscape ? '3px' : '6px') : '11px',
+              padding: cardPad, minHeight: cardMinH, borderRadius: '16px',
+              background: bgColor, border: `2px solid ${borderColor}`, color: 'white',
+              cursor: feedback !== null ? 'default' : 'pointer', transition: 'all 0.22s ease',
+              textAlign: 'center', ...glowStyle
+            }}
+            onMouseEnter={e => { if (!feedback) { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.borderColor = letterColor; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
+            onMouseLeave={e => { if (!feedback) { e.currentTarget.style.background = bgColor; e.currentTarget.style.borderColor = borderColor; e.currentTarget.style.transform = 'translateY(0)'; } }}
+          >
+            <div style={{
+              width: badgeSize, height: badgeSize, borderRadius: '7px', flexShrink: 0,
+              background: isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : `${letterColor}22`,
+              border: `2px solid ${isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : letterColor}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: isCorrectOpt || isWrongOpt ? 'white' : letterColor, fontWeight: 900,
+              fontSize: isMobile ? '0.65rem' : '1rem'
+            }}>
+              {isCorrectOpt ? <Check size={isMobile ? 12 : 18} /> : isWrongOpt ? <X size={isMobile ? 12 : 18} /> : String.fromCharCode(65 + idx)}
+            </div>
+            <span style={{ fontSize: textSize, fontWeight: 700, lineHeight: 1.25, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{opt}</span>
+          </button>
+        );
+      } else {
+        /* â”€â”€ FILA COMPACTA (media) â”€â”€ */
+        return (
+          <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: isMobile ? (isLandscape ? '7px 10px' : '9px 12px') : '13px 18px',
+              borderRadius: '12px', background: bgColor, border: `1px solid ${borderColor}`,
+              color: 'white', cursor: feedback !== null ? 'default' : 'pointer',
+              transition: 'all 0.2s ease', textAlign: 'left', ...glowStyle
+            }}
+            onMouseEnter={e => { if (!feedback) { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.borderColor = letterColor; } }}
+            onMouseLeave={e => { if (!feedback) { e.currentTarget.style.background = bgColor; e.currentTarget.style.borderColor = borderColor; } }}
+          >
+            <div style={{
+              width: isMobile ? '26px' : '32px', height: isMobile ? '26px' : '32px',
+              borderRadius: '7px', flexShrink: 0,
+              background: isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : `${letterColor}22`,
+              border: `1px solid ${isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : letterColor}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 900, fontSize: '0.8rem', color: isCorrectOpt || isWrongOpt ? 'white' : letterColor
+            }}>
+              {isCorrectOpt ? <Check size={13} /> : isWrongOpt ? <X size={13} /> : String.fromCharCode(65 + idx)}
+            </div>
+            <span style={{ fontSize: isMobile ? (isLandscape ? '0.72rem' : '0.8rem') : '0.95rem', fontWeight: 700, lineHeight: 1.25, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{opt}</span>
+          </button>
+        );
+      }
+    };
 
-        {/* ── BARRA SUPERIOR ── */}
-        <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? (isLandscape ? '8px' : '14px') : '16px', flexShrink: 0 }}>
-          <div style={{ background: 'rgba(59,130,246,0.15)', padding: isMobile ? '6px 14px' : '10px 25px', borderRadius: '100px', border: '1px solid rgba(59,130,246,0.3)', fontSize: isMobile ? '0.72rem' : '0.9rem', fontWeight: 700, color: '#93c5fd' }}>
-            Pregunta {currentQIndex + 1} / {questions.length}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '1rem' : '1.4rem', fontWeight: 900 }}>
-            <Clock size={isMobile ? 16 : 24} color="#3b82f6" /> {formatTime(timer)}
-          </div>
+    // â”€â”€ Barra de ayudas (50:50 + Pasar) â”€â”€
+    const lifelineBar = (
+      <div style={{ display: 'flex', gap: isMobile ? '20px' : '30px', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <button onClick={handleFiftyFifty} disabled={feedback || hiddenOptions.length > 0}
+            style={{
+              width: isMobile ? '48px' : '70px', height: isMobile ? '48px' : '70px', borderRadius: '50%',
+              background: 'rgba(59,130,246,0.2)', border: '2px solid #3b82f6', color: '#3b82f6',
+              fontWeight: 900, cursor: 'pointer', opacity: (feedback || hiddenOptions.length > 0) ? 0.3 : 1,
+              fontSize: isMobile ? '0.7rem' : '1rem'
+            }}>50:50</button>
+          <p style={{ fontSize: '0.55rem', fontWeight: 900, color: '#3b82f6', marginTop: '3px' }}>+10s</p>
         </div>
+        <div style={{ textAlign: 'center' }}>
+          <button onClick={handlePass} disabled={feedback}
+            style={{
+              width: isMobile ? '48px' : '70px', height: isMobile ? '48px' : '70px', borderRadius: '50%',
+              background: 'rgba(124,58,237,0.2)', border: '2px solid #7c3aed', color: '#a78bfa',
+              cursor: 'pointer', opacity: feedback ? 0.3 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+            <SkipForward size={isMobile ? 18 : 24} />
+          </button>
+          <p style={{ fontSize: '0.55rem', fontWeight: 900, color: '#a78bfa', marginTop: '3px' }}>Pasar (+30s)</p>
+        </div>
+        {isMobile && (
+          <button onClick={() => { if (window.confirm('Â¿Cancelar juego?')) { onExit(); } }}
+            style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.65rem', fontWeight: 700, cursor: 'pointer', opacity: 0.7 }}>
+            Cancelar
+          </button>
+        )}
+      </div>
+    );
 
-        {/* ── CUERPO PRINCIPAL ── */}
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // MÃ“VIL LANDSCAPE â†’ 2 columnas fijas sin scroll
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    if (isMobile && isLandscape) {
+      return (
         <div style={{
-          flex: mobileScroll ? '0 0 auto' : 1,
-          width: '100%',
-          maxWidth: '1100px',
-          display: 'flex',
-          // Solo desktop no-móvil en landscape → lado a lado para texto
-          flexDirection: isTextQ && isLandscape && !isMobile && !isTablet ? 'row' : 'column',
-          alignItems: 'center',
-          // Portrait: distribuir uniformemente pregunta + opciones
-          justifyContent: !isLandscape && !mobileScroll ? 'space-evenly' : 'flex-start',
-          gap: isMobile ? (isLandscape ? '8px' : '14px') : '24px',
-          overflow: mobileScroll ? 'visible' : 'hidden',
-          minHeight: mobileScroll ? 'auto' : 0,
-          paddingBottom: mobileScroll ? '8px' : 0,
+          height: '100vh', width: '100vw', background: '#000', color: 'white',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative'
         }}>
 
-          {/* ── PREGUNTA + MEDIA ── */}
+          {/* Barra superior compacta */}
           <div style={{
-            flex: isTextQ && isLandscape && !isMobile && !isTablet ? '0 0 40%' : '0 0 auto',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
-            gap: isMobile && isLandscape ? '6px' : '12px',
-            width: '100%',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '6px 14px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)'
           }}>
-            <h2 style={{
-              fontSize: isTextQ
-                ? (isMobile ? (isLandscape ? '1rem' : '1.2rem') : isTablet ? '1.6rem' : '2rem')
-                : (isMobile ? (isLandscape ? '0.85rem' : '1rem') : '1.3rem'),
-              fontWeight: 900,
-              lineHeight: 1.3,
-              margin: 0,
+            <div style={{
+              background: 'rgba(59,130,246,0.15)', padding: '4px 12px', borderRadius: '100px',
+              border: '1px solid rgba(59,130,246,0.3)', fontSize: '0.68rem', fontWeight: 700, color: '#93c5fd'
             }}>
+              Pregunta {currentQIndex + 1} / {questions.length}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 900 }}>
+              <Clock size={14} color="#3b82f6" /> {formatTime(timer)}
+            </div>
+          </div>
+
+          {/* Cuerpo 2 columnas */}
+          <div style={{ flex: 1, display: 'flex', overflow: 'hidden', gap: '10px', padding: '8px 12px', minHeight: 0 }}>
+
+            {/* Columna izquierda: pregunta + media */}
+            <div style={{
+              flex: '0 0 42%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              alignItems: 'center', textAlign: 'center', gap: '8px', overflow: 'hidden'
+            }}>
+              <h2 style={{ fontSize: isTextQ ? '0.95rem' : '0.82rem', fontWeight: 900, lineHeight: 1.25, margin: 0 }}>
+                {currentQ.question}
+              </h2>
+              {currentQ.type === 'image' && currentQ.mediaUrl && (
+                <img src={currentQ.mediaUrl} onClick={() => setFullImage(currentQ.mediaUrl)}
+                  style={{ width: '100%', maxHeight: '55%', objectFit: 'contain', borderRadius: '10px', cursor: 'zoom-in' }} />
+              )}
+              {currentQ.type === 'audio' && currentQ.mediaUrl && (
+                <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />
+              )}
+              {currentQ.type === 'video' && currentQ.mediaUrl && (
+                <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: '10px', overflow: 'hidden', flexShrink: 0 }}>
+                  {(() => {
+                    const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
+                    const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${currentQ.videoStart || 0}${currentQ.videoEnd ? `&end=${currentQ.videoEnd}` : ''}&autoplay=1&enablejsapi=1`;
+                    return <iframe id="quiz-video-player" width="100%" height="100%" src={embedUrl} frameBorder="0" allow="autoplay" allowFullScreen></iframe>;
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* Columna derecha: opciones */}
+            <div style={{
+              flex: 1, display: 'grid', gridTemplateColumns: optCols,
+              gap: '6px', alignContent: 'center', overflow: 'hidden', minHeight: 0
+            }}>
+              {currentQ.options.map((opt, idx) => renderOption(opt, idx))}
+            </div>
+          </div>
+
+          {/* Barra colapsable flotante â€” esquina inferior derecha */}
+          <div style={{ position: 'absolute', bottom: 0, right: 0, zIndex: 50 }}>
+            {/* PestaÃ±a toggle */}
+            <button
+              onClick={() => setShowLifelines(prev => !prev)}
+              style={{
+                position: 'absolute', bottom: showLifelines ? '72px' : 0, right: '8px',
+                background: 'rgba(30,30,50,0.95)', border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '10px 10px 0 0', padding: '4px 12px', color: '#94a3b8',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                fontSize: '0.6rem', fontWeight: 700, transition: 'bottom 0.25s ease', zIndex: 51
+              }}>
+              <ChevronUp size={12} style={{ transform: showLifelines ? 'rotate(180deg)' : 'none', transition: '0.25s' }} />
+              Ayudas
+            </button>
+            {/* Panel */}
+            <div style={{
+              background: 'rgba(10,10,20,0.97)', borderTop: '1px solid rgba(255,255,255,0.1)',
+              borderLeft: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px 0 0 0',
+              padding: '10px 16px', transform: showLifelines ? 'translateY(0)' : 'translateY(100%)',
+              transition: 'transform 0.25s ease', maxWidth: '220px'
+            }}>
+              {lifelineBar}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // MÃ“VIL PORTRAIT â†’ columna, drawer colapsable abajo
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    if (isMobile && !isLandscape) {
+      return (
+        <div style={{
+          height: '100vh', width: '100vw', background: '#000', color: 'white',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative'
+        }}>
+
+          {/* Barra superior */}
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '10px 14px', flexShrink: 0
+          }}>
+            <div style={{
+              background: 'rgba(59,130,246,0.15)', padding: '6px 14px', borderRadius: '100px',
+              border: '1px solid rgba(59,130,246,0.3)', fontSize: '0.72rem', fontWeight: 700, color: '#93c5fd'
+            }}>
+              Pregunta {currentQIndex + 1} / {questions.length}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1rem', fontWeight: 900 }}>
+              <Clock size={16} color="#3b82f6" /> {formatTime(timer)}
+            </div>
+          </div>
+
+          {/* Zona pregunta â€” centrada verticalmente en su mitad */}
+          <div style={{
+            flex: '0 0 auto', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            alignItems: 'center', textAlign: 'center', padding: '0 16px', gap: '10px',
+            minHeight: isTextQ ? '22%' : '30%'
+          }}>
+            <h2 style={{ fontSize: isTextQ ? '1.15rem' : '0.95rem', fontWeight: 900, lineHeight: 1.3, margin: 0 }}>
               {currentQ.question}
             </h2>
-
             {currentQ.type === 'image' && currentQ.mediaUrl && (
               <img src={currentQ.mediaUrl} onClick={() => setFullImage(currentQ.mediaUrl)}
-                style={{ width: '100%', maxHeight: isMobile ? '26vh' : '36vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
+                style={{ width: '100%', maxHeight: '22vh', objectFit: 'contain', borderRadius: '12px', cursor: 'zoom-in' }} />
             )}
             {currentQ.type === 'audio' && currentQ.mediaUrl && (
               <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />
             )}
             {currentQ.type === 'video' && currentQ.mediaUrl && (
-              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: isMobile ? '26vh' : '36vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
+              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '22vh', borderRadius: '12px', overflow: 'hidden' }}>
                 {(() => {
                   const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
                   const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${currentQ.videoStart || 0}${currentQ.videoEnd ? `&end=${currentQ.videoEnd}` : ''}&autoplay=1&enablejsapi=1`;
@@ -624,172 +810,148 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             )}
           </div>
 
-          {/* ── OPCIONES ── */}
+          {/* Separador sutil */}
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '0 16px', flexShrink: 0 }} />
+
+          {/* Zona opciones â€” ocupa el resto */}
           <div style={{
-            flex: mobileScroll ? '0 0 auto' : 1,
-            width: '100%',
-            display: 'grid',
-            gridTemplateColumns: optCols,
-            gap: isTextQ
-              ? (isMobile ? (isLandscape ? '6px' : '8px') : '14px')
-              : (isMobile ? '6px' : '10px'),
-            alignContent: 'center',
-            minHeight: mobileScroll ? 'auto' : 0,
-            overflowY: mobileScroll ? 'visible' : 'auto',
+            flex: 1, display: 'grid', gridTemplateColumns: optCols,
+            gap: '8px', alignContent: 'center', padding: '10px 14px 80px', overflowY: 'auto'
           }}>
-            {currentQ.options.map((opt, idx) => {
-              if (hiddenOptions.includes(idx)) {
-                return <div key={idx} style={{ opacity: 0, minHeight: isTextQ ? (isMobile ? (isLandscape ? '52px' : '64px') : '100px') : '40px' }} />;
-              }
+            {currentQ.options.map((opt, idx) => renderOption(opt, idx))}
+          </div>
 
-              const isCorrectOpt = !!feedback && idx === currentQ.correctAnswer;
-              const isWrongOpt = !!feedback && idx === selectedOption && idx !== currentQ.correctAnswer;
-              const letterColor = LETTER_COLORS[idx] || '#a78bfa';
+          {/* Drawer colapsable de ayudas â€” flotante sobre las opciones */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 50 }}>
+            {/* PestaÃ±a */}
+            <button
+              onClick={() => setShowLifelines(prev => !prev)}
+              style={{
+                position: 'absolute', bottom: showLifelines ? '90px' : 0,
+                left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(20,20,35,0.97)', border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '12px 12px 0 0', padding: '5px 20px', color: '#94a3b8',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
+                fontSize: '0.62rem', fontWeight: 700, transition: 'bottom 0.25s ease', zIndex: 51,
+                whiteSpace: 'nowrap'
+              }}>
+              <ChevronUp size={13} style={{ transform: showLifelines ? 'rotate(180deg)' : 'none', transition: '0.25s' }} />
+              Ayudas
+            </button>
+            {/* Panel */}
+            <div style={{
+              background: 'rgba(10,10,20,0.97)', borderTop: '1px solid rgba(255,255,255,0.1)',
+              padding: '12px 20px 10px',
+              transform: showLifelines ? 'translateY(0)' : 'translateY(100%)',
+              transition: 'transform 0.25s ease'
+            }}>
+              {lifelineBar}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
-              let bgColor = 'rgba(255,255,255,0.04)';
-              let borderColor = 'rgba(255,255,255,0.1)';
-              let glowStyle = {};
-              if (isCorrectOpt) { bgColor = 'rgba(16,185,129,0.18)'; borderColor = '#10b981'; glowStyle = { boxShadow: '0 0 22px rgba(16,185,129,0.4)' }; }
-              else if (isWrongOpt) { bgColor = 'rgba(239,68,68,0.18)'; borderColor = '#ef4444'; glowStyle = { boxShadow: '0 0 22px rgba(239,68,68,0.4)' }; }
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // DESKTOP / TABLET â†’ layout original mejorado
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    return (
+      <div style={{
+        height: '100vh', width: '100vw', background: '#000', color: 'white',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px',
+        position: 'relative', overflow: 'hidden'
+      }}>
 
-              if (isTextQ) {
-                /* ── TARJETA GRANDE: solo preguntas de texto ── */
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => handleAnswer(idx)}
-                    disabled={feedback !== null}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: isMobile ? (isLandscape ? '4px' : '7px') : '11px',
-                      padding: isMobile ? (isLandscape ? '8px 10px' : '12px 10px') : isTablet ? '18px 14px' : '22px 18px',
-                      minHeight: isMobile ? (isLandscape ? '52px' : '72px') : isTablet ? '100px' : '115px',
-                      borderRadius: '20px',
-                      background: bgColor,
-                      border: `2px solid ${borderColor}`,
-                      color: 'white',
-                      cursor: feedback !== null ? 'default' : 'pointer',
-                      transition: 'all 0.22s ease',
-                      textAlign: 'center',
-                      ...glowStyle,
-                    }}
-                    onMouseEnter={e => {
-                      if (!feedback) {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.09)';
-                        e.currentTarget.style.borderColor = letterColor;
-                        e.currentTarget.style.transform = 'translateY(-3px)';
-                        e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.4)`;
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!feedback) {
-                        e.currentTarget.style.background = bgColor;
-                        e.currentTarget.style.borderColor = borderColor;
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = glowStyle.boxShadow || 'none';
-                      }
-                    }}
-                  >
-                    {/* Badge letra */}
-                    <div style={{
-                      width: isMobile ? (isLandscape ? '24px' : '28px') : '38px',
-                      height: isMobile ? (isLandscape ? '24px' : '28px') : '38px',
-                      borderRadius: '8px',
-                      background: isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : `${letterColor}22`,
-                      border: `2px solid ${isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : letterColor}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0,
-                      color: isCorrectOpt || isWrongOpt ? 'white' : letterColor,
-                      fontWeight: 900,
-                      fontSize: isMobile ? '0.72rem' : '1rem',
-                    }}>
-                      {isCorrectOpt ? <Check size={isMobile ? 14 : 18} /> : isWrongOpt ? <X size={isMobile ? 14 : 18} /> : String.fromCharCode(65 + idx)}
-                    </div>
-                    {/* Texto opción */}
-                    <span style={{
-                      fontSize: isMobile ? (isLandscape ? '0.72rem' : '0.78rem') : isTablet ? '0.9rem' : '1rem',
-                      fontWeight: 700,
-                      lineHeight: 1.3,
-                      wordBreak: 'break-word',
-                      overflowWrap: 'anywhere',
-                    }}>
-                      {opt}
-                    </span>
-                  </button>
-                );
-              } else {
-                /* ── FILA COMPACTA: imagen / audio / video ── */
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => handleAnswer(idx)}
-                    disabled={feedback !== null}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: isMobile ? '10px 14px' : '13px 18px',
-                      borderRadius: '14px',
-                      background: bgColor,
-                      border: `1px solid ${borderColor}`,
-                      color: 'white',
-                      cursor: feedback !== null ? 'default' : 'pointer',
-                      transition: 'all 0.2s ease',
-                      textAlign: 'left',
-                      ...glowStyle,
-                    }}
-                    onMouseEnter={e => { if (!feedback) { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.borderColor = letterColor; } }}
-                    onMouseLeave={e => { if (!feedback) { e.currentTarget.style.background = bgColor; e.currentTarget.style.borderColor = borderColor; } }}
-                  >
-                    <div style={{
-                      width: isMobile ? '28px' : '32px',
-                      height: isMobile ? '28px' : '32px',
-                      borderRadius: '8px', flexShrink: 0,
-                      background: isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : `${letterColor}22`,
-                      border: `1px solid ${isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : letterColor}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontWeight: 900, fontSize: '0.85rem',
-                      color: isCorrectOpt || isWrongOpt ? 'white' : letterColor,
-                    }}>
-                      {isCorrectOpt ? <Check size={14} /> : isWrongOpt ? <X size={14} /> : String.fromCharCode(65 + idx)}
-                    </div>
-                    <span style={{
-                      fontSize: isMobile ? '0.8rem' : '0.95rem',
-                      fontWeight: 700,
-                      lineHeight: 1.3,
-                      wordBreak: 'break-word',
-                      overflowWrap: 'anywhere',
-                    }}>
-                      {opt}
-                    </span>
-                  </button>
-                );
-              }
-            })}
+        {/* Barra superior */}
+        <div style={{
+          width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center', marginBottom: '16px', flexShrink: 0
+        }}>
+          <div style={{
+            background: 'rgba(59,130,246,0.15)', padding: '10px 25px', borderRadius: '100px',
+            border: '1px solid rgba(59,130,246,0.3)', fontSize: '0.9rem', fontWeight: 700, color: '#93c5fd'
+          }}>
+            Pregunta {currentQIndex + 1} / {questions.length}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.4rem', fontWeight: 900 }}>
+            <Clock size={24} color="#3b82f6" /> {formatTime(timer)}
           </div>
         </div>
 
-        {/* ── AYUDAS ── */}
-        <div style={{ display: 'flex', gap: '30px', margin: isMobile ? '10px 0 4px' : '16px 0 6px', flexShrink: 0 }}>
+        {/* Cuerpo */}
+        <div style={{
+          flex: 1, width: '100%', maxWidth: '1100px', display: 'flex',
+          flexDirection: isTextQ && isLandscape && !isTablet ? 'row' : 'column',
+          alignItems: 'center', justifyContent: 'space-evenly',
+          gap: '24px', overflow: 'hidden', minHeight: 0
+        }}>
+
+          {/* Pregunta + media */}
+          <div style={{
+            flex: isTextQ && isLandscape && !isTablet ? '0 0 40%' : '0 0 auto',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            alignItems: 'center', textAlign: 'center', gap: '14px', width: '100%'
+          }}>
+            <h2 style={{
+              fontSize: isTextQ ? (isTablet ? '1.6rem' : '2rem') : '1.3rem',
+              fontWeight: 900, lineHeight: 1.3, margin: 0
+            }}>
+              {currentQ.question}
+            </h2>
+            {currentQ.type === 'image' && currentQ.mediaUrl && (
+              <img src={currentQ.mediaUrl} onClick={() => setFullImage(currentQ.mediaUrl)}
+                style={{ width: '100%', maxHeight: '36vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
+            )}
+            {currentQ.type === 'audio' && currentQ.mediaUrl && (
+              <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />
+            )}
+            {currentQ.type === 'video' && currentQ.mediaUrl && (
+              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '36vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
+                {(() => {
+                  const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
+                  const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${currentQ.videoStart || 0}${currentQ.videoEnd ? `&end=${currentQ.videoEnd}` : ''}&autoplay=1&enablejsapi=1`;
+                  return <iframe id="quiz-video-player" width="100%" height="100%" src={embedUrl} frameBorder="0" allow="autoplay" allowFullScreen></iframe>;
+                })()}
+              </div>
+            )}
+          </div>
+
+          {/* Opciones */}
+          <div style={{
+            flex: 1, width: '100%', display: 'grid', gridTemplateColumns: optCols,
+            gap: '14px', alignContent: 'center', minHeight: 0, overflowY: 'auto'
+          }}>
+            {currentQ.options.map((opt, idx) => renderOption(opt, idx))}
+          </div>
+        </div>
+
+        {/* Ayudas desktop â€” siempre visibles */}
+        <div style={{ display: 'flex', gap: '30px', margin: '16px 0 6px', flexShrink: 0 }}>
           <div style={{ textAlign: 'center' }}>
             <button onClick={handleFiftyFifty} disabled={feedback || hiddenOptions.length > 0}
-              style={{ width: isMobile ? '56px' : '70px', height: isMobile ? '56px' : '70px', borderRadius: '50%', background: 'rgba(59,130,246,0.2)', border: '2px solid #3b82f6', color: '#3b82f6', fontWeight: 900, cursor: 'pointer', opacity: (feedback || hiddenOptions.length > 0) ? 0.3 : 1, fontSize: isMobile ? '0.75rem' : '1rem' }}>50:50</button>
+              style={{
+                width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(59,130,246,0.2)',
+                border: '2px solid #3b82f6', color: '#3b82f6', fontWeight: 900, cursor: 'pointer',
+                opacity: (feedback || hiddenOptions.length > 0) ? 0.3 : 1
+              }}>50:50</button>
             <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#3b82f6', marginTop: '4px' }}>+10s</p>
           </div>
           <div style={{ textAlign: 'center' }}>
             <button onClick={handlePass} disabled={feedback}
-              style={{ width: isMobile ? '56px' : '70px', height: isMobile ? '56px' : '70px', borderRadius: '50%', background: 'rgba(124,58,237,0.2)', border: '2px solid #7c3aed', color: '#a78bfa', cursor: 'pointer', opacity: feedback ? 0.3 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <SkipForward size={isMobile ? 20 : 24} />
+              style={{
+                width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(124,58,237,0.2)',
+                border: '2px solid #7c3aed', color: '#a78bfa', cursor: 'pointer', opacity: feedback ? 0.3 : 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+              <SkipForward size={24} />
             </button>
             <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#a78bfa', marginTop: '4px' }}>Pasar (+30s)</p>
           </div>
         </div>
-
-        <button onClick={() => { if (window.confirm('¿Cancelar juego?')) { onExit(); } }}
-          style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6, flexShrink: 0 }}>Cancelar Juego</button>
+        <button onClick={() => { if (window.confirm('Â¿Cancelar juego?')) { onExit(); } }}
+          style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6, flexShrink: 0 }}>
+          Cancelar Juego
+        </button>
 
         {fullImage && (
           <div onClick={() => setFullImage(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, cursor: 'zoom-out' }}>
@@ -799,254 +961,257 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
         )}
       </div>
     );
-  }
 
-  if (view === 'results') {
-    const correct = answersLog.filter(a => a.isCorrect).length;
-    const incorrect = answersLog.filter(a => !a.isCorrect && !a.isSkipped).length;
-    const skipped = answersLog.filter(a => a.isSkipped).length;
 
-    return (
-      <div style={{ height: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-        <div className="glass anim-up" style={{ padding: '40px', maxWidth: '800px', width: '100%', textAlign: 'center' }}>
-          <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🏆</div>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px' }}>¡Juego Terminado!</h2>
-          <p style={{ color: '#94a3b8', marginBottom: '40px' }}>Estadísticas de la partida</p>
+    if (view === 'results') {
+      const correct = answersLog.filter(a => a.isCorrect).length;
+      const incorrect = answersLog.filter(a => !a.isCorrect && !a.isSkipped).length;
+      const skipped = answersLog.filter(a => a.isSkipped).length;
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '15px' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{formatTime(timer)}</div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Tiempo</div>
-            </div>
-            <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '20px', borderRadius: '15px', color: '#10b981' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{correct}</div>
-              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Correctas</div>
-            </div>
-            <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '20px', borderRadius: '15px', color: '#ef4444' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{incorrect}</div>
-              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Incorrectas</div>
-            </div>
-            <div style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '15px', color: '#a78bfa' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{skipped}</div>
-              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Saltadas</div>
-            </div>
-          </div>
+      return (
+        <div style={{ height: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass anim-up" style={{ padding: '40px', maxWidth: '800px', width: '100%', textAlign: 'center' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '20px' }}>†</div>
+            <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px' }}>Â¡Juego Terminado!</h2>
+            <p style={{ color: '#94a3b8', marginBottom: '40px' }}>EstadÃ­sticas de la partida</p>
 
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <button onClick={restartApp} className="btn-premium" style={{ flex: 1 }}>Reiniciar</button>
-            <button onClick={onExit} className="btn-outline" style={{ flex: 1 }}>Volver</button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '15px' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{formatTime(timer)}</div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Tiempo</div>
+              </div>
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '20px', borderRadius: '15px', color: '#10b981' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{correct}</div>
+                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Correctas</div>
+              </div>
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '20px', borderRadius: '15px', color: '#ef4444' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{incorrect}</div>
+                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Incorrectas</div>
+              </div>
+              <div style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '15px', color: '#a78bfa' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{skipped}</div>
+                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Saltadas</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <button onClick={restartApp} className="btn-premium" style={{ flex: 1 }}>Reiniciar</button>
+              <button onClick={onExit} className="btn-outline" style={{ flex: 1 }}>Volver</button>
+            </div>
           </div>
         </div>
-      </div>
+      );
+    }
+
+    return null;
+  }
+
+  function AdminForm({ initialData, onSave, onCancel, isMobile }) {
+    const { notify } = useApp();
+    const [formData, setFormData] = useState({ question: '', type: 'text', mediaUrl: '', videoStart: 0, videoEnd: 0, options: ['', ''], correctAnswer: 0 });
+    const [uploading, setUploading] = useState(false);
+    const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved
+
+    // --- Helpers para tiempo de video ---
+    // Convierte texto "M:SS" o "SS" a segundos (nÃºmero)
+    const parseTimeInput = (val) => {
+      const str = String(val).trim();
+      if (str.includes(':')) {
+        const parts = str.split(':');
+        const mins = parseInt(parts[0]) || 0;
+        const secs = parseInt(parts[1]) || 0;
+        return mins * 60 + secs;
+      }
+      return parseInt(str) || 0;
+    };
+
+    // Convierte segundos a texto "M:SS" o "SS" para mostrar en el campo
+    const secsToDisplay = (secs) => {
+      const s = parseInt(secs) || 0;
+      if (s < 60) return String(s);
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return `${m}:${r < 10 ? '0' : ''}${r}`;
+    };
+
+    // Preview legible de un valor de campo (texto) â†’ "1:30 (90 seg)"
+    const timePreview = (val) => {
+      const s = parseTimeInput(val);
+      if (s === 0) return null;
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return m > 0 ? `${m}:${r < 10 ? '0' : ''}${r} (${s} seg)` : `${s} seg`;
+    };
+
+    // Estados de texto para los campos de tiempo
+    const [videoStartText, setVideoStartText] = useState('0');
+    const [videoEndText, setVideoEndText] = useState('0');
+
+    useEffect(() => {
+      if (initialData) {
+        // Reemplazamos el formData COMPLETO (no merge con prev) para evitar que
+        // campos como `isNew` de una pregunta anterior contaminen la ediciÃ³n actual.
+        setFormData({
+          question: '',
+          type: 'text',
+          mediaUrl: '',
+          videoStart: 0,
+          videoEnd: 0,
+          options: ['', ''],
+          correctAnswer: 0,
+          ...initialData,
+        });
+        setVideoStartText(secsToDisplay(initialData.videoStart || 0));
+        setVideoEndText(secsToDisplay(initialData.videoEnd || 0));
+      }
+    }, [initialData]);
+
+    const handleFileUpload = async (e, type) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setUploading(true);
+      try {
+        const fileName = `quiz/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+        await dbService.uploadFile('media', fileName, file);
+        const publicUrl = dbService.getPublicUrl('media', fileName);
+        setFormData(prev => ({ ...prev, mediaUrl: publicUrl }));
+        notify.success('Archivo subido');
+      } catch (error) {
+        notify.error('Error: ' + error.message);
+      }
+      setUploading(false);
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setSaveStatus('saving');
+      try {
+        await onSave(formData);
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 1000);
+      } catch (err) {
+        setSaveStatus('idle');
+      }
+    };
+
+    return (
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '10px' }}>
+          {[{ id: 'text', label: 'Pregunta', Icon: HelpCircle, color: '#a78bfa' }, { id: 'audio', label: 'Audio', Icon: Music, color: '#3b82f6' }, { id: 'video', label: 'Video', Icon: Play, color: '#ef4444' }, { id: 'image', label: 'Imagen', Icon: ImageIcon, color: '#10b981' }].map(t => (
+            <button key={t.id} type="button" onClick={() => setFormData({ ...formData, type: t.id })} style={{ padding: '12px', borderRadius: '12px', background: formData.type === t.id ? `${t.color}20` : 'rgba(255,255,255,0.03)', border: `1px solid ${formData.type === t.id ? t.color : 'rgba(255,255,255,0.1)'}`, color: formData.type === t.id ? t.color : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 700 }}><t.Icon size={16} /> {t.label}</button>
+          ))}
+        </div>
+
+        <textarea style={{ width: '100%', minHeight: '100px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', padding: '15px', color: 'white', fontSize: '1rem', outline: 'none' }} placeholder="Escribe la pregunta..." value={formData.question} onChange={e => setFormData({ ...formData, question: e.target.value })} required />
+
+        {(formData.type === 'audio' || formData.type === 'image') && (
+          <label className="btn-outline" style={{ cursor: 'pointer', textAlign: 'center' }}>{uploading ? 'Subiendo...' : (formData.mediaUrl ? 'Cambiar Archivo' : 'Elegir Archivo')} <input type="file" hidden accept={formData.type === 'audio' ? 'audio/*' : 'image/*'} onChange={e => handleFileUpload(e, formData.type)} /></label>
+        )}
+
+        {formData.type === 'video' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <input className="premium-input" placeholder="URL de Youtube" value={formData.mediaUrl} onChange={e => setFormData(prev => ({ ...prev, mediaUrl: e.target.value }))} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              {/* Campo Inicio */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <input
+                  className="premium-input"
+                  placeholder="Inicio (ej: 50 Ã³ 1:30)"
+                  type="text"
+                  value={videoStartText}
+                  onChange={e => {
+                    setVideoStartText(e.target.value);
+                    setFormData(prev => ({ ...prev, videoStart: parseTimeInput(e.target.value) }));
+                  }}
+                />
+                {timePreview(videoStartText) && (
+                  <span style={{ fontSize: '0.72rem', color: '#a78bfa', fontWeight: 700, paddingLeft: '4px' }}>
+                    â–¶ {timePreview(videoStartText)}
+                  </span>
+                )}
+              </div>
+              {/* Campo Fin */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <input
+                  className="premium-input"
+                  placeholder="Fin (ej: 55 Ã³ 2:00)"
+                  type="text"
+                  value={videoEndText}
+                  onChange={e => {
+                    setVideoEndText(e.target.value);
+                    setFormData(prev => ({ ...prev, videoEnd: parseTimeInput(e.target.value) }));
+                  }}
+                />
+                {timePreview(videoEndText) && (
+                  <span style={{ fontSize: '0.72rem', color: '#a78bfa', fontWeight: 700, paddingLeft: '4px' }}>
+                    â–¶ {timePreview(videoEndText)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px' }}>
+            {formData.options.map((opt, idx) => (
+              <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${formData.correctAnswer === idx ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <input type="radio" checked={formData.correctAnswer === idx} onChange={() => setFormData({ ...formData, correctAnswer: idx })} style={{ cursor: 'pointer', flexShrink: 0 }} />
+                <input style={{ background: 'none', border: 'none', color: 'white', width: '100%', outline: 'none', minWidth: 0 }} value={opt} onChange={e => { const copy = [...formData.options]; copy[idx] = e.target.value; setFormData({ ...formData, options: copy }); }} placeholder={`OpciÃ³n ${idx + 1}`} required />
+                {formData.options.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const copy = formData.options.filter((_, i) => i !== idx);
+                      const newCorrect = formData.correctAnswer === idx
+                        ? 0
+                        : formData.correctAnswer > idx
+                          ? formData.correctAnswer - 1
+                          : formData.correctAnswer;
+                      setFormData({ ...formData, options: copy, correctAnswer: newCorrect });
+                    }}
+                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', flexShrink: 0, opacity: 0.7, display: 'flex', alignItems: 'center' }}
+                    title="Eliminar opciÃ³n"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          {formData.options.length < 6 && (
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, options: [...formData.options, ''] })}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.2)', color: '#64748b', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, transition: '0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.5)'; e.currentTarget.style.color = '#a78bfa'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#64748b'; }}
+            >
+              <Plus size={16} /> Agregar OpciÃ³n
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <button
+            type="submit"
+            className="btn-premium"
+            style={{
+              flex: 1,
+              background: saveStatus === 'saved' ? 'linear-gradient(135deg, #10b981, #059669)' : undefined,
+              boxShadow: saveStatus === 'saved' ? '0 10px 20px -5px rgba(16, 185, 129, 0.4)' : undefined
+            }}
+            disabled={saveStatus === 'saving'}
+          >
+            {saveStatus === 'saved' ? <ShieldCheck size={20} /> : <Save size={20} />}
+            {saveStatus === 'saving' ? 'GUARDANDO...' : (saveStatus === 'saved' ? '¡GUARDADO!' : 'GUARDAR')}
+          </button>
+          <button type="button" onClick={onCancel} className="btn-outline" style={{ flex: 1 }}>CANCELAR</button>
+        </div>
+      </form>
     );
   }
 
   return null;
-}
-
-function AdminForm({ initialData, onSave, onCancel, isMobile }) {
-  const { notify } = useApp();
-  const [formData, setFormData] = useState({ question: '', type: 'text', mediaUrl: '', videoStart: 0, videoEnd: 0, options: ['', ''], correctAnswer: 0 });
-  const [uploading, setUploading] = useState(false);
-  const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved
-
-  // --- Helpers para tiempo de video ---
-  // Convierte texto "M:SS" o "SS" a segundos (número)
-  const parseTimeInput = (val) => {
-    const str = String(val).trim();
-    if (str.includes(':')) {
-      const parts = str.split(':');
-      const mins = parseInt(parts[0]) || 0;
-      const secs = parseInt(parts[1]) || 0;
-      return mins * 60 + secs;
-    }
-    return parseInt(str) || 0;
-  };
-
-  // Convierte segundos a texto "M:SS" o "SS" para mostrar en el campo
-  const secsToDisplay = (secs) => {
-    const s = parseInt(secs) || 0;
-    if (s < 60) return String(s);
-    const m = Math.floor(s / 60);
-    const r = s % 60;
-    return `${m}:${r < 10 ? '0' : ''}${r}`;
-  };
-
-  // Preview legible de un valor de campo (texto) → "1:30 (90 seg)"
-  const timePreview = (val) => {
-    const s = parseTimeInput(val);
-    if (s === 0) return null;
-    const m = Math.floor(s / 60);
-    const r = s % 60;
-    return m > 0 ? `${m}:${r < 10 ? '0' : ''}${r} (${s} seg)` : `${s} seg`;
-  };
-
-  // Estados de texto para los campos de tiempo
-  const [videoStartText, setVideoStartText] = useState('0');
-  const [videoEndText, setVideoEndText] = useState('0');
-
-  useEffect(() => {
-    if (initialData) {
-      // Reemplazamos el formData COMPLETO (no merge con prev) para evitar que
-      // campos como `isNew` de una pregunta anterior contaminen la edición actual.
-      setFormData({
-        question: '',
-        type: 'text',
-        mediaUrl: '',
-        videoStart: 0,
-        videoEnd: 0,
-        options: ['', ''],
-        correctAnswer: 0,
-        ...initialData,
-      });
-      setVideoStartText(secsToDisplay(initialData.videoStart || 0));
-      setVideoEndText(secsToDisplay(initialData.videoEnd || 0));
-    }
-  }, [initialData]);
-
-  const handleFileUpload = async (e, type) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const fileName = `quiz/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-      await dbService.uploadFile('media', fileName, file);
-      const publicUrl = dbService.getPublicUrl('media', fileName);
-      setFormData(prev => ({ ...prev, mediaUrl: publicUrl }));
-      notify.success('Archivo subido');
-    } catch (error) {
-      notify.error('Error: ' + error.message);
-    }
-    setUploading(false);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaveStatus('saving');
-    try {
-      await onSave(formData);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 1000);
-    } catch (err) {
-      setSaveStatus('idle');
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '10px' }}>
-        {[{ id: 'text', label: 'Pregunta', Icon: HelpCircle, color: '#a78bfa' }, { id: 'audio', label: 'Audio', Icon: Music, color: '#3b82f6' }, { id: 'video', label: 'Video', Icon: Play, color: '#ef4444' }, { id: 'image', label: 'Imagen', Icon: ImageIcon, color: '#10b981' }].map(t => (
-          <button key={t.id} type="button" onClick={() => setFormData({ ...formData, type: t.id })} style={{ padding: '12px', borderRadius: '12px', background: formData.type === t.id ? `${t.color}20` : 'rgba(255,255,255,0.03)', border: `1px solid ${formData.type === t.id ? t.color : 'rgba(255,255,255,0.1)'}`, color: formData.type === t.id ? t.color : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 700 }}><t.Icon size={16} /> {t.label}</button>
-        ))}
-      </div>
-
-      <textarea style={{ width: '100%', minHeight: '100px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', padding: '15px', color: 'white', fontSize: '1rem', outline: 'none' }} placeholder="Escribe la pregunta..." value={formData.question} onChange={e => setFormData({ ...formData, question: e.target.value })} required />
-
-      {(formData.type === 'audio' || formData.type === 'image') && (
-        <label className="btn-outline" style={{ cursor: 'pointer', textAlign: 'center' }}>{uploading ? 'Subiendo...' : (formData.mediaUrl ? 'Cambiar Archivo' : 'Elegir Archivo')} <input type="file" hidden accept={formData.type === 'audio' ? 'audio/*' : 'image/*'} onChange={e => handleFileUpload(e, formData.type)} /></label>
-      )}
-
-      {formData.type === 'video' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input className="premium-input" placeholder="URL de Youtube" value={formData.mediaUrl} onChange={e => setFormData(prev => ({ ...prev, mediaUrl: e.target.value }))} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-            {/* Campo Inicio */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <input
-                className="premium-input"
-                placeholder="Inicio (ej: 50 ó 1:30)"
-                type="text"
-                value={videoStartText}
-                onChange={e => {
-                  setVideoStartText(e.target.value);
-                  setFormData(prev => ({ ...prev, videoStart: parseTimeInput(e.target.value) }));
-                }}
-              />
-              {timePreview(videoStartText) && (
-                <span style={{ fontSize: '0.72rem', color: '#a78bfa', fontWeight: 700, paddingLeft: '4px' }}>
-                  ▶ {timePreview(videoStartText)}
-                </span>
-              )}
-            </div>
-            {/* Campo Fin */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <input
-                className="premium-input"
-                placeholder="Fin (ej: 55 ó 2:00)"
-                type="text"
-                value={videoEndText}
-                onChange={e => {
-                  setVideoEndText(e.target.value);
-                  setFormData(prev => ({ ...prev, videoEnd: parseTimeInput(e.target.value) }));
-                }}
-              />
-              {timePreview(videoEndText) && (
-                <span style={{ fontSize: '0.72rem', color: '#a78bfa', fontWeight: 700, paddingLeft: '4px' }}>
-                  ▶ {timePreview(videoEndText)}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px' }}>
-          {formData.options.map((opt, idx) => (
-            <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${formData.correctAnswer === idx ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`, borderRadius: '12px', padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <input type="radio" checked={formData.correctAnswer === idx} onChange={() => setFormData({ ...formData, correctAnswer: idx })} style={{ cursor: 'pointer', flexShrink: 0 }} />
-              <input style={{ background: 'none', border: 'none', color: 'white', width: '100%', outline: 'none', minWidth: 0 }} value={opt} onChange={e => { const copy = [...formData.options]; copy[idx] = e.target.value; setFormData({ ...formData, options: copy }); }} placeholder={`Opción ${idx + 1}`} required />
-              {formData.options.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const copy = formData.options.filter((_, i) => i !== idx);
-                    const newCorrect = formData.correctAnswer === idx
-                      ? 0
-                      : formData.correctAnswer > idx
-                        ? formData.correctAnswer - 1
-                        : formData.correctAnswer;
-                    setFormData({ ...formData, options: copy, correctAnswer: newCorrect });
-                  }}
-                  style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', flexShrink: 0, opacity: 0.7, display: 'flex', alignItems: 'center' }}
-                  title="Eliminar opción"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-        {formData.options.length < 6 && (
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, options: [...formData.options, ''] })}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.2)', color: '#64748b', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, transition: '0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.5)'; e.currentTarget.style.color = '#a78bfa'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#64748b'; }}
-          >
-            <Plus size={16} /> Agregar Opción
-          </button>
-        )}
-      </div>
-
-      <div style={{ display: 'flex', gap: '15px' }}>
-        <button
-          type="submit"
-          className="btn-premium"
-          style={{
-            flex: 1,
-            background: saveStatus === 'saved' ? 'linear-gradient(135deg, #10b981, #059669)' : undefined,
-            boxShadow: saveStatus === 'saved' ? '0 10px 20px -5px rgba(16, 185, 129, 0.4)' : undefined
-          }}
-          disabled={saveStatus === 'saving'}
-        >
-          {saveStatus === 'saved' ? <ShieldCheck size={20} /> : <Save size={20} />}
-          {saveStatus === 'saving' ? 'GUARDANDO...' : (saveStatus === 'saved' ? '¡GUARDADO!' : 'GUARDAR')}
-        </button>
-        <button type="button" onClick={onCancel} className="btn-outline" style={{ flex: 1 }}>CANCELAR</button>
-      </div>
-    </form>
-  );
 }
