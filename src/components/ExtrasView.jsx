@@ -80,7 +80,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
             let finalExtras = eData || [];
 
             // Check if Reading Club exists (either by type or content marker)
-            const bookExists = finalExtras.some(e => e.type === 'book' || e.content === 'INTERNAL_BOOK' || e.content?.includes('github.io/Reading-Club'));
+            const bookExists = finalExtras.some(e => e.title === 'BOOK / RC');
 
             if (!bookExists) {
                 const newBook = {
@@ -162,7 +162,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 }
             } else {
-                const isBook = modalType === 'book' || editingExtra?.content === 'INTERNAL_BOOK' || editingExtra?.content?.includes('github.io/Reading-Club');
+                const isBook = modalType === 'book' || editingExtra?.title === 'BOOK / RC';
                 const extraData = {
                     title: formData.title.trim(),
                     type: isBook ? 'link' : modalType, // Ensure 'link' for books
@@ -227,7 +227,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const handleOpen = (extra) => {
-        const isBook = extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club');
+        const isBook = extra.title === 'BOOK / RC';
         if (isBook) {
             onOpenBook(extra.content);
         } else if (extra.type === 'link') {
@@ -493,29 +493,29 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                                     ) : (
                                                         <div style={{
                                                             padding: '12px',
-                                                            background: (extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club')) ? 'rgba(59, 130, 246, 0.1)' :
-                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.4))' :
+                                                            background: (extra.title !== 'BOOK / RC' && extra.type === 'link') ? 'rgba(59, 130, 246, 0.1)' :
+                                                                (extra.title === 'BOOK / RC') ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.4))' :
                                                                     'rgba(249, 115, 22, 0.1)',
                                                             borderRadius: '12px',
-                                                            color: (extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club')) ? '#3b82f6' :
-                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '#f59e0b' :
+                                                            color: (extra.title !== 'BOOK / RC' && extra.type === 'link') ? '#3b82f6' :
+                                                                (extra.title === 'BOOK / RC') ? '#f59e0b' :
                                                                     '#f97316',
-                                                            boxShadow: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '0 0 15px rgba(245, 158, 11, 0.3)' : 'none'
+                                                            boxShadow: (extra.title === 'BOOK / RC') ? '0 0 15px rgba(245, 158, 11, 0.3)' : 'none'
                                                         }}>
-                                                            {(extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club')) ? <LinkIcon size={24} /> :
-                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? <BookOpen size={24} /> :
+                                                            {(extra.title !== 'BOOK / RC' && extra.type === 'link') ? <LinkIcon size={24} /> :
+                                                                (extra.title === 'BOOK / RC') ? <BookOpen size={24} /> :
                                                                     <Gamepad2 size={24} />}
                                                         </div>
                                                     )}
                                                     <div style={{ flex: 1 }}>
-                                                        <h3 style={{ fontSize: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '1.3rem' : '1.1rem', fontWeight: 800, color: 'white', margin: 0, letterSpacing: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '0.02em' : 'normal' }}>
+                                                        <h3 style={{ fontSize: (extra.title === 'BOOK / RC') ? '1.3rem' : '1.1rem', fontWeight: 800, color: 'white', margin: 0, letterSpacing: (extra.title === 'BOOK / RC') ? '0.02em' : 'normal' }}>
                                                             {extra.title}
                                                         </h3>
-                                                        <p style={{ fontSize: '0.7rem', color: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '#f59e0b' : '#94a3b8', margin: 0, textTransform: 'uppercase', fontWeight: 700 }}>
-                                                            {extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club') ? 'Enlace' : (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '⭐ Sección Especial' : 'Juego'}
+                                                        <p style={{ fontSize: '0.7rem', color: (extra.title === 'BOOK / RC') ? '#f59e0b' : '#94a3b8', margin: 0, textTransform: 'uppercase', fontWeight: 700 }}>
+                                                            {extra.title !== 'BOOK / RC' && extra.type === 'link' ? 'Enlace' : (extra.title === 'BOOK / RC') ? '⭐ Sección Especial' : 'Juego'}
                                                         </p>
                                                     </div>
-                                                    {!isSortMode && extra.type !== 'book' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club') && (
+                                                    {!isSortMode && extra.title !== 'BOOK / RC' && (
                                                         <input type="checkbox" checked={selectedExtras.includes(extra.id)} onChange={() => toggleExtraSelection(extra.id)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
                                                     )}
                                                 </div>
@@ -569,7 +569,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                                             <button onClick={() => handleOpen(extra)} className="btn-premium" style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}>
                                                                 <ExternalLink size={14} /> Abrir
                                                             </button>
-                                                            {extra.type !== 'book' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club') && (
+                                                            {extra.title !== 'BOOK / RC' && (
                                                                 <button onClick={() => handleDelete(extra.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                                     <Trash2 size={14} />
                                                                 </button>

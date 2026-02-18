@@ -9,6 +9,7 @@ import GaleriaView from './components/GaleriaView';
 import ExtrasView from './components/ExtrasView';
 import { dbService } from './services/db';
 import confetti from 'canvas-confetti';
+import { RotateCcw } from 'lucide-react';
 
 import { Toaster } from 'react-hot-toast';
 import { AppProvider, useApp } from './context/AppContext';
@@ -454,12 +455,25 @@ function AppRoot() {
                             <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10b981' }} />
                             <span style={{ color: '#94a3b8', fontSize: '0.8rem', marginLeft: '10px', fontWeight: 600 }}>Reading Club</span>
                         </div>
-                        <button
-                            onClick={() => setView('extras')}
-                            style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}
-                        >
-                            Cerrar Libro
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <button
+                                onClick={() => {
+                                    const baseUrl = activeBookUrl.split('?')[0];
+                                    const freshUrl = `${baseUrl}?t=${Date.now()}`;
+                                    setActiveBookUrl(freshUrl);
+                                }}
+                                style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: 'none', padding: '8px 12px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                title="Recargar sin caché"
+                            >
+                                <RotateCcw size={14} /> Actualizar
+                            </button>
+                            <button
+                                onClick={() => setView('extras')}
+                                style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}
+                            >
+                                Cerrar Libro
+                            </button>
+                        </div>
                     </div>
                     <iframe
                         src={activeBookUrl}
