@@ -543,10 +543,13 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     const isTextQ = currentQ.type === 'text';
     const LETTER_COLORS = ['#a78bfa', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#ec4899'];
 
-    // Columnas de opciones según tipo y pantalla
-    const optCols = isMobile
+    // Texto → siempre 1 columna (textos largos necesitan todo el ancho)
+    // Media → 2 columnas en pantallas grandes (opciones son cortas)
+    const optCols = isTextQ
       ? '1fr'
-      : currentQ.options.length <= 2 ? '1fr' : '1fr 1fr';
+      : isMobile
+        ? '1fr'
+        : currentQ.options.length <= 2 ? '1fr' : '1fr 1fr';
 
     return (
       <div style={{ height: '100vh', width: '100vw', background: '#000', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '12px' : '20px', position: 'relative', overflow: 'hidden' }}>
