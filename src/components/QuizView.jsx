@@ -678,16 +678,25 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
           {/* Barra superior compacta */}
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '6px 14px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)'
+            padding: '6px 14px', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)',
+            background: 'rgba(0,0,0,0.3)', gap: '10px'
           }}>
             <div style={{
               background: 'rgba(59,130,246,0.15)', padding: '4px 12px', borderRadius: '100px',
               border: '1px solid rgba(59,130,246,0.3)', fontSize: '0.68rem', fontWeight: 700, color: '#93c5fd'
             }}>
-              Pregunta {currentQIndex + 1} / {questions.length}
+              Q{currentQIndex + 1}/{questions.length}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem', fontWeight: 900 }}>
-              <Clock size={14} color="#3b82f6" /> {formatTime(timer)}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', fontWeight: 900 }}>
+                <Clock size={14} color="#3b82f6" /> {formatTime(timer)}
+              </div>
+              {previewMode && (
+                <button onClick={onExit} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer' }}>
+                  SALIR
+                </button>
+              )}
             </div>
           </div>
 
@@ -778,7 +787,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
           {/* Barra superior */}
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '10px 14px', flexShrink: 0
+            padding: '10px 14px', flexShrink: 0, gap: '10px'
           }}>
             <div style={{
               background: 'rgba(59,130,246,0.15)', padding: '6px 14px', borderRadius: '100px',
@@ -786,8 +795,15 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             }}>
               Pregunta {currentQIndex + 1} / {questions.length}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1rem', fontWeight: 900 }}>
-              <Clock size={16} color="#3b82f6" /> {formatTime(timer)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1rem', fontWeight: 900 }}>
+                <Clock size={16} color="#3b82f6" /> {formatTime(timer)}
+              </div>
+              {previewMode && (
+                <button onClick={onExit} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>
+                  SALIR
+                </button>
+              )}
             </div>
           </div>
 
