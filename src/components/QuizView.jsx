@@ -693,7 +693,18 @@ function AdminForm({ initialData, onSave, onCancel, isMobile }) {
 
   useEffect(() => {
     if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }));
+      // Reemplazamos el formData COMPLETO (no merge con prev) para evitar que
+      // campos como `isNew` de una pregunta anterior contaminen la edición actual.
+      setFormData({
+        question: '',
+        type: 'text',
+        mediaUrl: '',
+        videoStart: 0,
+        videoEnd: 0,
+        options: ['', ''],
+        correctAnswer: 0,
+        ...initialData,
+      });
       setVideoStartText(secsToDisplay(initialData.videoStart || 0));
       setVideoEndText(secsToDisplay(initialData.videoEnd || 0));
     }
