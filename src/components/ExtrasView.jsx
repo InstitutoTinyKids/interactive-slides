@@ -80,13 +80,13 @@ export default function ExtrasView({ onExit, onOpenBook }) {
             let finalExtras = eData || [];
 
             // Check if Reading Club exists (either by type or content marker)
-            const bookExists = finalExtras.some(e => e.type === 'book' || e.content === 'INTERNAL_BOOK');
+            const bookExists = finalExtras.some(e => e.type === 'book' || e.content === 'INTERNAL_BOOK' || e.content?.includes('github.io/Reading-Club'));
 
             if (!bookExists) {
                 const newBook = {
                     title: 'BOOK / RC',
-                    type: 'link', // Use a valid type from DB constraint
-                    content: 'INTERNAL_BOOK', // Marker to identify it's the Reading Club
+                    type: 'link',
+                    content: 'https://institutotinykids.github.io/Reading-Club/',
                     folder_id: null,
                     is_active: true,
                     order_index: -1
@@ -115,7 +115,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
         setEditingFolderId(null);
         setFormData({
             title: type === 'book' ? 'BOOK / RC' : '',
-            content: '',
+            content: type === 'book' ? 'https://institutotinykids.github.io/Reading-Club/' : '',
             is_active: true
         });
         setShowModal(true);
@@ -162,7 +162,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 }
             } else {
-                const isBook = modalType === 'book' || editingExtra?.content === 'INTERNAL_BOOK';
+                const isBook = modalType === 'book' || editingExtra?.content === 'INTERNAL_BOOK' || editingExtra?.content?.includes('github.io/Reading-Club');
                 const extraData = {
                     title: formData.title.trim(),
                     type: isBook ? 'link' : modalType, // Ensure 'link' for books
@@ -227,9 +227,9 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const handleOpen = (extra) => {
-        const isBook = extra.type === 'book' || extra.content === 'INTERNAL_BOOK';
+        const isBook = extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club');
         if (isBook) {
-            onOpenBook();
+            onOpenBook(extra.content);
         } else if (extra.type === 'link') {
             window.open(extra.content, '_blank');
         } else if (extra.type === 'game') {
@@ -493,29 +493,29 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                                     ) : (
                                                         <div style={{
                                                             padding: '12px',
-                                                            background: (extra.type === 'link' && extra.content !== 'INTERNAL_BOOK') ? 'rgba(59, 130, 246, 0.1)' :
-                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.4))' :
+                                                            background: (extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club')) ? 'rgba(59, 130, 246, 0.1)' :
+                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.4))' :
                                                                     'rgba(249, 115, 22, 0.1)',
                                                             borderRadius: '12px',
-                                                            color: (extra.type === 'link' && extra.content !== 'INTERNAL_BOOK') ? '#3b82f6' :
-                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '#f59e0b' :
+                                                            color: (extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club')) ? '#3b82f6' :
+                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '#f59e0b' :
                                                                     '#f97316',
-                                                            boxShadow: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '0 0 15px rgba(245, 158, 11, 0.3)' : 'none'
+                                                            boxShadow: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '0 0 15px rgba(245, 158, 11, 0.3)' : 'none'
                                                         }}>
-                                                            {(extra.type === 'link' && extra.content !== 'INTERNAL_BOOK') ? <LinkIcon size={24} /> :
-                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? <BookOpen size={24} /> :
+                                                            {(extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club')) ? <LinkIcon size={24} /> :
+                                                                (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? <BookOpen size={24} /> :
                                                                     <Gamepad2 size={24} />}
                                                         </div>
                                                     )}
                                                     <div style={{ flex: 1 }}>
-                                                        <h3 style={{ fontSize: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '1.3rem' : '1.1rem', fontWeight: 800, color: 'white', margin: 0, letterSpacing: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '0.02em' : 'normal' }}>
+                                                        <h3 style={{ fontSize: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '1.3rem' : '1.1rem', fontWeight: 800, color: 'white', margin: 0, letterSpacing: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '0.02em' : 'normal' }}>
                                                             {extra.title}
                                                         </h3>
-                                                        <p style={{ fontSize: '0.7rem', color: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '#f59e0b' : '#94a3b8', margin: 0, textTransform: 'uppercase', fontWeight: 700 }}>
-                                                            {extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' ? 'Enlace' : (extra.type === 'book' || extra.content === 'INTERNAL_BOOK') ? '⭐ Sección Especial' : 'Juego'}
+                                                        <p style={{ fontSize: '0.7rem', color: (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '#f59e0b' : '#94a3b8', margin: 0, textTransform: 'uppercase', fontWeight: 700 }}>
+                                                            {extra.type === 'link' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club') ? 'Enlace' : (extra.type === 'book' || extra.content === 'INTERNAL_BOOK' || extra.content?.includes('github.io/Reading-Club')) ? '⭐ Sección Especial' : 'Juego'}
                                                         </p>
                                                     </div>
-                                                    {!isSortMode && extra.type !== 'book' && extra.content !== 'INTERNAL_BOOK' && (
+                                                    {!isSortMode && extra.type !== 'book' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club') && (
                                                         <input type="checkbox" checked={selectedExtras.includes(extra.id)} onChange={() => toggleExtraSelection(extra.id)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
                                                     )}
                                                 </div>
@@ -569,7 +569,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                                             <button onClick={() => handleOpen(extra)} className="btn-premium" style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}>
                                                                 <ExternalLink size={14} /> Abrir
                                                             </button>
-                                                            {extra.type !== 'book' && extra.content !== 'INTERNAL_BOOK' && (
+                                                            {extra.type !== 'book' && extra.content !== 'INTERNAL_BOOK' && !extra.content?.includes('github.io/Reading-Club') && (
                                                                 <button onClick={() => handleDelete(extra.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                                     <Trash2 size={14} />
                                                                 </button>
@@ -616,7 +616,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
                                     <input className="premium-input" placeholder="Nombre..." value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} autoFocus style={{ width: '100%' }} />
                                 </div>
 
-                                {modalType !== 'folder' && modalType !== 'book' && (
+                                {modalType !== 'folder' && (
                                     <div>
                                         <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px' }}>
                                             {modalType === 'link' ? 'URL' : 'Archivo del Juego'}

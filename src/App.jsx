@@ -29,6 +29,7 @@ function AppRoot() {
     const [view, setView] = useState('entry');
     const [alias, setAlias] = useState('');
     const [selectedProject, setSelectedProject] = useState(null);
+    const [activeBookUrl, setActiveBookUrl] = useState('https://institutotinykids.github.io/Reading-Club/');
     const [isActive, setIsActive] = useState(false);
     const [slides, setSlides] = useState([]);
     const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
@@ -310,7 +311,12 @@ function AppRoot() {
             {view === 'extras' && (
                 <ExtrasView
                     onExit={() => setView('entry')}
-                    onOpenBook={() => setView('browser')}
+                    onOpenBook={(url) => {
+                        const base = url && url !== 'INTERNAL_BOOK' ? url : 'https://institutotinykids.github.io/Reading-Club/';
+                        const freshUrl = `${base}${base.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                        setActiveBookUrl(freshUrl);
+                        setView('browser');
+                    }}
                 />
             )}
 
@@ -456,7 +462,7 @@ function AppRoot() {
                         </button>
                     </div>
                     <iframe
-                        src="https://institutotinykids.github.io/Reading-Club/"
+                        src={activeBookUrl}
                         style={{ flex: 1, border: 'none', width: '100%', height: 'calc(100% - 60px)' }}
                         title="Reading Club Book"
                     />
