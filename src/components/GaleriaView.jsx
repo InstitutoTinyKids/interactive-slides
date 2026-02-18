@@ -119,8 +119,7 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                 access_code: '',
                 questions: [],
                 folder_id: currentFolderId,
-                order_index: projects.filter(p => p.folder_id === currentFolderId).length,
-                type: projectType // Ensure type is saved
+                order_index: projects.filter(p => p.folder_id === currentFolderId).length
             };
 
             await dbService.createProject(newProject);
