@@ -551,48 +551,54 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
         ? '1fr'
         : currentQ.options.length <= 2 ? '1fr' : '1fr 1fr';
 
+    // En móvil landscape el contenido puede no caber → permitir scroll
+    const mobileScroll = isMobile && isLandscape;
+
     return (
-      <div style={{ height: '100vh', width: '100vw', background: '#000', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '12px' : '20px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ height: '100vh', width: '100vw', background: '#000', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '10px 12px' : '20px', position: 'relative', overflowY: mobileScroll ? 'auto' : 'hidden', overflowX: 'hidden' }}>
 
         {/* ── BARRA SUPERIOR ── */}
-        <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '10px' : '16px', flexShrink: 0 }}>
-          <div style={{ background: 'rgba(59,130,246,0.15)', padding: isMobile ? '7px 16px' : '10px 25px', borderRadius: '100px', border: '1px solid rgba(59,130,246,0.3)', fontSize: isMobile ? '0.75rem' : '0.9rem', fontWeight: 700, color: '#93c5fd' }}>
+        <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? (isLandscape ? '8px' : '14px') : '16px', flexShrink: 0 }}>
+          <div style={{ background: 'rgba(59,130,246,0.15)', padding: isMobile ? '6px 14px' : '10px 25px', borderRadius: '100px', border: '1px solid rgba(59,130,246,0.3)', fontSize: isMobile ? '0.72rem' : '0.9rem', fontWeight: 700, color: '#93c5fd' }}>
             Pregunta {currentQIndex + 1} / {questions.length}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '1.1rem' : '1.4rem', fontWeight: 900 }}>
-            <Clock size={isMobile ? 18 : 24} color="#3b82f6" /> {formatTime(timer)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '1rem' : '1.4rem', fontWeight: 900 }}>
+            <Clock size={isMobile ? 16 : 24} color="#3b82f6" /> {formatTime(timer)}
           </div>
         </div>
 
         {/* ── CUERPO PRINCIPAL ── */}
         <div style={{
-          flex: 1,
+          flex: mobileScroll ? '0 0 auto' : 1,
           width: '100%',
           maxWidth: '1100px',
           display: 'flex',
-          // Texto en landscape → lado a lado. Media siempre columna para dar espacio al media.
-          flexDirection: isTextQ && isLandscape && !isMobile ? 'row' : 'column',
+          // Solo desktop no-móvil en landscape → lado a lado para texto
+          flexDirection: isTextQ && isLandscape && !isMobile && !isTablet ? 'row' : 'column',
           alignItems: 'center',
-          gap: isMobile ? '12px' : '24px',
-          overflow: 'hidden',
-          minHeight: 0,
+          // Portrait: distribuir uniformemente pregunta + opciones
+          justifyContent: !isLandscape && !mobileScroll ? 'space-evenly' : 'flex-start',
+          gap: isMobile ? (isLandscape ? '8px' : '14px') : '24px',
+          overflow: mobileScroll ? 'visible' : 'hidden',
+          minHeight: mobileScroll ? 'auto' : 0,
+          paddingBottom: mobileScroll ? '8px' : 0,
         }}>
 
           {/* ── PREGUNTA + MEDIA ── */}
           <div style={{
-            flex: isTextQ && isLandscape && !isMobile ? '0 0 40%' : '0 0 auto',
+            flex: isTextQ && isLandscape && !isMobile && !isTablet ? '0 0 40%' : '0 0 auto',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
             textAlign: 'center',
-            gap: '12px',
+            gap: isMobile && isLandscape ? '6px' : '12px',
             width: '100%',
           }}>
             <h2 style={{
               fontSize: isTextQ
-                ? (isMobile ? '1.25rem' : isTablet ? '1.6rem' : '2rem')
-                : (isMobile ? '1rem' : '1.3rem'),
+                ? (isMobile ? (isLandscape ? '1rem' : '1.2rem') : isTablet ? '1.6rem' : '2rem')
+                : (isMobile ? (isLandscape ? '0.85rem' : '1rem') : '1.3rem'),
               fontWeight: 900,
               lineHeight: 1.3,
               margin: 0,
@@ -620,18 +626,20 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 
           {/* ── OPCIONES ── */}
           <div style={{
-            flex: 1,
+            flex: mobileScroll ? '0 0 auto' : 1,
             width: '100%',
             display: 'grid',
             gridTemplateColumns: optCols,
-            gap: isTextQ ? (isMobile ? '10px' : '14px') : (isMobile ? '8px' : '10px'),
+            gap: isTextQ
+              ? (isMobile ? (isLandscape ? '6px' : '8px') : '14px')
+              : (isMobile ? '6px' : '10px'),
             alignContent: 'center',
-            minHeight: 0,
-            overflowY: 'auto',
+            minHeight: mobileScroll ? 'auto' : 0,
+            overflowY: mobileScroll ? 'visible' : 'auto',
           }}>
             {currentQ.options.map((opt, idx) => {
               if (hiddenOptions.includes(idx)) {
-                return <div key={idx} style={{ opacity: 0, minHeight: isTextQ ? (isMobile ? '70px' : '100px') : '46px' }} />;
+                return <div key={idx} style={{ opacity: 0, minHeight: isTextQ ? (isMobile ? (isLandscape ? '52px' : '64px') : '100px') : '40px' }} />;
               }
 
               const isCorrectOpt = !!feedback && idx === currentQ.correctAnswer;
@@ -656,9 +664,9 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: isMobile ? '7px' : '11px',
-                      padding: isMobile ? '14px 10px' : isTablet ? '18px 14px' : '22px 18px',
-                      minHeight: isMobile ? '80px' : isTablet ? '100px' : '115px',
+                      gap: isMobile ? (isLandscape ? '4px' : '7px') : '11px',
+                      padding: isMobile ? (isLandscape ? '8px 10px' : '12px 10px') : isTablet ? '18px 14px' : '22px 18px',
+                      minHeight: isMobile ? (isLandscape ? '52px' : '72px') : isTablet ? '100px' : '115px',
                       borderRadius: '20px',
                       background: bgColor,
                       border: `2px solid ${borderColor}`,
@@ -687,24 +695,24 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                   >
                     {/* Badge letra */}
                     <div style={{
-                      width: isMobile ? '30px' : '38px',
-                      height: isMobile ? '30px' : '38px',
-                      borderRadius: '10px',
+                      width: isMobile ? (isLandscape ? '24px' : '28px') : '38px',
+                      height: isMobile ? (isLandscape ? '24px' : '28px') : '38px',
+                      borderRadius: '8px',
                       background: isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : `${letterColor}22`,
                       border: `2px solid ${isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : letterColor}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
                       color: isCorrectOpt || isWrongOpt ? 'white' : letterColor,
                       fontWeight: 900,
-                      fontSize: isMobile ? '0.8rem' : '1rem',
+                      fontSize: isMobile ? '0.72rem' : '1rem',
                     }}>
                       {isCorrectOpt ? <Check size={isMobile ? 14 : 18} /> : isWrongOpt ? <X size={isMobile ? 14 : 18} /> : String.fromCharCode(65 + idx)}
                     </div>
                     {/* Texto opción */}
                     <span style={{
-                      fontSize: isMobile ? '0.8rem' : isTablet ? '0.9rem' : '1rem',
+                      fontSize: isMobile ? (isLandscape ? '0.72rem' : '0.78rem') : isTablet ? '0.9rem' : '1rem',
                       fontWeight: 700,
-                      lineHeight: 1.35,
+                      lineHeight: 1.3,
                       wordBreak: 'break-word',
                       overflowWrap: 'anywhere',
                     }}>
