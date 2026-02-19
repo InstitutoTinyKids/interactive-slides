@@ -192,11 +192,12 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
       });
 
       setQuestions(updatedQuestions);
+      setProjectLocal(prev => ({ ...prev, questions: updatedQuestions }));
       if (!isSilent) {
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 1000);
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        notify.success('Â¡Quiz guardado con Ã©xito!');
+        notify.success('¡Quiz guardado con éxito!');
       }
       return true;
     } catch (err) {
@@ -500,12 +501,14 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                         const { isNew, ...qData } = q;
                         newQuestions = [...questions, qData];
                         setQuestions(newQuestions);
+                        setProjectLocal(prev => ({ ...prev, questions: newQuestions }));
                         // Cuando es nueva, la cerramos para volver a la lista
                         setTimeout(() => setEditingQ(null), 1000);
                       } else {
                         newQuestions = questions.map(item => item.id === q.id ? q : item);
                         setQuestions(newQuestions);
-                        // Si es ediciÃ³n, NO cerramos para que vea el "Â¡GUARDADO!" en el botÃ³n
+                        setProjectLocal(prev => ({ ...prev, questions: newQuestions }));
+                        setEditingQ(q); // Asegura que el editor local se actualice con la nueva referencia
                       }
                     }}
                     onCancel={() => setEditingQ(null)}
