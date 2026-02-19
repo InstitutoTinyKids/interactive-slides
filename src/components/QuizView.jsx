@@ -685,7 +685,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
               background: 'rgba(59,130,246,0.15)', padding: '4px 12px', borderRadius: '100px',
               border: '1px solid rgba(59,130,246,0.3)', fontSize: '0.68rem', fontWeight: 700, color: '#93c5fd'
             }}>
-              Q{currentQIndex + 1}/{questions.length}
+              {currentQIndex + 1}/{questions.length}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -770,6 +770,15 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
               Ayudas
             </button>
           </div>
+
+          {fullImage && (
+            <div onClick={() => setFullImage(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, cursor: 'zoom-out' }}>
+              <img src={fullImage} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain' }} />
+              <div style={{ position: 'absolute', top: '20px', right: '20px', color: 'white', background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '50%' }}>
+                <X size={24} />
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -793,7 +802,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
               background: 'rgba(59,130,246,0.15)', padding: '6px 14px', borderRadius: '100px',
               border: '1px solid rgba(59,130,246,0.3)', fontSize: '0.72rem', fontWeight: 700, color: '#93c5fd'
             }}>
-              Pregunta {currentQIndex + 1} / {questions.length}
+              {currentQIndex + 1} / {questions.length}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1rem', fontWeight: 900 }}>
@@ -872,6 +881,15 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
               {lifelineBar}
             </div>
           </div>
+
+          {fullImage && (
+            <div onClick={() => setFullImage(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, cursor: 'zoom-out' }}>
+              <img src={fullImage} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain' }} />
+              <div style={{ position: 'absolute', top: '20px', right: '20px', color: 'white', background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '50%' }}>
+                <X size={24} />
+              </div>
+            </div>
+          )}
         </div>
       );
     }
