@@ -1027,11 +1027,18 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                 </button>
                 <p style={{ fontSize: '0.55rem', fontWeight: 900, color: '#a78bfa', marginTop: '4px' }}>Pasar (+30s)</p>
               </div>
+              <div style={{ textAlign: 'center' }}>
+                <button onClick={() => { if (window.confirm('¿Cancelar juego?')) { onExit(); } }}
+                  style={{
+                    width: '55px', height: '55px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)',
+                    border: '2px solid #ef4444', color: '#ef4444', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                  <X size={20} />
+                </button>
+                <p style={{ fontSize: '0.55rem', fontWeight: 900, color: '#ef4444', marginTop: '4px' }}>Salir</p>
+              </div>
             </div>
-            <button onClick={() => { if (window.confirm('¿Cancelar juego?')) { onExit(); } }}
-              style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', opacity: 0.5 }}>
-              Cancelar Juego
-            </button>
           </div>
         </div>
 
