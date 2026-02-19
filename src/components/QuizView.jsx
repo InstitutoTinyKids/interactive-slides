@@ -714,13 +714,18 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             </div>
           </div>
 
-          {/* Cuerpo 2 columnas */}
-          <div style={{ flex: 1, display: 'flex', overflow: 'hidden', gap: '10px', padding: '8px 12px', minHeight: 0 }}>
+          {/* Cuerpo 2 columnas (o 1 si es audio) */}
+          <div style={{
+            flex: 1, display: 'flex', overflow: 'hidden', gap: '10px', padding: '8px 12px', minHeight: 0,
+            flexDirection: currentQ.type === 'audio' ? 'column' : 'row'
+          }}>
 
             {/* Columna izquierda: pregunta + media */}
             <div style={{
-              flex: '0 0 42%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
-              alignItems: 'center', textAlign: 'center', gap: '8px', overflow: 'hidden'
+              flex: currentQ.type === 'audio' ? '0 0 auto' : '0 0 42%',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              alignItems: 'center', textAlign: 'center', gap: '8px', overflow: 'hidden',
+              width: currentQ.type === 'audio' ? '100%' : 'auto'
             }}>
               <h2 style={{ fontSize: isTextQ ? '0.95rem' : '0.82rem', fontWeight: 900, lineHeight: 1.25, margin: 0 }}>
                 {currentQ.question}
@@ -730,7 +735,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                   style={{ width: '100%', maxHeight: '55%', objectFit: 'contain', borderRadius: '10px', cursor: 'zoom-in' }} />
               )}
               {currentQ.type === 'audio' && currentQ.mediaUrl && (
-                <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />
+                <audio controls src={currentQ.mediaUrl} style={{ width: '100%', maxWidth: '500px' }} />
               )}
               {currentQ.type === 'video' && currentQ.mediaUrl && (
                 <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: '10px', overflow: 'hidden', flexShrink: 0 }}>
@@ -937,14 +942,14 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
         {/* Cuerpo */}
         <div style={{
           flex: 1, width: '100%', maxWidth: '1200px', display: 'flex',
-          flexDirection: isLandscape && !isMobile ? 'row' : 'column',
+          flexDirection: (isLandscape && !isMobile && currentQ.type !== 'audio') ? 'row' : 'column',
           alignItems: 'center', justifyContent: 'center',
-          gap: isLandscape ? '30px' : '12px', overflow: 'hidden', minHeight: 0
+          gap: isLandscape ? (currentQ.type === 'audio' ? '25px' : '30px') : '12px', overflow: 'hidden', minHeight: 0
         }}>
 
           {/* Pregunta + media */}
           <div style={{
-            flex: isLandscape && !isMobile ? '0 0 50%' : '0 0 auto',
+            flex: (isLandscape && !isMobile && currentQ.type !== 'audio') ? '0 0 50%' : '0 0 auto',
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
             alignItems: 'center', textAlign: 'center', gap: '14px', width: '100%'
           }}>
@@ -959,7 +964,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                 style={{ width: '100%', maxHeight: isLandscape && !isMobile ? '60vh' : '42vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
             )}
             {currentQ.type === 'audio' && currentQ.mediaUrl && (
-              <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />
+              <audio controls src={currentQ.mediaUrl} style={{ width: isLandscape && !isMobile ? '600px' : '100%', maxWidth: '100%' }} />
             )}
             {currentQ.type === 'video' && currentQ.mediaUrl && (
               <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: isLandscape && !isMobile ? '60vh' : '42vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
