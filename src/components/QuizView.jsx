@@ -583,10 +583,10 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 
       if (isTextQ) {
         /* -- FILA: badge izquierda + texto derecha -- */
-        const badgeSize = isMobile ? (isLandscape ? '22px' : '26px') : '26px';
-        const textSize = isMobile ? (isLandscape ? '0.68rem' : '0.76rem') : isTablet ? '0.85rem' : '0.9rem';
-        const cardPad = isMobile ? (isLandscape ? '6px 10px' : '9px 12px') : isTablet ? '10px 14px' : '12px 16px';
-        const cardMinH = isMobile ? (isLandscape ? '40px' : '52px') : isTablet ? '50px' : '54px';
+        const badgeSize = isMobile ? (isLandscape ? '22px' : '26px') : '30px';
+        const textSize = isMobile ? (isLandscape ? '0.68rem' : '0.76rem') : isTablet ? '0.9rem' : '0.95rem';
+        const cardPad = isMobile ? (isLandscape ? '6px 10px' : '9px 12px') : isTablet ? '12px 14px' : '15px 22px';
+        const cardMinH = isMobile ? (isLandscape ? '40px' : '52px') : isTablet ? '55px' : '68px';
         return (
           <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null}
             style={{
@@ -953,13 +953,13 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             </h2>
             {currentQ.type === 'image' && currentQ.mediaUrl && (
               <img src={currentQ.mediaUrl} onClick={() => setFullImage(currentQ.mediaUrl)}
-                style={{ width: '100%', maxHeight: '30vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
+                style={{ width: '100%', maxHeight: '42vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
             )}
             {currentQ.type === 'audio' && currentQ.mediaUrl && (
               <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />
             )}
             {currentQ.type === 'video' && currentQ.mediaUrl && (
-              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '30vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
+              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '42vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
                 {(() => {
                   const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
                   const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${currentQ.videoStart || 0}${currentQ.videoEnd ? `&end=${currentQ.videoEnd}` : ''}&autoplay=1&enablejsapi=1`;
@@ -978,33 +978,61 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
           </div>
         </div>
 
-        {/* Ayudas desktop â€” siempre visibles */}
-        <div style={{ display: 'flex', gap: '30px', margin: '16px 0 6px', flexShrink: 0 }}>
-          <div style={{ textAlign: 'center' }}>
-            <button onClick={handleFiftyFifty} disabled={feedback || hiddenOptions.length > 0}
-              style={{
-                width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(59,130,246,0.2)',
-                border: '2px solid #3b82f6', color: '#3b82f6', fontWeight: 900, cursor: 'pointer',
-                opacity: (feedback || hiddenOptions.length > 0) ? 0.3 : 1
-              }}>50:50</button>
-            <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#3b82f6', marginTop: '4px' }}>+10s</p>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <button onClick={handlePass} disabled={feedback}
-              style={{
-                width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(124,58,237,0.2)',
-                border: '2px solid #7c3aed', color: '#a78bfa', cursor: 'pointer', opacity: feedback ? 0.3 : 1,
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-              <SkipForward size={24} />
+        {/* Panel de Ayudas (Drawer) */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100 }}>
+          {/* Pestaña para abrir/cerrar */}
+          <button
+            onClick={() => setShowLifelines(prev => !prev)}
+            style={{
+              position: 'absolute', bottom: showLifelines ? '110px' : '0',
+              left: '50%', transform: 'translateX(-50%)',
+              background: 'rgba(20,20,35,0.98)', border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '15px 15px 0 0', padding: '8px 25px', color: '#94a3b8',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+              fontSize: '0.8rem', fontWeight: 800, transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              whiteSpace: 'nowrap', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)'
+            }}>
+            <ChevronUp size={16} style={{ transform: showLifelines ? 'rotate(180deg)' : 'none', transition: '0.3s' }} />
+            {showLifelines ? 'Ocultar Ayudas' : 'Ayudas'}
+          </button>
+
+          {/* Panel de contenido */}
+          <div style={{
+            background: 'rgba(10,10,25,0.98)', borderTop: '1px solid rgba(255,255,255,0.1)',
+            padding: '20px 0',
+            height: '110px',
+            transform: showLifelines ? 'translateY(0)' : 'translateY(100%)',
+            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px'
+          }}>
+            <div style={{ display: 'flex', gap: '40px', alignItems: 'center' }}>
+              <div style={{ textAlign: 'center' }}>
+                <button onClick={handleFiftyFifty} disabled={feedback || hiddenOptions.length > 0}
+                  style={{
+                    width: '55px', height: '55px', borderRadius: '50%', background: 'rgba(59,130,246,0.15)',
+                    border: '2px solid #3b82f6', color: '#3b82f6', fontWeight: 900, cursor: 'pointer',
+                    opacity: (feedback || hiddenOptions.length > 0) ? 0.3 : 1, transition: '0.2s'
+                  }}>50:50</button>
+                <p style={{ fontSize: '0.55rem', fontWeight: 900, color: '#3b82f6', marginTop: '4px' }}>+10s</p>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <button onClick={handlePass} disabled={feedback}
+                  style={{
+                    width: '55px', height: '55px', borderRadius: '50%', background: 'rgba(124,58,237,0.15)',
+                    border: '2px solid #7c3aed', color: '#a78bfa', cursor: 'pointer',
+                    opacity: feedback ? 0.3 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                  <SkipForward size={20} />
+                </button>
+                <p style={{ fontSize: '0.55rem', fontWeight: 900, color: '#a78bfa', marginTop: '4px' }}>Pasar (+30s)</p>
+              </div>
+            </div>
+            <button onClick={() => { if (window.confirm('¿Cancelar juego?')) { onExit(); } }}
+              style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', opacity: 0.5 }}>
+              Cancelar Juego
             </button>
-            <p style={{ fontSize: '0.6rem', fontWeight: 900, color: '#a78bfa', marginTop: '4px' }}>Pasar (+30s)</p>
           </div>
         </div>
-        <button onClick={() => { if (window.confirm('¿Cancelar juego?')) { onExit(); } }}
-          style={{ background: 'none', border: 'none', color: '#475569', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', opacity: 0.6, flexShrink: 0 }}>
-          Cancelar Juego
-        </button>
 
         {fullImage && (
           <div onClick={() => setFullImage(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, cursor: 'zoom-out' }}>
