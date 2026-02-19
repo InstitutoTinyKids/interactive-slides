@@ -583,10 +583,10 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 
       if (isTextQ) {
         /* -- FILA: badge izquierda + texto derecha -- */
-        const badgeSize = isMobile ? (isLandscape ? '22px' : '26px') : '30px';
-        const textSize = isMobile ? (isLandscape ? '0.68rem' : '0.76rem') : isTablet ? '0.9rem' : '0.95rem';
-        const cardPad = isMobile ? (isLandscape ? '6px 10px' : '9px 12px') : isTablet ? '12px 14px' : '14px 18px';
-        const cardMinH = isMobile ? (isLandscape ? '40px' : '52px') : isTablet ? '60px' : '64px';
+        const badgeSize = isMobile ? (isLandscape ? '22px' : '26px') : '26px';
+        const textSize = isMobile ? (isLandscape ? '0.68rem' : '0.76rem') : isTablet ? '0.85rem' : '0.9rem';
+        const cardPad = isMobile ? (isLandscape ? '6px 10px' : '9px 12px') : isTablet ? '10px 14px' : '12px 16px';
+        const cardMinH = isMobile ? (isLandscape ? '40px' : '52px') : isTablet ? '50px' : '54px';
         return (
           <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null}
             style={{
@@ -936,7 +936,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
           flex: 1, width: '100%', maxWidth: '1100px', display: 'flex',
           flexDirection: isTextQ && isLandscape && !isTablet ? 'row' : 'column',
           alignItems: 'center', justifyContent: 'center',
-          gap: '16px', overflow: 'hidden', minHeight: 0
+          gap: '12px', overflow: 'hidden', minHeight: 0
         }}>
 
           {/* Pregunta + media */}
@@ -953,13 +953,13 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             </h2>
             {currentQ.type === 'image' && currentQ.mediaUrl && (
               <img src={currentQ.mediaUrl} onClick={() => setFullImage(currentQ.mediaUrl)}
-                style={{ width: '100%', maxHeight: '36vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
+                style={{ width: '100%', maxHeight: '30vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
             )}
             {currentQ.type === 'audio' && currentQ.mediaUrl && (
               <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />
             )}
             {currentQ.type === 'video' && currentQ.mediaUrl && (
-              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '36vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
+              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '30vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
                 {(() => {
                   const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
                   const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${currentQ.videoStart || 0}${currentQ.videoEnd ? `&end=${currentQ.videoEnd}` : ''}&autoplay=1&enablejsapi=1`;
@@ -1022,77 +1022,77 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     const skipped = answersLog.filter(a => a.isSkipped).length;
 
     return (
-      <div style={{ height: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-        <div className="glass anim-up" style={{ padding: '40px', maxWidth: '800px', width: '100%', textAlign: 'center' }}>
-          <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🏆</div>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px' }}>¡Juego Terminado!</h2>
-          <p style={{ color: '#94a3b8', marginBottom: '40px' }}>Estadísticas de la partida</p>
+      <div style={{ height: '100vh', width: '100vw', background: '#050510', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
+        <div className="glass anim-up" style={{ padding: isMobile ? '20px' : '30px', maxWidth: '800px', width: '100%', textAlign: 'center' }}>
+          <div style={{ fontSize: isMobile ? '2rem' : '3rem', marginBottom: '10px' }}>🏆</div>
+          <h2 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', fontWeight: 900, marginBottom: '5px' }}>¡Juego Terminado!</h2>
+          <p style={{ color: '#94a3b8', marginBottom: '20px' }}>Estadísticas de la partida</p>
 
           <div style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)',
-            gap: isMobile ? '12px' : '20px',
-            marginBottom: '40px',
+            gap: isMobile ? '10px' : '15px',
+            marginBottom: '20px',
             width: '100%'
           }}>
             {/* Tiempo - Destacado arriba */}
             <div style={{
               gridColumn: isMobile ? 'span 2' : 'span 3',
               background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05))',
-              padding: isMobile ? '20px' : '30px',
-              borderRadius: '24px',
+              padding: isMobile ? '12px' : '15px',
+              borderRadius: '20px',
               border: '1px solid rgba(59, 130, 246, 0.2)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '5px'
+              gap: '2px'
             }}>
-              <div style={{ fontSize: isMobile ? '2rem' : '3rem', fontWeight: 900, color: '#60a5fa', textShadow: '0 0 20px rgba(59, 130, 246, 0.3)' }}>{formatTime(timer)}</div>
-              <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>TIEMPO TOTAL</div>
+              <div style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', fontWeight: 900, color: '#60a5fa', textShadow: '0 0 20px rgba(59, 130, 246, 0.3)' }}>{formatTime(timer)}</div>
+              <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>TIEMPO TOTAL</div>
             </div>
 
             {/* Estadísticas Secundarias */}
             <div style={{
               background: 'rgba(16, 185, 129, 0.08)',
-              padding: '20px',
-              borderRadius: '20px',
+              padding: '12px',
+              borderRadius: '16px',
               border: '1px solid rgba(16, 185, 129, 0.15)',
               color: '#10b981',
               display: 'flex',
               flexDirection: 'column',
-              gap: '5px'
+              gap: '2px'
             }}>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{correct}</div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>Correctas</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 900 }}>{correct}</div>
+              <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>Correctas</div>
             </div>
 
             <div style={{
               background: 'rgba(239, 68, 68, 0.08)',
-              padding: '20px',
-              borderRadius: '20px',
+              padding: '12px',
+              borderRadius: '16px',
               border: '1px solid rgba(239, 68, 68, 0.15)',
               color: '#ef4444',
               display: 'flex',
               flexDirection: 'column',
-              gap: '5px'
+              gap: '2px'
             }}>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{incorrect}</div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>Incorrectas</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 900 }}>{incorrect}</div>
+              <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>Incorrectas</div>
             </div>
 
             <div style={{
               background: 'rgba(124, 58, 237, 0.08)',
-              padding: '20px',
-              borderRadius: '20px',
+              padding: '12px',
+              borderRadius: '16px',
               border: '1px solid rgba(124, 58, 237, 0.15)',
               color: '#a78bfa',
               display: 'flex',
               flexDirection: 'column',
-              gap: '5px',
+              gap: '2px',
               gridColumn: (isMobile && (correct + incorrect + skipped) % 2 !== 0) ? 'span 2' : 'auto'
             }}>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{skipped}</div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>Saltadas</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 900 }}>{skipped}</div>
+              <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>Saltadas</div>
             </div>
           </div>
 
