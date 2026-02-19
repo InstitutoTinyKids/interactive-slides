@@ -563,9 +563,11 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     // Columnas de opciones
     const optCols = isMobile
       ? '1fr'
-      : (isTextQ && currentQ.options.length > 3) || (!isTextQ && currentQ.options.length > 2)
-        ? '1fr 1fr'
-        : '1fr';
+      : (isLandscape && !isTablet) // En horizontal desktop usamos 1 columna si hay media al lado
+        ? '1fr'
+        : (isTextQ && currentQ.options.length > 3) || (!isTextQ && currentQ.options.length > 2)
+          ? '1fr 1fr'
+          : '1fr';
 
     // â”€â”€ Renderizado de una opciÃ³n (reutilizable) â”€â”€
     const renderOption = (opt, idx) => {
@@ -933,15 +935,15 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 
         {/* Cuerpo */}
         <div style={{
-          flex: 1, width: '100%', maxWidth: '1100px', display: 'flex',
-          flexDirection: isTextQ && isLandscape && !isTablet ? 'row' : 'column',
+          flex: 1, width: '100%', maxWidth: '1200px', display: 'flex',
+          flexDirection: isLandscape && !isMobile ? 'row' : 'column',
           alignItems: 'center', justifyContent: 'center',
-          gap: '12px', overflow: 'hidden', minHeight: 0
+          gap: isLandscape ? '30px' : '12px', overflow: 'hidden', minHeight: 0
         }}>
 
           {/* Pregunta + media */}
           <div style={{
-            flex: isTextQ && isLandscape && !isTablet ? '0 0 40%' : '0 0 auto',
+            flex: isLandscape && !isMobile ? '0 0 50%' : '0 0 auto',
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
             alignItems: 'center', textAlign: 'center', gap: '14px', width: '100%'
           }}>
@@ -953,13 +955,13 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             </h2>
             {currentQ.type === 'image' && currentQ.mediaUrl && (
               <img src={currentQ.mediaUrl} onClick={() => setFullImage(currentQ.mediaUrl)}
-                style={{ width: '100%', maxHeight: '42vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
+                style={{ width: '100%', maxHeight: isLandscape && !isMobile ? '60vh' : '42vh', objectFit: 'contain', borderRadius: '15px', cursor: 'zoom-in' }} />
             )}
             {currentQ.type === 'audio' && currentQ.mediaUrl && (
               <audio controls src={currentQ.mediaUrl} style={{ width: '100%' }} />
             )}
             {currentQ.type === 'video' && currentQ.mediaUrl && (
-              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: '42vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
+              <div style={{ width: '100%', aspectRatio: '16/9', maxHeight: isLandscape && !isMobile ? '60vh' : '42vh', borderRadius: '15px', overflow: 'hidden', flexShrink: 0 }}>
                 {(() => {
                   const videoId = currentQ.mediaUrl.split('v=')[1]?.split('&')[0] || currentQ.mediaUrl.split('/').pop();
                   const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${currentQ.videoStart || 0}${currentQ.videoEnd ? `&end=${currentQ.videoEnd}` : ''}&autoplay=1&enablejsapi=1`;
