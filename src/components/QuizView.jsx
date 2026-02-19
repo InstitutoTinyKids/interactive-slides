@@ -1125,6 +1125,16 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 
         <textarea style={{ width: '100%', minHeight: '100px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', padding: '15px', color: 'white', fontSize: '1rem', outline: 'none' }} placeholder="Escribe la pregunta..." value={formData.question} onChange={e => setFormData({ ...formData, question: e.target.value })} required />
 
+        {(formData.type === 'audio' || formData.type === 'image') && formData.mediaUrl && (
+          <div style={{ padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {formData.type === 'audio' ? (
+              <audio controls src={formData.mediaUrl} style={{ width: '100%', height: '35px' }} />
+            ) : (
+              <img src={formData.mediaUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: '150px', borderRadius: '8px', objectFit: 'contain' }} />
+            )}
+          </div>
+        )}
+
         {(formData.type === 'audio' || formData.type === 'image') && (
           <label className="btn-outline" style={{ cursor: 'pointer', textAlign: 'center' }}>{uploading ? 'Subiendo...' : (formData.mediaUrl ? 'Cambiar Archivo' : 'Elegir Archivo')} <input type="file" hidden accept={formData.type === 'audio' ? 'audio/*' : 'image/*'} onChange={e => handleFileUpload(e, formData.type)} /></label>
         )}
