@@ -1157,7 +1157,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                 />
                 {timePreview(videoStartText) && (
                   <span style={{ fontSize: '0.72rem', color: '#a78bfa', fontWeight: 700, paddingLeft: '4px' }}>
-                    â–¶ {timePreview(videoStartText)}
+                    ▶ {timePreview(videoStartText)}
                   </span>
                 )}
               </div>
@@ -1175,7 +1175,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
                 />
                 {timePreview(videoEndText) && (
                   <span style={{ fontSize: '0.72rem', color: '#a78bfa', fontWeight: 700, paddingLeft: '4px' }}>
-                    â–¶ {timePreview(videoEndText)}
+                    ▶ {timePreview(videoEndText)}
                   </span>
                 )}
               </div>
