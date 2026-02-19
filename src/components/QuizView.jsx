@@ -563,7 +563,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     // Columnas de opciones
     const optCols = isMobile
       ? '1fr'
-      : (isTextQ && currentQ.options.length > 3) || (!isTextQ && currentQ.options.length > 2)
+      : currentQ.options.length > 4
         ? '1fr 1fr'
         : '1fr';
 
@@ -972,7 +972,8 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
           {/* Opciones */}
           <div style={{
             flex: 1, width: '100%', display: 'grid', gridTemplateColumns: optCols,
-            gap: '14px', alignContent: 'center', minHeight: 0, overflowY: 'auto'
+            gap: '14px', alignContent: 'center', minHeight: 0, overflowY: 'auto',
+            padding: '10px 0' // Espacio para que el efecto hover (translateY) no se corte
           }}>
             {currentQ.options.map((opt, idx) => renderOption(opt, idx))}
           </div>
