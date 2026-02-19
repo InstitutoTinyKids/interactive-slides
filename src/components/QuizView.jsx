@@ -291,11 +291,22 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     if (feedback !== null || hiddenOptions.length > 0) return;
     setTimer(prev => prev + 10);
     const currentQ = questions[currentQIndex];
+    const total = currentQ.options.length;
+
+    // Dinámica de 50:50:
+    // 3 opciones: quita 1
+    // 4 opciones: quita 2
+    // 5 opciones: quita 2
+    // 6 opciones: quita 3
+    let numToHide = 2;
+    if (total === 3) numToHide = 1;
+    else if (total === 6) numToHide = 3;
+
     const wrongIndices = currentQ.options
       .map((_, idx) => idx)
       .filter(idx => idx !== currentQ.correctAnswer);
     const shuffledWrong = [...wrongIndices].sort(() => 0.5 - Math.random());
-    setHiddenOptions(shuffledWrong.slice(0, 2));
+    setHiddenOptions(shuffledWrong.slice(0, numToHide));
   };
 
   const handlePass = () => {
