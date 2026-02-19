@@ -11,7 +11,9 @@ export const Header = ({ title, onBack, children }) => {
             justifyContent: 'space-between',
             padding: '0 25px',
             marginBottom: '25px',
-            flexShrink: 0
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 50
         }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1, minWidth: 0 }}>
                 {onBack && (
