@@ -33,6 +33,13 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     const [hoveredFolderId, setHoveredFolderId] = useState(null);
     const folderRefs = useRef({});
 
+    const checkAdmin = () => {
+        const pin = prompt('🔑 Seguridad Central TK: Ingrese la clave 2406 para continuar');
+        if (pin === '2406') return true;
+        if (pin !== null) notify.error('Clave incorrecta');
+        return false;
+    };
+
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(window.innerWidth < 768);
@@ -110,6 +117,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const handleCreate = (type) => {
+        if (!checkAdmin()) return;
         setModalType(type);
         setEditingExtra(null);
         setEditingFolderId(null);
@@ -122,6 +130,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const handleEdit = (extra) => {
+        if (!checkAdmin()) return;
         setModalType(extra.type);
         setEditingExtra(extra);
         setFormData({ title: extra.title, content: extra.content, is_active: extra.is_active ?? true });
@@ -129,6 +138,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const handleEditFolder = (folder) => {
+        if (!checkAdmin()) return;
         setModalType('folder');
         setEditingFolderId(folder.id);
         setFormData({ title: folder.name, content: '' });
@@ -194,6 +204,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const handleDelete = async (id) => {
+        if (!checkAdmin()) return;
         if (!confirm('¿Eliminar este extra?')) return;
         setLoading(true);
         try {
@@ -208,6 +219,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const handleDeleteFolder = async (folderId) => {
+        if (!checkAdmin()) return;
         const extrasInFolder = extras.filter(e => e.folder_id === folderId);
         if (extrasInFolder.length > 0) {
             notify.error('No puedes eliminar una carpeta que contiene extras');
@@ -238,6 +250,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const toggleActive = async (extra) => {
+        if (!checkAdmin()) return;
         try {
             const newActiveState = !extra.is_active;
             await dbService.updateExtra(extra.id, { is_active: newActiveState });
@@ -258,6 +271,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const handleMoveSelected = async () => {
+        if (!checkAdmin()) return;
         if (!targetFolderForMove && targetFolderForMove !== 'root') {
             notify.error('Selecciona un destino');
             return;
@@ -280,6 +294,7 @@ export default function ExtrasView({ onExit, onOpenBook }) {
     };
 
     const enterSortMode = () => {
+        if (!checkAdmin()) return;
         setIsSortMode(true);
         setTempFolders([...folders]);
         setTempExtras([...extras]);
