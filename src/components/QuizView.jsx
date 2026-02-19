@@ -561,11 +561,11 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     const LETTER_COLORS = ['#a78bfa', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#ec4899'];
 
     // Columnas de opciones
-    const optCols = isTextQ
+    const optCols = isMobile
       ? '1fr'
-      : isMobile
-        ? '1fr'
-        : currentQ.options.length <= 2 ? '1fr' : '1fr 1fr';
+      : (isTextQ && currentQ.options.length > 3) || (!isTextQ && currentQ.options.length > 2)
+        ? '1fr 1fr'
+        : '1fr';
 
     // â”€â”€ Renderizado de una opciÃ³n (reutilizable) â”€â”€
     const renderOption = (opt, idx) => {
@@ -583,10 +583,10 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
 
       if (isTextQ) {
         /* -- FILA: badge izquierda + texto derecha -- */
-        const badgeSize = isMobile ? (isLandscape ? '22px' : '26px') : '34px';
-        const textSize = isMobile ? (isLandscape ? '0.68rem' : '0.76rem') : isTablet ? '0.9rem' : '1rem';
-        const cardPad = isMobile ? (isLandscape ? '6px 10px' : '9px 12px') : isTablet ? '14px 16px' : '16px 20px';
-        const cardMinH = isMobile ? (isLandscape ? '40px' : '52px') : isTablet ? '64px' : '72px';
+        const badgeSize = isMobile ? (isLandscape ? '22px' : '26px') : '30px';
+        const textSize = isMobile ? (isLandscape ? '0.68rem' : '0.76rem') : isTablet ? '0.9rem' : '0.95rem';
+        const cardPad = isMobile ? (isLandscape ? '6px 10px' : '9px 12px') : isTablet ? '12px 14px' : '14px 18px';
+        const cardMinH = isMobile ? (isLandscape ? '40px' : '52px') : isTablet ? '60px' : '64px';
         return (
           <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null}
             style={{
@@ -619,7 +619,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
           <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null}
             style={{
               display: 'flex', alignItems: 'center', gap: '10px',
-              padding: isMobile ? (isLandscape ? '7px 10px' : '9px 12px') : '13px 18px',
+              padding: isMobile ? (isLandscape ? '7px 10px' : '9px 12px') : '11px 16px',
               borderRadius: '12px', background: bgColor, border: `1px solid ${borderColor}`,
               color: 'white', cursor: feedback !== null ? 'default' : 'pointer',
               transition: 'all 0.2s ease', textAlign: 'left', ...glowStyle
@@ -628,7 +628,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
             onMouseLeave={e => { if (!feedback) { e.currentTarget.style.background = bgColor; e.currentTarget.style.borderColor = borderColor; } }}
           >
             <div style={{
-              width: isMobile ? '26px' : '32px', height: isMobile ? '26px' : '32px',
+              width: isMobile ? '26px' : '30px', height: isMobile ? '26px' : '30px',
               borderRadius: '7px', flexShrink: 0,
               background: isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : `${letterColor}22`,
               border: `1px solid ${isCorrectOpt ? '#10b981' : isWrongOpt ? '#ef4444' : letterColor}`,
@@ -918,7 +918,7 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
         {/* Barra superior */}
         <div style={{
           width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', marginBottom: '16px', flexShrink: 0
+          alignItems: 'center', marginBottom: '10px', flexShrink: 0
         }}>
           <div style={{
             background: 'rgba(59,130,246,0.15)', padding: '10px 25px', borderRadius: '100px',
@@ -935,8 +935,8 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
         <div style={{
           flex: 1, width: '100%', maxWidth: '1100px', display: 'flex',
           flexDirection: isTextQ && isLandscape && !isTablet ? 'row' : 'column',
-          alignItems: 'center', justifyContent: 'space-evenly',
-          gap: '24px', overflow: 'hidden', minHeight: 0
+          alignItems: 'center', justifyContent: 'center',
+          gap: '16px', overflow: 'hidden', minHeight: 0
         }}>
 
           {/* Pregunta + media */}
