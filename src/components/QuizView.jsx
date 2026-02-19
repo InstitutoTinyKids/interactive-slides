@@ -1028,22 +1028,71 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
           <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px' }}>¡Juego Terminado!</h2>
           <p style={{ color: '#94a3b8', marginBottom: '40px' }}>Estadísticas de la partida</p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '15px' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{formatTime(timer)}</div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Tiempo</div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)',
+            gap: isMobile ? '12px' : '20px',
+            marginBottom: '40px',
+            width: '100%'
+          }}>
+            {/* Tiempo - Destacado arriba */}
+            <div style={{
+              gridColumn: isMobile ? 'span 2' : 'span 3',
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05))',
+              padding: isMobile ? '20px' : '30px',
+              borderRadius: '24px',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '5px'
+            }}>
+              <div style={{ fontSize: isMobile ? '2rem' : '3rem', fontWeight: 900, color: '#60a5fa', textShadow: '0 0 20px rgba(59, 130, 246, 0.3)' }}>{formatTime(timer)}</div>
+              <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>TIEMPO TOTAL</div>
             </div>
-            <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '20px', borderRadius: '15px', color: '#10b981' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{correct}</div>
-              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Correctas</div>
+
+            {/* Estadísticas Secundarias */}
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.08)',
+              padding: '20px',
+              borderRadius: '20px',
+              border: '1px solid rgba(16, 185, 129, 0.15)',
+              color: '#10b981',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px'
+            }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{correct}</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>Correctas</div>
             </div>
-            <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '20px', borderRadius: '15px', color: '#ef4444' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{incorrect}</div>
-              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Incorrectas</div>
+
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.08)',
+              padding: '20px',
+              borderRadius: '20px',
+              border: '1px solid rgba(239, 68, 68, 0.15)',
+              color: '#ef4444',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px'
+            }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{incorrect}</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>Incorrectas</div>
             </div>
-            <div style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '20px', borderRadius: '15px', color: '#a78bfa' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{skipped}</div>
-              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Saltadas</div>
+
+            <div style={{
+              background: 'rgba(124, 58, 237, 0.08)',
+              padding: '20px',
+              borderRadius: '20px',
+              border: '1px solid rgba(124, 58, 237, 0.15)',
+              color: '#a78bfa',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px',
+              gridColumn: (isMobile && (correct + incorrect + skipped) % 2 !== 0) ? 'span 2' : 'auto'
+            }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{skipped}</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>Saltadas</div>
             </div>
           </div>
 
