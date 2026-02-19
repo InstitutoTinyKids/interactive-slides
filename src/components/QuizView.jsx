@@ -563,11 +563,9 @@ export default function QuizView({ onExit, isAdmin = false, role = 'student', pr
     // Columnas de opciones
     const optCols = isMobile
       ? '1fr'
-      : (isLandscape && !isTablet) // En horizontal desktop usamos 1 columna si hay media al lado
-        ? '1fr'
-        : (isTextQ && currentQ.options.length > 3) || (!isTextQ && currentQ.options.length > 2)
-          ? '1fr 1fr'
-          : '1fr';
+      : (isTextQ && currentQ.options.length > 3) || (!isTextQ && currentQ.options.length > 2)
+        ? '1fr 1fr'
+        : '1fr';
 
     // â”€â”€ Renderizado de una opciÃ³n (reutilizable) â”€â”€
     const renderOption = (opt, idx) => {
