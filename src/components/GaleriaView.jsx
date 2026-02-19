@@ -270,18 +270,34 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                 title={currentFolderId ? folders.find(f => f.id === currentFolderId)?.name : 'Galería'}
                 onBack={currentFolderId ? () => setCurrentFolderId(null) : onExit}
             >
+                {/* Pestañas de Filtro */}
                 {!isMobile && (
-                    <div style={{ display: 'flex', gap: '15px', marginRight: '20px' }}>
+                    <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        background: 'rgba(255,255,255,0.03)',
+                        padding: '4px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        marginRight: '15px'
+                    }}>
                         {['all', 'guias', 'quiz'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setGalleryTab(tab)}
                                 style={{
-                                    background: 'none', border: 'none',
-                                    color: galleryTab === tab ? (tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed') : '#475569',
-                                    fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer',
-                                    borderBottom: galleryTab === tab ? `2px solid ${tab === 'quiz' ? '#3b82f6' : tab === 'guias' ? '#a78bfa' : '#7c3aed'}` : '2px solid transparent',
-                                    paddingBottom: '3px'
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    background: galleryTab === tab ? 'rgba(124, 58, 237, 0.15)' : 'transparent',
+                                    border: 'none',
+                                    color: galleryTab === tab ? '#a78bfa' : '#94a3b8',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
                                 }}
                             >
                                 {tab.toUpperCase() === 'ALL' ? 'TODAS' : tab.toUpperCase() === 'GUIAS' ? 'GUIAS' : 'QUIZZES'}
@@ -290,24 +306,75 @@ export default function GaleriaView({ onOpenGuide, onOpenQuiz, onExit, onPreview
                     </div>
                 )}
 
+                {/* Acciones del Header */}
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     {selectedProjects.length > 0 && (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={handleDuplicateSelected} className="btn-outline" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.8rem' }}><Copy size={16} /> Duplicar</button>
-                            <button onClick={() => setShowMoveModal(true)} className="btn-outline" style={{ background: 'rgba(167, 139, 250, 0.1)', color: '#a78bfa', borderColor: 'rgba(167, 139, 250, 0.2)', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.8rem' }}><Move size={16} /> Mover</button>
-                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.8rem' }}><Trash2 size={16} /> Eliminar</button>
+                        <div style={{ display: 'flex', gap: '8px', paddingRight: '10px', borderRight: '1px solid rgba(255,255,255,0.1)', marginRight: '5px' }}>
+                            <button onClick={handleDuplicateSelected} className="btn-outline" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)', padding: '10px 14px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.7rem' }} title="Duplicar Selección"><Copy size={15} /> {!isMobile && 'Duplicar'}</button>
+                            <button onClick={() => setShowMoveModal(true)} className="btn-outline" style={{ background: 'rgba(167, 139, 250, 0.1)', color: '#a78bfa', borderColor: 'rgba(167, 139, 250, 0.2)', padding: '10px 14px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.7rem' }} title="Mover Selección"><Move size={15} /> {!isMobile && 'Mover'}</button>
+                            <button onClick={handleDeleteSelected} className="btn-outline" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', padding: '10px 14px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.7rem' }} title="Eliminar Selección"><Trash2 size={15} /> {!isMobile && 'Eliminar'}</button>
                         </div>
                     )}
-                    <button onClick={toggleSortMode} className="btn-outline" style={{ padding: '10px 18px', background: isSortMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)', color: isSortMode ? '#10b981' : 'white', borderColor: isSortMode ? '#10b981' : 'rgba(255,255,255,0.1)', fontWeight: 800, fontSize: '0.8rem' }}>{isSortMode ? 'Listo' : 'Ordenar'}</button>
+
+                    <button
+                        onClick={toggleSortMode}
+                        className="btn-outline"
+                        style={{
+                            padding: '10px 20px',
+                            borderRadius: '12px',
+                            background: isSortMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)',
+                            color: isSortMode ? '#10b981' : 'white',
+                            borderColor: isSortMode ? '#10b981' : 'rgba(255,255,255,0.1)',
+                            fontWeight: 800,
+                            fontSize: '0.8rem'
+                        }}
+                    >
+                        {isSortMode ? 'Listo' : 'Ordenar'}
+                    </button>
+
                     <div style={{ position: 'relative' }}>
-                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowTypeDropdown(!showTypeDropdown); }} className="btn-premium" style={{ padding: '10px 18px', fontSize: '0.8rem' }}><Plus size={16} /> Agregar</button>
-                        {showTypeDropdown && (
-                            <div className="glass" style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, width: '180px', zIndex: 9999, padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(15, 15, 30, 0.95)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                                <button onClick={(e) => { e.stopPropagation(); setAddType('guias'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', borderRadius: '10px', fontSize: '0.8rem' }}><LayoutGrid size={16} color="#a78bfa" /> <span>Guía</span></button>
-                                <button onClick={(e) => { e.stopPropagation(); setAddType('quiz'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', borderRadius: '10px', fontSize: '0.8rem' }}><HelpCircle size={16} color="#3b82f6" /> <span>Quiz</span></button>
-                                <button onClick={(e) => { e.stopPropagation(); setAddType('folder'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', borderRadius: '10px', fontSize: '0.8rem' }}><FolderPlus size={16} color="#10b981" /> <span>Carpeta</span></button>
-                            </div>
-                        )}
+                        <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowTypeDropdown(!showTypeDropdown); }}
+                            className="btn-premium"
+                            style={{
+                                padding: '10px 20px',
+                                fontSize: '0.8rem',
+                                borderRadius: '12px',
+                                boxShadow: '0 8px 15px -5px rgba(124, 58, 237, 0.3)'
+                            }}
+                        >
+                            <Plus size={16} /> Agregar
+                        </button>
+
+                        <AnimatePresence>
+                            {showTypeDropdown && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="glass"
+                                    style={{
+                                        position: 'absolute',
+                                        top: 'calc(100% + 12px)',
+                                        right: 0,
+                                        width: '200px',
+                                        zIndex: 9999,
+                                        padding: '10px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px',
+                                        background: 'rgba(10, 10, 25, 0.98)',
+                                        boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '16px'
+                                    }}
+                                >
+                                    <button onClick={(e) => { e.stopPropagation(); setAddType('guias'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700 }}><LayoutGrid size={18} color="#a78bfa" /> <span>Guía Interactiva</span></button>
+                                    <button onClick={(e) => { e.stopPropagation(); setAddType('quiz'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700 }}><HelpCircle size={18} color="#3b82f6" /> <span>Nuevo Quiz</span></button>
+                                    <button onClick={(e) => { e.stopPropagation(); setAddType('folder'); setShowAddModal(true); setShowTypeDropdown(false); }} className="btn-outline" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700 }}><FolderPlus size={18} color="#10b981" /> <span>Carpeta</span></button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </Header>
